@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dir C:UsersEvanNthreestarRL *)"
+      "Bash(dir C:UsersEvanNthreestarRL *)",
+      "Bash(jq --version)",
+      "Bash(claude --version)",
+      "Bash(gh auth *)",
+      "Bash(gh repo *)",
+      "Bash(export PATH=\"/c/Program Files/GitHub CLI:$PATH\")",
+      "Bash(gh --version)"
     ]
   }
 }

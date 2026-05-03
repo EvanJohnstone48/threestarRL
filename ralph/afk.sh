@@ -20,12 +20,12 @@ for ((i=1; i<=$1; i++)); do
   issues=$(cat issues/open/*.md 2>/dev/null || echo "No issues found")
   prompt=$(cat ralph/prompt.md)
 
-  claude \
+  printf '%s' "Previous commits: $commits Issues: $issues $prompt" \
+  | claude \
     --verbose \
     --print \
     --output-format stream-json \
     --dangerously-skip-permissions \
-    "Previous commits: $commits Issues: $issues $prompt" \
   | grep --line-buffered '^{' \
   | tee "$tmpfile" \
   | jq --unbuffered -rj "$stream_text"

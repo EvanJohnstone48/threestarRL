@@ -49,6 +49,7 @@ Make a git commit. The commit message must:
 1. Include key decisions made
 2. Include files changed
 3. Blockers or notes for next iteration
+4. Include a trailing line `Closes #<N>` where `<N>` is the GitHub issue number read from the issue file's `**GitHub Issue:** #<N>` line. This auto-closes the corresponding GitHub Issue when the commit is pushed to `origin`.
 
 # THE ISSUE
 
