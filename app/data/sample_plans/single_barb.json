@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "name": "single_barb",
+    "notes": "Phase 0 tracer plan: deploy a single Barbarian on the top edge.",
+    "author": "phase-0",
+    "created_at": "2026-05-03T00:00:00Z"
+  },
+  "actions": [
+    {
+      "tick": 0,
+      "kind": "deploy_troop",
+      "entity_type": "barbarian",
+      "position": [2.5, 17.5],
+      "level": 6
+    }
+  ]
+}

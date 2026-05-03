@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "name": "tracer",
+    "th_level": 6,
+    "tags": ["tracer", "phase-0"],
+    "notes": "Phase 0 tracer base: TH + 1 Cannon. Used to demo end-to-end pipeline.",
+    "author": "phase-0",
+    "created_at": "2026-05-03T00:00:00Z"
+  },
+  "th_level": 6,
+  "placements": [
+    { "building_type": "town_hall", "origin": [15, 15], "level": 1 },
+    { "building_type": "cannon",    "origin": [40, 40], "level": 1 }
+  ],
+  "cc_contents": []
+}

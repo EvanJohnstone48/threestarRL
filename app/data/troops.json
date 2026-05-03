@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "name": "barbarian",
+      "category": "ground",
+      "footprint": [1, 1],
+      "hitbox_radius_tiles": 0.5,
+      "housing_space": 1,
+      "speed_tiles_per_sec": 2.0,
+      "target_filter": "ground",
+      "target_preference": "none",
+      "splash_radius_tiles": 0.0,
+      "splash_damages_walls": false,
+      "projectile_speed_tiles_per_sec": null,
+      "projectile_homing": true,
+      "damages_walls_on_suicide": false,
+      "damage_multipliers": {},
+      "damage_multiplier_default": 1.0,
+      "levels": [
+        { "level": 1, "hp": 45, "base_damage": 8, "range_tiles": 0.4, "attack_cooldown_ticks": 10, "unlocked_at_th": 1 },
+        { "level": 2, "hp": 54, "base_damage": 11, "range_tiles": 0.4, "attack_cooldown_ticks": 10, "unlocked_at_th": 1 },
+        { "level": 3, "hp": 65, "base_damage": 14, "range_tiles": 0.4, "attack_cooldown_ticks": 10, "unlocked_at_th": 3 },
+        { "level": 4, "hp": 78, "base_damage": 18, "range_tiles": 0.4, "attack_cooldown_ticks": 10, "unlocked_at_th": 5 },
+        { "level": 5, "hp": 95, "base_damage": 23, "range_tiles": 0.4, "attack_cooldown_ticks": 10, "unlocked_at_th": 6 },
+        { "level": 6, "hp": 110, "base_damage": 26, "range_tiles": 0.4, "attack_cooldown_ticks": 10, "unlocked_at_th": 6 }
+      ]
+    },
+    {
+      "name": "giant",
+      "category": "ground",
+      "footprint": [1, 1],
+      "hitbox_radius_tiles": 0.7,
+      "housing_space": 5,
+      "speed_tiles_per_sec": 1.25,
+      "target_filter": "ground",
+      "target_preference": "defenses",
+      "splash_radius_tiles": 0.0,
+      "splash_damages_walls": false,
+      "projectile_speed_tiles_per_sec": null,
+      "projectile_homing": true,
+      "damages_walls_on_suicide": false,
+      "damage_multipliers": {},
+      "damage_multiplier_default": 1.0,
+      "levels": [
+        { "level": 1, "hp": 280, "base_damage": 11, "range_tiles": 0.5, "attack_cooldown_ticks": 15, "unlocked_at_th": 3 },
+        { "level": 2, "hp": 340, "base_damage": 14, "range_tiles": 0.5, "attack_cooldown_ticks": 15, "unlocked_at_th": 3 },
+        { "level": 3, "hp": 410, "base_damage": 19, "range_tiles": 0.5, "attack_cooldown_ticks": 15, "unlocked_at_th": 4 },
+        { "level": 4, "hp": 460, "base_damage": 24, "range_tiles": 0.5, "attack_cooldown_ticks": 15, "unlocked_at_th": 6 },
+        { "level": 5, "hp": 520, "base_damage": 31, "range_tiles": 0.5, "attack_cooldown_ticks": 15, "unlocked_at_th": 6 },
+        { "level": 6, "hp": 580, "base_damage": 43, "range_tiles": 0.5, "attack_cooldown_ticks": 15, "unlocked_at_th": 6 }
+      ]
+    }
+  ]
+}
