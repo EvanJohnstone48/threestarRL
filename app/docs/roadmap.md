@@ -279,8 +279,8 @@ These run continuously across all phases and don't fit cleanly into any one of t
 Each phase decomposes into issue clusters that the agentic ralph loop expands into individual issue files.
 
 - High-level issue clusters live as headers in this roadmap (e.g., "1.1.1 Defenses + splash damage").
-- Concrete issues are authored in `app/docs/{subsystem}/issues/open/*.md` per the structure described in `agent.md`.
-- An issue's done state is marked by moving it to `app/docs/{subsystem}/issues/done/`.
+- Concrete issues are authored in the root `issues/open/*.md` queue per the structure described in `agent.md`. Issues from all subsystems share this single queue.
+- An issue's done state is marked by moving it to `issues/done/`.
 - The `prd-to-issues` skill (`/prd-to-issues`) can decompose a per-subsystem PRD into a starting set of issues; that's the kickoff for each phase.
 
 ## Risks and contingencies (roadmap-specific)

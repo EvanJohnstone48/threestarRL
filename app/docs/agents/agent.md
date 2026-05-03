@@ -24,26 +24,26 @@ A tracer bullet is a thin, working slice through the full system. It may be roug
 
 This codebase may contain multiple PRDs.
 
-Each PRD belongs to a specific documentation folder. The agent should treat each documentation folder as its own planning context.
+Each PRD belongs to a specific documentation folder. The agent should treat each documentation folder as its own planning context. Issues, however, all live in a **single root queue** at `issues/open/` (active) and `issues/done/` (completed). The ralph loop globs `issues/open/*.md` and works one at a time.
 
 Example structure:
 
 ```md
-docs/
+issues/
+  open/
+    issue-001.md
+    issue-002.md
+  done/
+    issue-000.md
+
+app/docs/
   sandbox/
     prd.md
-    issues/
-      issue-001.md
-      issue-002.md
+    design.md
 
   barracks/
     prd.md
-    issues/
-      issue-001.md
-      issue-002.md
+    design.md
 
-  image-to-grid/
+  cartographer/
     prd.md
-    issues/
-      issue-001.md
-      issue-002.md

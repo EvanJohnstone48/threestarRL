@@ -1,0 +1,69 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# Virtual envs
+.venv/
+venv/
+env/
+ENV/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyright/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+
+# uv
+# (uv.lock is intentionally tracked)
+
+# Editors / IDEs
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Web frontend
+app/sandbox_web/node_modules/
+app/sandbox_web/dist/
+app/sandbox_web/.vite/
+app/sandbox_web/*.tsbuildinfo
+app/sandbox_web/public/sprites/*
+!app/sandbox_web/public/sprites/.gitkeep
+
+# Experiments — every run dir is gitignored, only structure is tracked
+app/experiments/runs/*
+!app/experiments/runs/.gitkeep
+
+# Cartographer — scraped real bases are not committed
+app/data/scraped_bases/*
+!app/data/scraped_bases/.gitkeep
+
+# Secrets / env
+.env
+.env.local
+*.key
+
+# Logs
+*.log
+
+# Generated TS types
+app/sandbox_web/src/generated_types.ts

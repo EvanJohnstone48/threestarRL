@@ -22,7 +22,7 @@ The shared glossary for threestarRL. Every doc, issue, commit message, and code 
 | **Tracer bullet** | A thin, working slice through the full system that proves the architecture end-to-end. The Phase 0 deliverable. | "spike", "POC", "skeleton" |
 | **Phase** | A roadmap stage (Phase 0, 1, 2, 3). Distinct from milestones — phases are time-boxed work, milestones are headline results. | "stage", "iteration" |
 | **Ralph loop** | The issue-execution loop driven by `ralph/prompt.md`. Picks an open issue, executes it, commits, marks it done. | "the agent", "the runner" |
-| **Issue** | A markdown task file under `app/docs/{subsystem}/issues/open/`. Moves to `issues/done/` when complete. | "ticket", "todo" |
+| **Issue** | A markdown task file in the root `issues/open/` queue. Moves to `issues/done/` when complete. All subsystems share the single queue. | "ticket", "todo" |
 
 ## Clash / TH6 game domain
 

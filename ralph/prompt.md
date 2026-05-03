@@ -1,6 +1,6 @@
 # ISSUES
 
-Local issue files from `issues/` (in some parent docs folder) are provided at start of context. Parse them to understand the open issues.
+Local issue files from the root `issues/open/` directory are provided at start of context. Parse them to understand the open issues.
 
 You will work on the AFK issues only, not the HITL ones.
 
@@ -51,7 +51,7 @@ Make a git commit. The commit message must:
 
 # THE ISSUE
 
-If the task is complete, move the issue file to `issues/done/` inside of whatever folder the issues are in.
+If the task is complete, move the issue file from `issues/open/` to `issues/done/`.
 
 If the task is not complete, add a note to the issue file with what was done.
 

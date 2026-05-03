@@ -1,0 +1,32 @@
+target-version = "py312"
+line-length = 100
+extend-exclude = [
+    "app/sandbox_web",
+    "app/experiments/runs",
+    ".venv",
+]
+
+[lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "UP",   # pyupgrade
+    "N",    # pep8-naming
+    "C4",   # flake8-comprehensions
+    "SIM",  # flake8-simplify
+    "RUF",  # ruff-specific
+]
+ignore = [
+    "E501",  # line length handled by formatter
+]
+
+[lint.per-file-ignores]
+"tests/**/*.py" = ["N802", "N803"]   # allow non-snake-case in tests where mirroring API names
+"**/__init__.py" = ["F401"]           # re-exports
+
+[format]
+quote-style = "double"
+indent-style = "space"

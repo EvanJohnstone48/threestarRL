@@ -30,22 +30,21 @@ threestarRL/
 ├── app/
 │   ├── docs/                             # All project documentation
 │   │   ├── idea.md                        # Original project pitch
-│   │   ├── agent.md                       # Agent operating process
+│   │   ├── agents/
+│   │   │   ├── agent.md                   # Agent operating process
+│   │   │   └── sessions/                  # Per-grilling-session notes
 │   │   ├── prd.md                         # Full project PRD
 │   │   ├── technical.md                   # This file
 │   │   ├── roadmap.md                     # Phased roadmap
 │   │   ├── ubiquitous-language.md         # Glossary
 │   │   ├── sandbox/
 │   │   │   ├── prd.md                     # (later) per-subsystem PRD
-│   │   │   ├── design.md                  # (later) per-subsystem design
-│   │   │   └── issues/{open,done}/        # Tracer-bullet issues for ralph loop
+│   │   │   └── design.md                  # (later) per-subsystem design
 │   │   ├── barracks/
 │   │   │   ├── design.md                  # RL design doc (obs/action/reward/training)
-│   │   │   ├── prd.md                     # (later)
-│   │   │   └── issues/{open,done}/
+│   │   │   └── prd.md                     # (later)
 │   │   └── cartographer/
-│   │       ├── prd.md                     # (later)
-│   │       └── issues/{open,done}/
+│   │       └── prd.md                     # (later)
 │   ├── sandbox_core/                     # Pure simulator (Python package)
 │   │   ├── __init__.py
 │   │   ├── schemas.py                     # Pydantic models for all data contracts
@@ -118,7 +117,12 @@ threestarRL/
 │   └── golden/
 │       └── replays/                       # Frozen replay fixtures
 ├── ralph/
-│   └── prompt.md                          # Existing — issue execution loop
+│   ├── afk.sh                             # Multi-iteration ralph loop
+│   ├── once.sh                            # Single-iteration ralph
+│   └── prompt.md                          # Issue execution loop prompt
+├── issues/
+│   ├── open/                              # Active issues (ralph reads via cat issues/open/*.md)
+│   └── done/                              # Completed issues (ralph moves them here)
 ├── .github/
 │   └── workflows/
 │       └── ci.yml                         # Lint + typecheck + test

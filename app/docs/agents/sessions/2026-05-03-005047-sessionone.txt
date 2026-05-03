@@ -1,0 +1,3228 @@
+╭─── Claude Code v2.1.126 ─────────────────────────────────────────────────────╮
+│                                                    │ Tips for getting        │
+│                 Welcome back Matt!                 │ started                 │
+│                                                    │ Run /init to create a … │
+│                       ▐▛███▜▌                      │ ─────────────────────── │
+│                      ▝▜█████▛▘                     │ What's new              │
+│                        ▘▘ ▝▝                       │ The `/model` picker no… │
+│    Opus 4.7 · Claude Max ·                         │ - Added `claude projec… │
+│    matthew.cooper.lones@gmail.com's Organization   │ `--dangerously-skip-pe… │
+│                    ~\threestarRL                   │ /release-notes for more │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+> Read @app/docs/idea.md to understand the project. Then use /grill-me. Once    
+  finished create the @prd.md for full project, the @app/docs/techincal.md for  
+  implementation of all parts of project and the @app/docs/roadmap.md for the   
+  roadmap of the full project following the three subsystems: 1. the sandbox.   
+  2. the cartographer 3. the barracks (read idea.md to see what these mean).    
+  Good luck                                                                     
+  ⎿  Read app\docs\idea.md (131 lines)
+  ⎿  Read app\docs\techincal.md (1 lines)
+  ⎿  Read app\docs\roadmap.md (1 lines)
+
+● I've read the idea.md. The project is threestarRL — a Clash of Clans attack
+  simulator (The Sandbox), a CV pipeline (The Cartographer), and an RL
+  environment (The Barracks). Now I'll launch the grill-me skill to stress-test
+  the plan before writing the PRD, technical doc, and roadmap.
+
+● Skill(grill-me)
+  ⎿  Successfully loaded skill
+
+● Let me first scan what's already in the repo so I don't ask questions the
+  codebase already answers.
+
+  Searched for 2 patterns (ctrl+o to expand)
+
+● Bash(dir C:\Users\EvanN\threestarRL /B)
+  ⎿  Error: Exit code 2
+     dir: cannot access 'C:UsersEvanNthreestarRL': No such file or directory
+     dir: cannot access '/B': No such file or directory
+
+  Read 5 files (ctrl+o to expand)
+
+● Good — I've got the full picture. The repo has empty stubs for prd.md,
+  techincal.md, roadmap.md, and ubiquitous-language.md, plus an agent.md that
+  calls for TDD with npm run test/npm run typecheck (hinting TypeScript) and a
+  ralph loop that drives issues. Let's grill.
+
+  I'll go one at a time, starting with the most foundational decision since it
+  cascades into everything else.
+
+  ---
+  Question 1 of N — Language/runtime split for the simulator core
+
+  The Sandbox core needs to be (a) fast and headless for RL training (millions
+  of steps), (b) shareable with a visual web frontend, and (c) shareable with
+  the Barracks RL environment. There are three realistic paths:
+
+  1. Python everywhere. Sandbox-core in Python (NumPy/Numba), web frontend talks
+   to it via a thin server, Barracks imports it directly. Pro: zero-friction RL
+  stack (Gymnasium, Stable-Baselines3, PyTorch). Con: web rendering is awkward,
+  and agent.md already implies Node tooling.
+  2. TypeScript core + Python RL bridge. Sandbox-core in TS (matches npm run 
+  test in agent.md), Barracks in Python wraps the TS core via subprocess/IPC or
+  a WASM build. Pro: web frontend is native. Con: every RL step pays IPC
+  overhead — kills training throughput. RL ergonomics suffer badly.
+  3. Two cores, one spec. A canonical rules spec (JSON/markdown) with two
+  implementations: Rust or Python core for RL speed + headless, TypeScript port
+  for the web visualizer. Pro: best-of-both. Con: two codebases to keep in sync
+  — cartographer-style drift risk.
+
+  My recommendation: Path 1, Python everywhere, with the web frontend as a thin 
+  viewer that consumes JSON state snapshots/replays from the Python core.
+  Reasoning: this is fundamentally an RL research project, not a game. The
+  Sandbox exists to serve the Barracks. RL throughput trumps web ergonomics — a
+  TS↔Python boundary at every step would cap training at maybe 100s steps/sec
+  when you want 10k+. The web frontend can be a separate small app (React +
+  Canvas/PixiJS) that loads state.json files emitted by the Python core for
+  inspection and replay; it doesn't need to drive the simulator live. The
+  agent.md npm commands likely apply only to that thin frontend.
+
+  The cost: you give up the dream of a "play it live in the browser" mode where
+  humans attack interactively in real-time. You can still build a manual-attack
+  mode in Python (pygame/arcade) if you want a human-playable Sandbox.
+
+  Do you accept Path 1, or do you want to preserve interactive browser play 
+  (forcing Path 2 or 3)?
+
+✻ Cogitated for 48s
+
+> Let's go with path 1 here. You're confident we can pack everything about the  
+  state into a json and visualize it well?                                      
+
+● Yes, with a caveat about the replay format. JSON can absolutely encode every
+  piece of state needed — buildings (id, type, tile pos, hp, target, cooldown),
+  walls, troops (continuous x/y, hp, state, target), projectiles in flight,
+  spells, score, tick number. None of that is exotic data. The ceiling on visual
+   quality isn't the JSON, it's the renderer effort and the sprite assets — and
+  idea.md already says assets load from local folders, so that's user-supplied
+  (no Supercell IP issue).
+
+  The real question hiding inside your question is what we serialize, not 
+  whether we can. Pure per-tick state snapshots work but miss the "something
+  just happened" moments you need to trigger attack animations, projectile arcs,
+   hit flashes, and death effects cleanly. So the replay format choice matters —
+   which is exactly the next thing to pin down.
+
+  ---
+  Question 2 of N — Replay format and core↔frontend contract
+
+  The Python core is going to emit something the web frontend consumes for both
+  live inspection and replay scrubbing. Three formats:
+
+  1. Per-tick state snapshots only. Core emits the full state every tick (say 20
+   Hz). Renderer interpolates positions between ticks for smooth motion.
+  Simplest contract; no separate event types. Animation triggers (attacks, hits,
+   deaths) must be derived by diffing consecutive snapshots — workable but
+  fragile (e.g., a unit that died and respawned in the same tile would be
+  missed).
+  2. Initial state + event log only. Core emits one starting snapshot, then a
+  stream of typed events (deploy, move, attack_start, projectile_fired, damage,
+  destroyed, spell_cast). Renderer reconstructs state by applying events.
+  Compact, animation triggers are first-class, exact replay determinism. Cost:
+  scrubbing backward requires replaying from start (or periodic checkpoints).
+  3. Hybrid: initial state + per-tick delta + animation events. Core emits a
+  starting snapshot, then per tick: a small delta (only what changed) + a list
+  of events that occurred this tick. Renderer can both render state at any tick
+  and trigger animations. Best of both, slightly more code in the core's
+  serializer.
+
+  My recommendation: Path 3 (hybrid), but build it in phases. Start the tracer
+  bullet with Path 1 (full state per tick) because it's the simplest thing that
+  lets you stand up a renderer. As soon as you want attack animations to look
+  good, add an events: [...] array per tick — that's a backward-compatible
+  extension. Skip deltas until file size or network bandwidth actually hurts;
+  for TH6 with maybe 200 entities, full-state JSON at 20 Hz for a 90-second
+  attack is ~few MB, which is fine on disk and fine in memory.
+
+  Concretely the per-tick payload would look like:
+
+  {
+    "tick": 412,
+    "time_ms": 20600,
+    "state": { "buildings": [...], "troops": [...], "projectiles": [...],
+  "spells": [...], "score": {...} },
+    "events": [
+      {"type": "attack_start", "src": "troop_17", "tgt": "bld_4"},
+      {"type": "projectile_fired", "src": "bld_9", "tgt": "troop_3", "arc_ms":
+  600},
+      {"type": "destroyed", "id": "bld_4"}
+    ]
+  }
+
+  And the core also emits a replay.json containing {seed, base_layout, 
+  deployment_plan, ticks: [...]} for offline replay.
+
+  Do you accept the hybrid format with phased rollout (start state-only, add 
+  events when needed), or do you want the event log to be first-class from day 
+  one?
+
+✻ Baked for 41s
+
+> Let's do the hybrid format                                                    
+
+● Locked: hybrid format, phased. Now the question that determines what gets
+  built first and how big each subsystem is.
+
+  ---
+  Question 3 of N — V1 milestone (the thing that proves the hypothesis)
+
+  Before sequencing the three subsystems, you need a target — the smallest
+  concrete result that makes the project a "yes, this works." Without it, every
+  PRD section drifts into "and then we'd also build…" and nothing ships. Three
+  plausible bars, in increasing ambition:
+
+  1. MVP-Tiny — "an agent learned something." A single hand-built TH6 base. A
+  single troop type (say, all Giants or all Barbarians, no spells). Agent picks
+  deployment positions only (no timing). Reward = % destruction. Success =
+  trained agent beats a random-deploy baseline by a clear margin. Probably 1–2
+  months once Sandbox-core is up. This proves the loop works end-to-end and is
+  the tracer bullet.
+  2. MVP-Real — "an agent three-stars a curated set of TH6 bases." Multiple
+  hand-built bases (say 10–20). Full TH6 troop roster (Barbarian, Archer, Giant,
+   Goblin, Wall Breaker, Wizard) + 2 spells (Lightning, Heal). Agent controls
+  deployment timing, position, and which troop. Reward = stars + % destruction +
+   time bonus. Success = ≥50% three-star rate on training set, ≥30% on held-out
+  bases. Probably 4–6 months.
+  3. MVP-Wild — "an agent generalizes to scraped real bases via the 
+  Cartographer." Everything in MVP-Real, plus Cartographer ingests screenshots
+  of real bases and the agent attacks those. Success = agent transfers from
+  synthetic to scraped bases without catastrophic drop. Probably 9–12+ months
+  and Cartographer is on the critical path.
+
+  My recommendation: MVP-Tiny first as the tracer bullet, then MVP-Real as the 
+  headline v1 result. Drop MVP-Wild from v1 entirely — make the Cartographer a
+  v2 that lights up after you've confirmed the agent can learn at all.
+  Reasoning: you do not want to be debugging a CV pipeline while you're also
+  debugging an RL training loop on a custom simulator. Each of those is its own
+  multi-month landmine. Hand-built bases plus procedurally-mutated variants give
+   you plenty of training distribution for v1. The Cartographer is also
+  genuinely independent — it produces base layouts, which you can already get by
+   hand-authoring or via a layout generator. It does not block research
+  progress.
+
+  This means the roadmap looks roughly:
+  - Phase 0 (foundation): Sandbox-core skeleton + sandbox-web replay viewer.
+  Tracer bullet: deploy one troop, watch it walk and attack one building, see it
+   on the screen.
+  - Phase 1 (MVP-Tiny): Sandbox-core feature-complete enough for one-troop
+  attacks. Barracks v1 with a Gymnasium env. Train the simplest possible agent.
+  Headline: "PPO agent beats random baseline on one base."
+  - Phase 2 (MVP-Real): Full TH6 roster, multi-base training, sprite/UI polish.
+  Headline: "PPO agent three-stars 50% of curated TH6 bases."
+  - Phase 3 (Cartographer + generalization): CV pipeline, real-base ingestion,
+  transfer experiments. Headline: "Agent attacks scraped bases."
+
+  Do you accept MVP-Tiny → MVP-Real → (Cartographer-as-v2) as the milestone 
+  ladder, with Cartographer explicitly deferred out of v1? Or do you want 
+  Cartographer on the critical path because real-base generalization is the 
+  point of the project for you?
+
+✻ Worked for 45s
+
+> Yes this milestone ladder sounds good                                         
+
+● Locked: MVP-Tiny → MVP-Real → Cartographer-as-v2. Next foundational decision
+  since it sets the contract for everything downstream — replays, RL, debugging.
+
+  ---
+  Question 4 of N — Determinism, tick model, and time
+
+  The simulator can run on a spectrum from "fully deterministic, seeded,
+  frame-exact reproducible" to "physics-style continuous time with stochastic
+  mechanics." Three choices to make as a bundle:
+
+  1. Determinism level
+    - (a) Fully deterministic with explicit seed. Every stochastic call (target
+  tie-breaks, troop AI choices, spell jitter if any) goes through a single
+  seeded RNG. Same (base, deployment_plan, seed) always produces bit-identical
+  state. Replays are guaranteed perfect.
+    - (b) Deterministic-but-no-randomness. No RNG at all. All tie-breaks
+  resolved by canonical ordering (e.g., target with lowest id). Same input →
+  same output trivially.
+    - (c) Stochastic. RNG used freely, replays best-effort.
+  2. Tick rate
+    - Real Clash runs at 20 Hz internally (≈50 ms per tick). For TH6 a max
+  attack is 3 minutes = 3600 ticks.
+    - Choose one fixed rate (e.g., 20 Hz) and everything (movement speed, attack
+   cooldown, projectile travel, spell duration) is expressed in ticks.
+  3. Time semantics in RL
+    - Does the RL agent get to act every tick? Or only at deployment moments? In
+   real Clash you make ~30 deploy decisions over 3 minutes, then watch.
+    - Two natural framings: per-tick action (agent emits "do nothing" most
+  ticks, deploy occasionally) or decision-point episodes (env steps only when
+  the agent has a choice — agent emits "deploy troop X at position (r,c)" or
+  "wait Δt"; sim fast-forwards between decisions).
+
+  My recommendation: (1b) deterministic-no-randomness for v1, (2) 20 Hz fixed 
+  tick rate, (3) decision-point action model.
+
+  Reasoning:
+  - No RNG by default is a hard rule that pays off for years. Tie-breaks
+  resolved by (lowest_id, then lowest_distance, then lowest_row_col) are boring
+  and reproducible. Real Clash has tiny stochastic elements (Witch skeleton
+  spawn timing, etc.) but TH6 has essentially none — Giants, Barbarians,
+  Archers, Wizards are deterministic. Add seeded RNG later only if a v2 mechanic
+   actually requires it. This makes every bug exactly reproducible from
+  (base.json, plan.json) — a debugging superpower for an RL project.
+  - 20 Hz matches the source material and gives smooth animation without
+  exploding training cost. At decision-point granularity it doesn't matter for
+  training throughput anyway.
+  - Decision-point action model is enormously better for learning. A per-tick
+  agent has to learn that 99% of actions should be "no-op" — a sparse credit
+  assignment nightmare. A decision-point agent has an action space like
+  (troop_type, row, col) and outputs ~30 actions per episode. Wait-actions can
+  be a special "deploy_at_time(t)" that pre-schedules, or a "hold X seconds"
+  action. This collapses the horizon from 3600 to ~30, which is the difference
+  between "trains in days" and "trains in months."
+
+  The cost: decision-point framing means the env's step() advances simulation by
+   a variable amount of wall-time (until the agent's next decision is required),
+   and the renderer needs to know how to play back that variable-length gap
+  smoothly. The hybrid replay format already handles this (the tick field is the
+   source of truth, not a step counter).
+
+  Do you accept (deterministic-no-RNG, 20 Hz, decision-point action model)? Or 
+  do you want to keep per-tick actions on the table because you want the agent 
+  to also learn micro-management like dropping a single Archer between two 
+  defense layers at the perfect moment?
+
+✻ Sautéed for 37s
+
+> I agree with your reccomendation. For v1, I think we should keep it           
+  deterministic and avoid any randomness.                                       
+                                                                                
+  The 20-tick rate for Clash sounds good, and the decision-point action model   
+  also sounds good. Before you get the next question, can you explain where you 
+   got that tick rate from, what a tick is, and how it would work?              
+
+● Fair — I should be transparent that I'm citing community/reverse-engineering
+  numbers, not Supercell-published spec.
+
+  Where the 20 Hz comes from
+
+  20 ticks/sec is the figure most commonly cited in Clash community
+  documentation and private-server projects (CoCBot, etc.) as the internal
+  simulation rate. It's not officially published. Some sources cite 30 Hz, some
+  say render is 60 fps but logic is decoupled. The honest stance for this 
+  project: the exact number doesn't matter for the research question. We just 
+  need a consistent, fixed rate that makes balance numbers easy to author and 
+  animation easy to render. I'd actually argue for 10 Hz (100 ms/tick) for v1
+  because it makes balance arithmetic cleaner — but 20 Hz matches the source
+  material if you ever want to compare to in-game footage. Either works. Pick
+  one and never change it.
+
+  What a tick is
+
+  A tick is the smallest atomic unit of simulation time. Nothing happens between
+   ticks. The world is a frozen photograph at tick 412, then a frozen photograph
+   at tick 413. The core's job each tick is to compute photograph N+1 from
+  photograph N.
+
+  All quantities in the simulator are expressed in tick-relative units:
+  - Movement speed = tiles per tick (e.g., Giant = 0.012 tiles/tick at 20 Hz)
+  - Attack cooldown = ticks between attacks (e.g., Cannon = 16 ticks)
+  - HP regen, projectile travel, spell duration = all in ticks
+  - Damage is per-hit (event-based), not per-tick — but a per-tick damage source
+   like a healing spell would be expressed as HP/tick
+
+  Tick rate is decoupled from render framerate. The web viewer can run at 60 fps
+   and interpolate troop positions between tick N and N+1; tick rate only
+  governs simulation granularity.
+
+  How a tick is computed (the per-tick update loop)
+
+  Each tick the core does a fixed-order pass over the world. Order matters for
+  determinism:
+
+  def step_tick(state):
+      1. Resolve projectiles in flight.    # arrows land, deal damage events
+      2. Apply scheduled deployments.       # any troops the agent queued for
+  this tick spawn now
+      3. Update troop targeting.            # if target dead/destroyed, pick new
+   (canonical tie-break)
+      4. Move troops one substep.           # advance each troop by its speed*dt
+   along its path
+      5. Troops attack if in range + ready. # emit damage event or spawn
+  projectile
+      6. Update defense targeting.
+      7. Defenses attack if in range + ready.
+      8. Apply damage events.               # subtract HP, mark destroyed, emit
+  "destroyed" event
+      9. Update score (% destruction, stars).
+      10. tick += 1
+      return new_state, events_this_tick
+
+  Step 4 is where pathfinding lives. A common cheap approach: each troop has a
+  cached path (recompute on wall-break or target-death), and movement is just
+  "advance the path-cursor by speed*dt." Movement is continuous-position on a 
+  discrete grid — troop coordinates are floats (2.7, 4.3), but the grid they
+  navigate is integer-indexed.
+
+  How it shows up in the RL contract
+
+  Decision-point step() looks like:
+
+  def step(action):
+      # action is one of: ("deploy", troop_type, row, col) or ("wait", Δticks)
+  or ("end")
+      if action[0] == "deploy":
+          state.scheduled_deployments.append(...)
+      fast_forward_until_next_decision_point()  # runs many ticks of step_tick()
+      return obs, reward_delta, done, info
+
+  A single RL step() may advance 1 tick or 200 ticks of simulation depending on
+  what the agent chose. The agent never sees ticks directly — it sees
+  observations at decision points. The renderer sees every tick's
+  snapshot/events from the replay, so visuals are smooth regardless of agent
+  decision cadence.
+
+  Recommendation refinement
+
+  For v1 I'd actually lean toward 10 Hz over 20 Hz because:
+  - Balance numbers stay round (Giant moves 1 tile per second = 0.1 tiles/tick)
+  - Half the ticks per attack episode → smaller replay files, cheaper sim
+  - Animation interpolation in the web viewer makes the lower rate invisible to
+  humans
+  - Nothing in TH6 needs sub-100ms timing precision
+
+  If we ever want to model frame-perfect Clash mechanics (Hog Rider jump timing,
+   etc.) we can rerate later — all balance data is in JSON, not hardcoded.
+
+  Want to lock in 10 Hz for v1, or stick with 20 Hz to stay closer to the 
+  source? Then I'll move to the next question.
+
+✻ Cooked for 40s
+
+> Sure let's do 10Hz. Next Question                                             
+
+● Locked: 10 Hz. Next.
+
+  ---
+  Question 5 of N — Grid/map model, walls, building footprints
+
+  The spatial substrate has surprising design depth and gates how everything
+  else (action space, pathfinding, obs tensor, replay) is shaped. Real Clash
+  uses a 44×44 tile grid with a center-aligned playable area and a deploy
+  border. Three decisions to bundle:
+
+  1. Grid size and coordinate system
+    - (a) 44×44 with [0,0] at top-left, integer tiles for buildings, float 
+  positions for troops. Matches source. Some tiles are non-buildable (border,
+  water).
+    - (b) A smaller grid for v1 (say 22×22) — half the cells, simpler
+  pathfinding, less obs tensor, faster training. You can rescale later.
+  2. Building footprints
+    - Buildings in Clash occupy 2×2, 3×3, or 4×4 contiguous tiles. Town Hall =
+  4×4, Cannon = 3×3, Wall = 1×1, etc. Footprints must be respected for placement
+   and collision.
+    - This needs to be a first-class concept in the core (Building has
+  footprint: (w, h) and occupies [(r, c), (r+1, c), …]).
+  3. Wall semantics — the trickiest one
+    - (a) Walls as 1×1 tile occupants. Each wall segment is a building with HP.
+  Pathfinder sees occupied tile = blocked. Wall-breakers do extra damage to
+  walls. Simple, reasonably accurate.
+    - (b) Walls as edges between tiles. More accurate to source (walls sit on
+  tile boundaries, troops walk through a tile but can't cross a wall edge).
+  Pathfinder needs edge-aware A*. Significantly more code.
+    - (c) Walls as 1×1 tiles but with an "is_wall" flag so wall-breakers,
+  jumpers (later), and pathfinder can treat them specially without polymorphism.
+
+  My recommendation: (1a) full 44×44, (2) first-class footprints, (3c) walls as 
+  1×1 tile occupants with is_wall flag.
+
+  Reasoning:
+  - Full 44×44 because shrinking the grid changes the strategic shape of the
+  game (compaction ratios, wall layouts, defense coverage zones) in ways that
+  may quietly break what the agent learns. It also makes a future Cartographer
+  harder — real screenshots are 44×44 and you'd have to resample. The cost is
+  mostly in the obs tensor size, which is fine for TH6 (44×44 with ~10 channels
+  = 19k floats — trivially cheap on a GPU). Pathfinding on 44×44 with cached
+  paths and incremental replanning is also fine at decision-point cadence.
+  There's no upside to 22×22 once you've sized the obs tensor properly.
+  - First-class footprints are non-negotiable; without them you can't place
+  buildings correctly or compute "is this tile blocked" for pathfinding. Cost is
+   one helper that returns the occupied tile set given (origin, footprint).
+  - Walls as 1×1 tile occupants with is_wall flag because (b) edge-walls is a
+  known pathfinding tar-pit that adds weeks of work and gives the agent ~zero
+  additional learnable signal at TH6. The "tile-walls" approximation is what
+  nearly every Clash sim project uses, and at 10 Hz with continuous troop
+  positions the visual difference is invisible. The is_wall flag is so
+  wall-breakers, healing spells (which target ground troops anyway), and the
+  pathfinder can each handle walls with a one-line check without inheritance
+  gymnastics.
+
+  The tradeoff being accepted: with tile-walls, a troop adjacent to a wall is
+  "in" the tile next to the wall, not "touching" the wall — so wall-breakers
+  blow up on the wall tile (replacing themselves with the wall's hp drop), which
+   is slightly off from source. For v1, fine.
+
+  Concrete data structures this implies:
+
+  @dataclass
+  class Building:
+      id: int
+      type: str           # "cannon", "town_hall", "wall", "archer_tower", ...
+      origin: tuple[int, int]   # top-left (row, col)
+      footprint: tuple[int, int]  # (h, w)
+      hp: int
+      max_hp: int
+      is_wall: bool
+      is_destroyed: bool
+      # defense-only fields:
+      target_id: int | None = None
+      cooldown_remaining: int = 0   # in ticks
+
+  Plus a derived tile_occupancy: dict[(r,c), building_id] lookup the core
+  maintains incrementally.
+
+  Do you accept (44×44, first-class footprints, tile-walls with is_wall flag)? 
+  Or would you rather start at 22×22 to bias toward training speed in v1, 
+  accepting a future port?
+
+✻ Worked for 52s
+
+> I agree with your recommendation                                              
+● Locked: 44×44 + footprints + tile-walls with is_wall flag.
+
+  ---
+  Question 6 of N — TH6 entity scope (exact roster)
+
+  This is the concrete content list — what the simulator must model for v1. The
+  decisions are which Clash entities are in scope, which are deferred, and which
+   simplifications are acceptable. I'll group by category and propose a v1 cut.
+
+  Buildings — defenses (TH6 caps)
+  - Town Hall (lvl 6)
+  - Cannon ×3, Archer Tower ×3, Mortar ×2, Air Defense ×2, Wizard Tower ×1
+  - Hidden Tesla ×1 (TH7 actually — drop)
+  - Walls (up to 75 segments at TH6, lvl 6 walls)
+
+  Buildings — non-defenses
+  - Clan Castle (defensive when filled — defer the "filled" mechanic)
+  - Army Camp ×4, Barracks ×3, Lab, Spell Factory, Gold Mine, Elixir Collector,
+  Gold Storage, Elixir Storage, Builder's Hut ×5
+  - Most of these have HP and count toward % destruction but don't do anything
+  during attack.
+
+  Troops (TH6 unlocks)
+  - Tier 1: Barbarian, Archer, Goblin
+  - Tier 2: Giant, Wall Breaker
+  - Tier 3: Wizard
+  - Healer (TH7) — drop
+  - Note: Goblin prefers resource buildings (special targeting), Giant prefers
+  defenses, Wall Breaker prefers walls, Wizard does splash damage.
+
+  Spells (TH6 unlocks)
+  - Lightning Spell only at TH6 (Heal unlocks at TH7, Rage at TH8). For v1 we
+  have just Lightning.
+
+  Defender-side mechanics
+  - Mortar splash damage, Wizard Tower splash damage, Air Defense
+  (single-target, anti-air only).
+  - All defenses in v1: single ground-target except splash on Mortar/Wizard
+  Tower.
+  - Anti-air only matters once we have air troops — TH6 doesn't really have any
+  (Healer is TH7), so air mechanics can be deferred entirely.
+
+  Three v1 cut options:
+
+  1. Full TH6 — model everything above faithfully. Maximum realism. Cost: ~15
+  building types × correct stats, 6 troop types with targeting rules, 1 spell,
+  splash damage logic, ground-only mechanics. ~3–4 weeks of content work after
+  the core is up.
+  2. TH6-Lite — defenses + walls + town hall + storages + 3 troops + no spells.
+  Drops Mortar splash, Wizard Tower splash, Wizard troop, Wall Breaker, Goblin,
+  Lightning Spell. Just Cannon/Archer Tower/Air Defense/TH/Walls/Storages and
+  Barbarian/Archer/Giant. Faster to ship MVP-Tiny on, but MVP-Real basically
+  needs the full set anyway.
+  3. MVP-Tiny content + MVP-Real content as separate scope packages. MVP-Tiny:
+  TH + 1 Cannon + 1 Archer Tower + 4 walls + Barbarian only. Author this as 1
+  hand-built base. MVP-Real: full TH6 roster. The simulator core is built to
+  handle the full roster from day one (data-driven from
+  buildings.json/troops.json), but the MVP-Tiny milestone uses a tiny subset for
+   the tracer bullet.
+
+  My recommendation: Path 3. The simulator core should be 100% data-driven from
+  JSON config — no hardcoded entity stats. That means "supporting Wizard" is
+  just adding a row to troops.json with {splash_radius: 0.5, damage: 75, ...}.
+  With that architecture, MVP-Tiny just uses 1 base + 1 troop type, and MVP-Real
+   flips on the full roster by extending the JSONs. You build the engine once
+  and add content incrementally.
+
+  A few specific simplifications for v1 I'd lock in:
+  - No air units, no anti-air-only logic. Every troop is ground, every defense
+  targets ground. Air system gets added when we add Healer/Dragon (TH7+).
+  - Clan Castle is a destructible building only (no defending troops inside).
+  Filled-CC is a TH7+ concern anyway.
+  - Storages and resource buildings are HP-only. They count toward destruction %
+   but don't produce anything during an attack.
+  - Mortar and Wizard Tower do splash damage — this is too central to TH6 to
+  skip.
+  - Goblin's resource preference, Giant's defense preference, Wall Breaker's 
+  wall preference are all in scope — they're the interesting targeting logic and
+   Wall Breakers in particular are needed for the agent to learn wall-breaching
+  strategy.
+  - Lightning Spell in scope. It's the agent's only spell and learning when to
+  use it is part of the research question.
+  - Heroes (Barbarian King, Archer Queen) — drop entirely. King is TH7. Queen is
+   TH9.
+
+  Concrete content files:
+
+  data/
+    buildings.json    # each entry: type, hp[], footprint, damage[], range,
+  splash_radius, cooldown, target_filter, …
+    troops.json       # each entry: type, hp, damage, range, speed,
+  target_preference, splash_radius, …
+    spells.json       # lightning: damage_per_hit, hits, radius, ...
+    th6_rules.json    # caps: max_walls, max_cannons, max_camps, troop_capacity,
+   spell_capacity
+    sample_bases/
+      tracer.json     # MVP-Tiny: TH + 1 cannon + 1 archer tower + walls
+      base_01.json…base_20.json   # hand-built TH6 bases for MVP-Real
+
+  Do you accept Path 3 (data-driven core, MVP-Tiny content as a tiny subset, 
+  MVP-Real expands JSON), with the specific simplifications above (no air, CC as
+   building-only, splash for Mortar/WizTower, Lightning only, no heroes)? Or do 
+  you want to argue for keeping or cutting any specific entity?
+
+✻ Cogitated for 37s
+
+> I'd actually like to do Full TH6. While we can keep the first RL training     
+  model with simple. I'd like to have access in the simulator from the start of 
+   all the troops and buildings and functionality at town hall 6.               
+
+● Locked: Full TH6 in the simulator from day one — data-driven core, complete
+  entity roster shipped before MVP-Real begins. That changes the upfront
+  content/balance work but keeps MVP-Tiny's RL agent simple.
+
+  There are two ambiguities inside "Full TH6" that I want to resolve before
+  moving on, then I'll move to action space.
+
+  ---
+  Question 7 of N — When does "Full TH6" land, and what's the Clan Castle scope?
+
+  Two coupled sub-decisions:
+
+  7a — Sequencing of "full TH6 simulator content" vs. MVP-Tiny RL
+
+  Two interpretations of what you said:
+
+  1. Gated: Full TH6 simulator content (all 6 troops, all defenses, splash,
+  special targeting, Lightning, full base building roster, walls) ships before 
+  any RL work starts. MVP-Tiny RL then uses a simple subset of that
+  fully-capable simulator. Pro: clean foundation, no thrash. Con: pushes first
+  RL training back by weeks of content/balance authoring.
+  2. Parallel: Simulator core is data-driven from day one (so the engine
+  supports the full roster), but content authoring ramps. The MVP-Tiny tracer
+  bullet uses a 1-troop-1-base subset and ships ASAP to validate the end-to-end
+  loop. Full TH6 content (all 6 troops with correct stats, splash, special
+  targeting, Lightning) lands in parallel with MVP-Tiny → MVP-Real transition.
+  Pro: hits the tracer-bullet philosophy from agent.md, gets early signal that
+  the architecture works. Con: if a TH6 entity stresses an architectural
+  assumption (e.g., splash damage forces a refactor), you find out during RL
+  work, not before.
+
+  My recommendation: Path 2 (parallel). Because:
+  - The whole point of a tracer bullet is to validate the path from input to
+  output before scaling content. If the data-driven engine is built right,
+  adding entities is JSON edits, not code changes — content-induced refactors
+  should be rare.
+  - The risky parts of "Full TH6" (splash damage, target preferences, Wall
+  Breaker's wall-targeting AI, Lightning spell mechanics) are exactly the things
+   you want to land after the tracer bullet has confirmed the simulator API, not
+   before.
+  - Concretely: Phase 0 ships engine + 1 base + 1 troop. Phase 1 (in parallel)
+  lands all troops, all defenses, splash, Lightning, Wall Breakers, special
+  targeting, while MVP-Tiny RL trains on the simple subset. Phase 2 (MVP-Real
+  RL) opens up the full roster to the agent.
+
+  The hard rule that makes this safe: the engine is data-driven from day zero.
+  Anything that depends on entity count, entity type, splash radius, target
+  filter, projectile arc, etc. lives in JSON or in entity-type-agnostic code —
+  never if entity.type == "wizard". Special targeting (Goblin → resources, Giant
+   → defenses, WB → walls) is expressed as a target_filter field, not a
+  polymorphic class.
+
+  7b — Clan Castle: building only, or filled with defending troops?
+
+  In real TH6 a CC can hold donated troops that spawn during attacks. Two
+  scopes:
+  - (a) Building-only CC. Has HP, occupies tiles, counts toward % destruction.
+  No defending troops. Simple.
+  - (b) Filled CC with defender troops. Each base config specifies CC contents
+  (e.g., cc_troops: [{type: "archer", count: 3}]). When an attacker enters CC
+  trigger range, troops spawn and use the same troop AI as attackers.
+  Significantly more code (defender-side troop loop, trigger range, despawn
+  rules) and more design (what CC contents are "fair" for training
+  distribution?).
+
+  My recommendation: Path (a) — building-only CC for v1. Reasoning: filled CC is
+   genuinely interesting strategy (the agent should learn to "lure CC troops out
+   and Lightning them"), but it's also a meaningful scope addition —
+  defender-side troop AI is its own subsystem and CC contents become an
+  additional axis of training distribution. For v1 it's acceptable to model CC
+  as just another destructible building. Add filled-CC in v2 alongside
+  Cartographer and air units. If you push back here you're choosing to add 2–3
+  weeks to the simulator phase and a CC-loadout config schema.
+
+  Do you accept (7a Path 2 — data-driven engine, content lands in parallel with 
+  MVP-Tiny) and (7b Path a — building-only CC for v1)? Or do you want either 
+  gated content delivery or filled CC?
+
+✻ Sautéed for 1m 7s
+
+> Sure let's do parrallel                                                       
+
+● Locking 7b too with the building-only CC default since you didn't push back.
+  Moving on.
+
+  ---
+  Question 8 of N — RL action space
+
+  We settled "decision-point action model" in Q4 — the agent acts only at
+  decision points, not every tick. Now: what does each action look like? This
+  sets the policy network's output head and is the single biggest determinant of
+   training difficulty.
+
+  A decision-point action needs to convey: (1) what to deploy, (2) where to
+  deploy it, (3) when the next decision happens, plus optionally (4) spell
+  casts, which are "deploy at any tile inside the base" not "at the perimeter."
+
+  Four design options:
+
+  1. Flat discrete. One huge categorical: every (troop_type, perimeter_cell)
+  combination + (spell_type, base_cell) combination + a "wait Δt" set + an "end
+  attack" action. With ~140 perimeter cells, 6 troops, 1 spell × ~1500 base
+  cells, plus wait buckets, the action space is ~3000–4000 categories. Pro: one
+  head, simple. Con: massive output, no spatial inductive bias, bad sample
+  efficiency.
+  2. Multi-discrete factored. Separate heads for (action_kind ∈ {deploy, spell, 
+  wait, end}, troop_type, row, col, wait_bucket). Pro: smaller heads, each
+  independently learnable. Con: agent can emit invalid combinations (deploy with
+   a spell-only target tile, etc.) — needs masking.
+  3. Hierarchical / two-stage. First head picks action_kind. Conditional on
+  that, subsequent heads pick the relevant sub-fields (troop type if
+  kind=deploy, target tile, etc.). Cleanest semantically; standard in StarCraft
+  / MOBA RL papers. Pro: invalid actions impossible by construction. Con: more
+  code, two-stage sampling is harder for off-policy algorithms.
+  4. Spatial action via grid-shaped policy head. Output is a (C, 44, 44) tensor
+  where C = num troop types + num spells + 1 (wait/end). Argmax over the whole
+  tensor picks (action, row, col). Mask invalid (action, cell) pairs (e.g.,
+  troops only on perimeter cells, spells only on base cells, walls block
+  deploys). Pro: directly mirrors observation tensor — perfect spatial inductive
+   bias for a CNN policy, and well-established for SC2-style games. Con: needs
+  explicit "wait" and "end" non-spatial logits alongside; constraints expressed
+  via masks.
+
+  My recommendation: Path 4 (spatial grid policy with auxiliary scalar heads), 
+  with action masking.
+
+  Concrete shape:
+  - Spatial head: (C, 44, 44) logits where C = num_troop_types + 
+  num_spell_types. Each cell-channel pair is a candidate "deploy this entity at
+  this cell."
+  - Scalar head: small categorical over [wait_50_ticks, wait_100_ticks, 
+  wait_200_ticks, end_attack] (a few wait buckets + early termination).
+  - Action selection: at each decision point, agent samples either spatial or
+  scalar head (gated by a top-level binary or by softmax over flattened combined
+   logits).
+  - Masking: an action_mask tensor of the same shape zeroes out illegal cells
+  (deploys outside perimeter, deploys on already-occupied perimeter, spells with
+   army-camp empty, deploys when no troops left).
+  - Constraints respected: troop count limits (housing space), spell count
+  limits (1 Lightning at TH6), already-deployed-this-game bookkeeping.
+
+  Reasoning:
+  - The observation will almost certainly be a (channels, 44, 44) tensor
+  (multi-channel grid). Having the action be the same shape gives a CNN policy a
+   one-to-one spatial alignment between "what I see at cell (r,c)" and "what I
+  do at cell (r,c)." This is what made AlphaStar tractable. The agent learns
+  "deploy near a defense" directly from spatial features, not by translating
+  between coord systems.
+  - Action masking prevents wasted exploration on illegal moves. Without masking
+   the agent burns the first ~10k episodes learning that perimeter cells exist.
+  - Wait buckets (50/100/200 ticks at 10 Hz = 5/10/20 seconds) are coarse enough
+   that the agent doesn't have to learn millisecond timing but fine enough to
+  express "drop the next wave just as my Giants tank the Cannon."
+
+  The cost being accepted: action masking is mandatory wiring (no quick way to
+  skip it), and the policy network has to handle two heads. Both are
+  well-understood.
+
+  Implementation note: since Gymnasium doesn't natively express masked-spatial
+  actions cleanly, the env exposes:
+
+  observation_space = Dict({
+      "grid": Box(0, 1, (C_obs, 44, 44)),
+      "scalar": Box(...),                # globals: time remaining, troops in 
+  camp, etc.
+      "action_mask_spatial": Box(0, 1, (C_act, 44, 44)),
+      "action_mask_scalar": Box(0, 1, (n_scalar,)),
+  })
+  action_space = Dict({
+      "spatial_action": Discrete(C_act * 44 * 44),  # flattened
+      "scalar_action": Discrete(n_scalar),
+      "head_select": Discrete(2),  # which head to use this step
+  })
+
+  Or more cleanly: a single Discrete(C_act*44*44 + n_scalar) flattened action —
+  simpler.
+
+  Do you accept Path 4 (spatial grid policy + scalar head + action masking, 
+  flattened to a single Discrete)? Or push back?
+
+✻ Sautéed for 42s
+
+※ recap: We're grilling the threestarRL plan before writing the PRD, technical doc, and roadmap; eight foundational decisions are locked. Next: you decide the RL action space — I recommended a spatial grid policy plus scalar head with action masking, flattened to a single Discrete. (disable recaps in /config)
+
+> Yes. Path 4 sounds good.                                                      
+
+● Locked: Path 4 spatial action + scalar head + masking, flattened to Discrete.
+
+  ---
+  Question 9 of N — RL observation space
+
+  The action space is a (C_act, 44, 44) spatial tensor + scalar head. The
+  observation should mirror that shape so a CNN can map directly from "what's
+  here" to "what to do here." The decision is which channels go in the obs grid,
+   plus what scalars accompany it.
+
+  Three flavors:
+
+  1. Minimal raw grid. Channels = one-hot per building type + a wall channel + a
+   destroyed channel. ~20 channels. No HP info, no defense state, no troop info.
+   The agent has to infer everything dynamic from successive frames.
+  2. Rich semantic grid (recommended baseline). Channels split into static and
+  dynamic features:
+    - Static (per-building type, but for the current base): one channel per
+  building type (TH, Cannon, Archer Tower, Mortar, Air Defense, Wizard Tower,
+  Wall, CC, storages-collectors-other) where each building's footprint cells are
+   1.0. ~12–15 channels.
+    - Dynamic state: building_hp_pct (HP / max HP, smeared over footprint
+  cells), is_destroyed mask, defense_attacking (1 where defenses are
+  mid-attack), defense_target_distance (encoded), troop_density_per_type (one
+  channel per attacker troop type with troop count smeared over occupied cells),
+   troop_hp_pct, projectile_in_flight mask, spell_active_radius mask. ~15–20
+  dynamic channels.
+    - Static map info: is_perimeter (deploy zone), is_blocked (wall/building
+  occupies tile). 2 channels.
+    - Total ~30–40 channels.
+  3. Entity-list observation (transformer-style). A variable-length list of
+  buildings + troops, each with feature vectors. Policy is a transformer or
+  set-attention. Pro: scale-invariant, no fixed grid. Con: doesn't compose with
+  the spatial action head you just chose, and is harder to train.
+
+  Plus a scalar globals vector (always present alongside whichever spatial obs):
+  - Time remaining (ticks normalized to [0, 1])
+  - Stars earned so far
+  - % destruction so far
+  - Troops remaining per type (housing-space-normalized)
+  - Spells remaining per type
+  - Decision point counter
+
+  Plus the action masks (already designed in Q8) provided as part of obs.
+
+  My recommendation: Path 2 (rich semantic grid), ~30 channels, plus scalar 
+  globals, plus action masks.
+
+  Concrete obs spec:
+
+  observation_space = Dict({
+    "spatial": Box(0, 1, shape=(N_CHANNELS, 44, 44), dtype=float32),
+    "scalar": Box(-1, 1, shape=(N_SCALAR,), dtype=float32),
+    "action_mask_spatial": Box(0, 1, shape=(C_act, 44, 44), dtype=int8),
+    "action_mask_scalar":  Box(0, 1, shape=(n_scalar,), dtype=int8),
+  })
+
+  # Spatial channels (in order, fixed schema):
+  # 0..K_BLD-1: per-building-type footprint mask
+  # K_BLD..K_BLD+K_BLD-1: per-building-type hp_pct
+  # next: is_destroyed, is_wall, is_perimeter, is_blocked
+  # next: per-troop-type density (count smeared)
+  # next: per-troop-type hp_pct
+  # next: defense_attacking_now, projectile_in_flight, spell_active
+
+  # Scalar channels (in order):
+  # time_remaining_pct, current_stars (0..3), destruction_pct,
+  # troops_left_per_type[..], spells_left_per_type[..],
+  # elapsed_ticks_pct, decision_point_idx
+
+  Reasoning:
+  - Channels are pre-decoded, not raw. The agent doesn't have to learn what
+  "Cannon" looks like — channel 4 is the cannon-presence map. This is how
+  AlphaStar/OpenAI Five succeeded; raw-pixel obs would force the agent to also
+  learn Clash's UI before learning strategy.
+  - HP smeared on footprint cells rather than as scalar features lets the
+  spatial CNN see "this 3×3 cannon at 30% HP" in one glance.
+  - Static base info repeated every step is wasteful but trivial in float32 —
+  and frame-stacking-free policies (no LSTM needed for static state) are easier
+  to train.
+  - Per-troop-type density instead of per-troop-instance keeps the channel count
+   constant regardless of how many Barbarians are alive. The agent can't track
+  individual troops, but at TH6 with 6 troop types and decision-point
+  granularity, that's fine — humans don't track individual barbarians either.
+  - Action masks in obs is the standard pattern: the env exposes the mask, the
+  policy multiplies its logits by the mask before softmax.
+  - Entity-list (Path 3) is a research direction worth keeping for v2
+  (scale-invariance to TH8+), but it adds research risk on top of an already
+  research-heavy project.
+
+  The cost being accepted: ~30 channels × 44 × 44 × 4 bytes = ~230 KB per obs.
+  At ~30 decision points per episode and millions of episodes, the dataset is
+  fine. The CNN inference cost is still a fraction of the simulator step time.
+
+  Do you accept Path 2 (rich semantic grid + scalar globals + masks) with the 
+  channel schema above? Or would you push back on any of: channel count, HP 
+  encoding, troop-density-vs-instance, including masks in obs?
+
+✻ Brewed for 35s
+
+> Yes I'd accept Path 2.                                                        
+
+● Locked: rich semantic grid obs.
+
+  ---
+  Question 10 of N — Reward function
+
+  The reward shapes what the agent actually learns. Get this wrong and the agent
+   learns to game the proxy instead of the goal. Three reward design choices to
+  bundle:
+
+  1. Sparse vs shaped
+    - Sparse: reward only at episode end. reward = stars * 100 + 
+  destruction_pct, zero per-step. Pro: no gaming, agent optimizes the real
+  objective. Con: extremely hard to learn from at v1 — most early-training
+  episodes get 0 stars, no signal.
+    - Shaped: per-step reward proportional to incremental progress. Pro: dense
+  gradient, faster learning. Con: shaping bugs are silent and pernicious — agent
+   finds exploits.
+  2. What counts as "progress" in shaped reward
+    - Destruction-based: Δreward = +α * (Δ destruction_pct) per tick or per
+  decision point. Easy to compute, directly correlated with stars.
+    - Damage-based: Δreward = +β * damage_dealt_this_step / total_base_hp.
+  Smoother because partial-damage gives signal. Risk: agent learns to
+  chip-damage many buildings instead of finishing key ones.
+    - Building-priority weighted: different building types have different reward
+   weights (TH destroyed = big bonus, Mortar destroyed = bigger than Cannon,
+  storage destroyed = small). Encodes prior knowledge but requires hand-tuning.
+  3. Penalties / shaping additions
+    - Time penalty (-γ per tick) to encourage fast attacks
+    - Troop-loss penalty (-δ * troops_lost_value) to discourage feeding troops
+  to defenses
+    - Stars-bonus jumps: +100 at 50% destruction, +200 at TH destroyed, +500 at
+  100% destruction (the three Clash stars)
+
+  My recommendation: a layered shaped reward, additive across components, with 
+  sparse stars as the dominant signal:
+
+  reward(t) =
+      + 100  * Δ stars_earned                    # the three star thresholds:
+  50% / TH-destroyed / 100%
+      +   1  * Δ destruction_pct                 # smooth signal between
+  thresholds
+      +  20  * Δ town_hall_destroyed             # one-time +20 when TH falls
+  (bumps the "TH down" star)
+      -  0.001 * 1                               # tiny per-tick time penalty
+      -  0.5 * troop_value_lost_this_step        # discourage feeding (value =
+  housing-space cost)
+  final bonus at episode end:
+      + 500 if 3 stars,  + 200 if 2 stars,  + 50 if 1 star,  0 otherwise
+
+  Reasoning:
+  - Star thresholds are the real objective, weighted dominantly. No matter what
+  shaping the agent finds, the 3-star end-bonus dwarfs everything.
+  - Destruction-pct as smooth signal between star thresholds. Coefficient
+  deliberately small (1 per percent) so it doesn't drown the star reward but
+  gives gradient for early learning.
+  - TH-destroyed bonus is broken out because the second star is "TH destroyed OR
+   50% destruction" — both paths matter and the agent should learn either is
+  acceptable.
+  - Time penalty is tiny — just enough to break ties between equivalent
+  strategies in favor of faster ones. Real Clash gives time-bonus stars at high
+  TH levels but TH6 doesn't, so this is mild.
+  - Troop-loss penalty — cautiously included. Without it, the agent learns
+  "throw all troops at the wall" because total damage is what matters. With it,
+  the agent learns to use Wall Breakers to open paths instead of letting Giants
+  tank walls. Coefficient is small (0.5 × housing space) so it's a nudge, not a
+  constraint. Risk to monitor: if too high, agent becomes risk-averse and never
+  deploys; needs tuning.
+  - No explicit reward for using spells — Lightning's value emerges naturally
+  from the damage it deals.
+  - Sparse-only would not work for v1 — you'd be training PPO from cold start on
+   a hard exploration problem with terminal-only signal. That's research-grade
+  hard.
+
+  Crucially, the shaped components are all potential-based shaping (telescoping
+  deltas) when expressed as Δ-quantities: the cumulative shaped reward over an
+  episode equals the terminal sparse reward (by telescoping), so optimal
+  policies are unchanged by shaping. This is the textbook safe-shaping pattern
+  (Ng et al. 1999).
+
+  Two values worth flagging as tunables, not gospel:
+  - The troop-loss penalty coefficient (0.5) is a guess. Should be A/B'd at
+  MVP-Tiny.
+  - The star-bonus weights (50/200/500) are big but the relative scale matters
+  more than absolute.
+
+  Do you accept this layered shaped reward design? Two specific decisions in 
+  here you might want to push back on:
+  - Including the troop-loss penalty at all — some would argue let the agent
+  figure out troop conservation from the time-penalty + star-bonus alone.
+  - Building-priority weights — I deliberately didn't add per-building weights
+  (e.g., extra reward for Mortar). Want them in, or trust the agent to learn
+  priorities from what defenses kill its troops?
+
+✻ Crunched for 4m 3s
+
+> I would agree. A layered shaped reward, additive across MANY componenents     
+  which can be determined later in project such as troop loss, in a dedicated   
+  sessions and yes sparse stars as the dominant signal. I think some per        
+  building weights will be useful.                                              
+
+● Locked: layered shaped reward, sparse stars dominant, per-building weights in,
+   secondary shaping coefficients live in a tunable JSON config and get dialed
+  in during MVP-Tiny eval sessions.
+
+  ---
+  Question 11 of N — Training distribution: where do bases come from?
+
+  An RL agent trained on one base overfits hard. A trained agent's
+  "intelligence" is essentially how many bases it has seen. Three sources of
+  training bases, with very different costs and generalization properties:
+
+  1. Hand-built canonical set. Author 20–50 TH6 bases by hand in the sandbox-web
+   editor, with deliberate variety (compact vs spread, walled vs open,
+  TH-centered vs TH-cornered). Pro: high-quality, label-able as "easy / medium /
+   hard," directly used for human-meaningful evaluation. Con: 50 bases is not
+  enough to prevent overfit. Authoring 200+ by hand is brutal.
+  2. Procedural base generator. A Python tool that emits random-but-valid TH6
+  bases under constraints (TH6 building cap counts, minimum spacing, walls form
+  closed compartments, no overlapping footprints). Pro: infinite training data.
+  Con: random ≠ realistic — generators tend to produce strategically nonsensical
+   bases that teach the agent weird priors (e.g., always-open Mortars). Tuning
+  the generator to make plausible bases is its own subproject.
+  3. Mutation of seed bases. Start from a hand-built canonical set; apply random
+   mutations (jitter buildings by ±2 tiles, swap building positions of same
+  footprint, rotate/mirror, randomly add/remove walls). Pro: distributional
+  bridge between hand-built and procedural — bases stay strategically plausible
+  because they're rooted in human designs. Con: still bounded by the diversity
+  of seed bases.
+
+  Plus the cross-cutting decision: how many distinct bases does the MVP-Tiny
+  experiment train on, and how does MVP-Real scale up?
+
+  My recommendation: tiered approach across phases.
+
+  - MVP-Tiny (phase 1): Train on a single hand-built base with a single troop
+  type. Beat random-deploy baseline. The point is to prove the loop, not
+  generalization. One base is correct here.
+  - MVP-Real (phase 2): Train on a curated bank of ~30 hand-built bases plus
+  mutations (rotation/mirror = free 4× / 8× expansion, jitter mutations on top).
+   Hold out 5 hand-built bases for evaluation. This gives ~120–240 effective
+  training bases from 30 hand-authored ones. Sufficient for first-pass
+  generalization.
+  - MVP-Real+ (phase 2.5, optional): If overfit is observed on the held-out set,
+   build a constrained procedural generator that respects: TH6 cap counts (1 TH,
+   3 cannons, 3 archer towers, 2 mortars, 2 air defenses, 1 wizard tower, 1 CC,
+  75 wall segments, X storages, X collectors), wall connectivity (every interior
+   compartment closed), buildable-area constraints. Use it for additional
+  training distribution but always evaluate on the held-out hand-built set.
+  - Cartographer phase (v2): Real-base ingestion replaces/augments synthetic
+  distribution.
+
+  The hand-built bases live in data/sample_bases/ as JSON files. The mutation
+  pipeline is a small data/mutate.py that takes a base + a seed and emits a
+  mutated base. The procedural generator is data/generate.py and is deferred
+  until MVP-Real shows it's needed — don't build it speculatively.
+
+  The eval protocol that this implies:
+
+  - Every training run reports two metrics: train mean stars (across training
+  bases) and eval mean stars (across the 5 held-out bases). The gap between them
+   is the overfit signal.
+  - The eval set is frozen — those 5 bases never enter training. Ever. Even if
+  the model needs them.
+  - Curriculum learning option: order bases by difficulty (easy → hard) for
+  early training, then shuffle once the agent passes a threshold on the easy
+  set.
+
+  Do you accept this tiered plan: single base for MVP-Tiny, ~30 hand-built + 
+  mutations for MVP-Real, procedural generator deferred until needed, 5-base 
+  frozen eval set? Or do you want the procedural generator pulled into MVP-Real 
+  day one?
+
+✻ Crunched for 46s
+
+> That sounds like a good tiered plan.                                          
+
+● Locked: tiered distribution.
+
+  ---
+  Question 12 of N — RL library, training infra, and vectorization
+
+  Settled: Gymnasium-style env API. Now: which library actually trains, and how
+  do we run it fast enough?
+
+  Three coupled decisions:
+
+  1. Algorithm + library
+    - (a) Stable-Baselines3 (SB3) + PPO. The default. Battle-tested, supports
+  masked PPO via sb3-contrib (MaskablePPO), good docs, easy callbacks. Pro: ship
+   a training run on day 2. Con: SB3 internals are opinionated — custom obs Dict
+   spaces work but extending policies takes effort.
+    - (b) CleanRL. Single-file PPO/IMPALA/DQN implementations meant to be
+  copy-edited. Pro: full control, easy to read, perfect for a research project.
+  Con: you write more glue, less out-of-the-box training infra (vec envs,
+  monitoring, eval callbacks).
+    - (c) Custom JAX/PyTorch implementation. Pro: maximum performance and
+  flexibility. Con: months of detour from the actual research question.
+  2. Algorithm choice within the library
+    - PPO is the safe default for this kind of structured-action problem.
+  Robust, clip-protected, well-understood.
+    - IMPALA / SEED RL for distributed scale — overkill for v1.
+    - DQN / Rainbow — works on discrete actions but PPO with action masking is
+  generally better for masked spatial actions.
+    - Action-masked PPO specifically (sb3-contrib's MaskablePPO or CleanRL's
+  masked variant) is required given the action mask design from Q8.
+  3. Vectorization / throughput
+    - The Python sim at 10 Hz, ~30 decision points per episode, full TH6 —
+  assume a single env steps at maybe 100–500 episodes/sec with optimized Python
+  (NumPy ops, no per-tick allocations). Need at least 10⁶–10⁸ steps total for
+  PPO to converge on a hard problem.
+    - Vectorized envs: run N envs in parallel. SB3's SubprocVecEnv forks N
+  workers; each runs the sim independently. With 16–32 workers on a beefy CPU
+  you get 16–32× throughput.
+    - GPU? The sim is CPU-bound (pure Python logic). The policy network is
+  GPU-friendly but tiny (CNN over 30×44×44). For v1, training on a single
+  workstation with a midrange GPU + 16-core CPU is enough.
+
+  My recommendation: SB3 + sb3-contrib's MaskablePPO + 16-worker SubprocVecEnv 
+  on a single GPU box.
+
+  Reasoning:
+  - SB3 over CleanRL because this is a research project with multiple subsystems
+   (sim, env, training, eval, replay viewer). You don't want to also be
+  debugging your PPO implementation. SB3's MaskablePPO is exactly the algorithm
+  we need with masked spatial actions, and its callback system handles
+  eval/checkpointing/tensorboard out of the box. The "opinionated internals"
+  complaint doesn't matter for v1 — you're customizing the policy network (CNN
+  over 30×44×44 spatial obs) and the env, both of which are well-supported
+  extension points.
+  - MaskablePPO specifically because invalid-action masking is a hard
+  requirement of the action space.
+  - PPO because it's the right tool for this size of problem. DQN works on
+  discrete actions but doesn't compose well with the multi-head action design.
+  PPO handles Dict obs spaces and masked actions natively.
+  - SubprocVecEnv with 16 workers because the sim is in pure Python and the GIL
+  would crush any threaded approach. Forking processes is the standard answer;
+  SB3 wires it with one config flag.
+  - No GPU optimization for the sim itself — keep the simulator in pure Python
+  (NumPy where it helps) for v1. Later, if throughput is the bottleneck, port
+  hot loops to Numba or Cython. Don't write the sim in JAX or Rust
+  speculatively. Optimize only with profiler evidence.
+
+  A few specific infra calls that follow:
+
+  - Logging / monitoring: TensorBoard + Weights & Biases. SB3 has W&B
+  integration via callback; W&B is standard for RL research and gives you
+  experiment tracking for free. (Local-only TB is fine if you'd rather avoid the
+   cloud account.)
+  - Checkpointing: Every N steps, save model + replay buffer + RNG state +
+  config snapshot to experiments/runs/<run_id>/checkpoints/. Integration with
+  SB3 is one-line.
+  - Eval callback: Every K training steps, run a fixed eval against the 5
+  held-out bases, log mean stars + destruction. SB3's EvalCallback handles this
+  directly.
+  - Reproducibility: every run logs (git_sha, seed, config_hash, 
+  library_versions) to its run dir.
+  - Single workstation profile: target hardware = 16-core CPU + RTX 3060+ class
+  GPU + 32GB RAM. Should comfortably train MVP-Tiny in hours and MVP-Real in 1–3
+   days per run.
+
+  Do you accept SB3 + MaskablePPO + 16-worker SubprocVecEnv? Or do you want to 
+  push back — e.g., prefer CleanRL for its pedagogical/research transparency, or
+   prefer TensorBoard-only over W&B?
+
+✻ Baked for 36s
+
+※ recap: We're grilling the threestarRL plan to lock decisions before writing the PRD, technical doc, and roadmap. Next action: you decide on the RL library and training infra (recommended SB3 + MaskablePPO + 16-worker SubprocVecEnv) so we can move on. (disable recaps in /config)
+
+> You're sure SB3 is a good fit for my use case? It sounds great, but it’s not  
+  as customizable as Clean RL, and the reinforcement learning algorithm could   
+  get pretty complex. Based on what you understand the algorithm would do, do   
+  you still think SB3 is okay? Action-masked PPO sounds good? I have access to  
+  a CPU and a GPU, so whatever you think is better for training.                
+
+● Fair pushback. Let me re-examine honestly rather than parroting the
+  recommendation.
+
+  What we actually need from the trainer
+
+  Looking at what we've designed so far:
+  - Dict obs (spatial + scalar + masks) — both libs handle
+  - Masked action: we flattened it in Q8 to a single Discrete(C_act*44*44 + 
+  n_scalar), which is exactly what sb3-contrib's MaskablePPO expects. No exotic
+  dual-head custom action distribution needed. Good fit.
+  - Custom CNN feature extractor over the spatial obs — SB3's
+  BaseFeaturesExtractor is the standard extension point, lots of examples.
+  - 16-way SubprocVecEnv — first-class in SB3.
+  - Reward shaping coefficients — env-side, library-agnostic.
+  - Eval callback over 5 held-out bases — SB3's EvalCallback is one-line.
+  - Curriculum (swap base sets at thresholds) — a callback that mutates env
+  config between training rounds. Slightly clunky in SB3, but ~50 lines.
+
+  For this design, the PPO algorithm itself is textbook. The hard part of the
+  project lives in the env, the obs/action design, the reward shaping, and the 
+  simulator — none of which is the trainer's concern. That's the case for SB3.
+
+  Where SB3 starts hurting
+
+  If/when these come in scope, SB3 gets painful:
+
+  - Auxiliary losses (representation pretraining, value-distillation, predictive
+   forward models) — requires subclassing or copying SB3's _train() loop, which
+  is private API.
+  - Imitation learning warm-start from human attack replays — SB3's imitation
+  package exists but is its own ecosystem; CleanRL gives you a 50-line BC
+  pretrain naturally.
+  - Hierarchical policies (e.g., high-level "which troop next" + low-level
+  "where") — fightable in SB3, native in CleanRL.
+  - Self-play / league play with adaptive defenders — would push toward custom.
+
+  None of those are on the v1 roadmap. They're plausible v2 directions.
+
+  The migration cost
+
+  Critical point: everything except the trainer is library-agnostic. Your env,
+  simulator, policy network architecture (PyTorch nn.Module), reward function,
+  observation builder, and replay format all transfer cleanly between SB3 and
+  CleanRL. If at MVP-Real you decide you need custom losses, swapping SB3 for a
+  CleanRL-style trainer is roughly 2 days of work — you copy a single CleanRL
+  PPO file, point it at your existing env, port your policy network, done. The
+  cost of choosing SB3 first and migrating later is small.
+
+  CPU/GPU setup
+
+  Identical for both libs. Vec envs run sim on CPU workers (your 16+ cores),
+  policy net trains on GPU. Both libs handle the device split automatically.
+
+  Action-masked PPO
+
+  Yes, correct. The action space we designed needs masking — the agent must not
+  be able to deploy on non-perimeter cells, deploy a troop type it's out of, or
+  use a spell already cast. PPO with logit masking (zero-out invalid logits
+  before softmax) is the standard approach and matches both MaskablePPO and
+  CleanRL masked variants.
+
+  Honest recommendation
+
+  Start with SB3 + MaskablePPO. If you hit a wall at MVP-Real, swap the trainer 
+  (not the env) for CleanRL.
+
+  But here's the genuine tradeoff: this is a research project, you've explicitly
+   set up an agentic codebase with TDD and tracer bullets, and the intellectual 
+  heart of the project is the RL design — not the simulator. There's a real
+  argument for CleanRL on the grounds that:
+  - You'll understand what your agent is doing (single-file PPO is ~400 lines
+  you can read top-to-bottom in an hour)
+  - When it doesn't learn, you can debug at every step instead of into SB3
+  internals
+  - Adding any exotic v2 thing is trivial
+  - Cost is ~2 extra days of trainer-glue setup vs. SB3
+
+  Both are defensible. My pick if forced: SB3 for velocity, with full 
+  understanding that I'd swap to CleanRL the moment the algorithm stops being 
+  vanilla PPO. If you'd rather front-load the transparency, CleanRL is also
+  correct.
+
+  Your call: SB3 (ship faster, swap later if needed) or CleanRL (own the trainer
+   from day one)?
+
+✻ Sautéed for 1m 3s
+
+> Ok Let's go with SB3. Next question. Questions are for the overall            
+  architecture, and they'll be in later grilling sessions, specifically going   
+  into the sandbox, the cartographer, and the barracks.                         
+
+● Understood — overall architecture only. Each subsystem gets its own grilling
+  session later.
+
+  ---
+  Question 13 of N — Repo layout and Python toolchain
+
+  The idea.md sketches a structure but flags it as "just suggested." I want to
+  lock concrete answers for both the directory tree and the Python toolchain
+  since they govern every later issue. Three coupled decisions:
+
+  1. Monorepo shape
+    - (a) Single Python package, single repo — threestarRL is one package with
+  submodules sandbox, barracks, cartographer. Web frontend is a sibling Node
+  project under app/sandbox-web/. Pro: simplest. Con: enforces no API boundaries
+   — submodules can poke each other's internals.
+    - (b) Multi-package monorepo — separate Python packages sandbox-core,
+  barracks, cartographer each with their own pyproject.toml, all in one repo.
+  Pro: enforced boundaries; you can publish one without the others. Con:
+  inter-package refactoring needs version bumps; toolchain a bit more complex.
+    - (c) Multi-repo — overkill for one developer.
+  2. Python version + package manager + lockfile
+    - Python 3.12 (current stable, has performance improvements relevant to a
+  Python sim, well-supported by torch/SB3).
+    - uv — fast Rust-based package manager, lockfile, virtualenvs in one tool.
+  Eclipsing Poetry in 2025 ecosystems. Or Poetry as the conservative choice, or
+  plain pip + venv + requirements.txt as the simplest.
+  3. Code quality tools
+    - Ruff (linter + formatter, replaces black/isort/flake8) — fast and
+  standard.
+    - Pyright (type checker, faster than mypy and used by VS Code's Pylance) or
+  mypy (more conservative, more papers/codebases use it).
+    - pytest for tests, with pytest-cov for coverage.
+
+  My recommendation:
+
+  - (a) single Python package, single repo. For one developer on a research
+  project, the boundary discipline of a multi-package setup costs more than it
+  gives. The submodules sandbox/, barracks/, cartographer/ will have de facto
+  stable APIs because the agentic-issue-driven workflow naturally avoids
+  cross-cutting changes. If you ever need to publish sandbox standalone,
+  splitting is mechanical.
+  - Python 3.12, uv, Ruff, Pyright, pytest. uv is the right call for a 2026
+  project — it's faster than pip by an order of magnitude, the lockfile
+  (uv.lock) is reproducible, and the workflow uv run pytest etc. is clean. Ruff
+  replaces three tools with one. Pyright is faster than mypy and the Pylance
+  integration in VS Code is excellent — and you can always layer mypy in CI
+  later if you want a stricter second opinion.
+
+  Concrete repo layout (resolving the idea.md sketch):
+
+  threestarRL/
+  ├── .claude/                          # claude config, skills (existing)
+  ├── app/
+  │   ├── docs/                          # all PRDs, technical, roadmap
+  (existing)
+  │   │   ├── idea.md, agent.md, prd.md, techincal.md, roadmap.md
+  │   │   ├── ubiquitous-language.md
+  │   │   ├── sandbox/
+  │   │   │   ├── prd.md
+  │   │   │   └── issues/{open,done}/
+  │   │   ├── cartographer/
+  │   │   │   ├── prd.md
+  │   │   │   └── issues/{open,done}/
+  │   │   └── barracks/
+  │   │       ├── prd.md
+  │   │       └── issues/{open,done}/
+  │   ├── sandbox_core/                  # Python package — pure simulator
+  │   │   ├── __init__.py
+  │   │   ├── grid.py, building.py, troop.py, projectile.py, spell.py
+  │   │   ├── combat.py, pathfinding.py, scoring.py
+  │   │   ├── sim.py                      # the Sim class with step_tick() /
+  advance_to()
+  │   │   ├── replay.py                   # replay writer + reader
+  │   │   ├── schemas.py                  # pydantic models for base, plan,
+  replay, config
+  │   │   └── content/                    # data loaders, target-filter logic
+  │   ├── sandbox_web/                    # Node project — visual editor +
+  replay viewer
+  │   │   ├── package.json, vite.config.ts, tsconfig.json
+  │   │   └── src/
+  │   ├── barracks/                       # Python package — RL env + training
+  │   │   ├── env.py                      # Gymnasium env wrapping sandbox_core
+  │   │   ├── obs.py, action.py, reward.py
+  │   │   ├── policy.py                   # custom CNN feature extractor
+  │   │   ├── train.py                    # SB3 MaskablePPO entry point
+  │   │   ├── eval.py                     # eval callback / held-out evaluation
+  │   │   └── curriculum.py
+  │   ├── cartographer/                   # Python package — CV pipeline (v2)
+  │   │   └── (deferred — placeholder package)
+  │   ├── data/                           # game content + sample bases
+  │   │   ├── buildings.json, troops.json, spells.json, th6_rules.json
+  │   │   ├── reward_weights.json         # tunable reward coefficients
+  │   │   ├── sample_bases/{tracer.json, base_01..base_30.json,
+  eval_01..eval_05.json}
+  │   │   └── mutations.py                # base-mutation pipeline
+  │   └── experiments/
+  │       └── runs/<run_id>/{config.json, checkpoints/, replays/, tensorboard/}
+  ├── tests/
+  │   ├── unit/
+  │   │   ├── sandbox_core/, barracks/, cartographer/
+  │   ├── integration/
+  │   │   ├── test_full_episode.py
+  │   │   └── test_replay_roundtrip.py
+  │   └── golden/
+  │       └── replays/                    # frozen replay fixtures for
+  regression tests
+  ├── ralph/                              # existing — issue execution loop
+  ├── pyproject.toml                      # single package config
+  ├── uv.lock
+  ├── ruff.toml
+  ├── pyrightconfig.json
+  ├── .gitignore
+  └── README.md
+
+  A few specifics worth flagging:
+
+  - app/sandbox_core/ (underscore, Python) vs app/sandbox-web/ (hyphen, Node) —
+  Python forbids hyphens in package names, JS conventionally uses them. This
+  split is fine.
+  - app/data/ is shared by everything — base layouts, content JSONs, reward
+  weights all live in one place rather than scattered into each subsystem's
+  folder. Single source of truth.
+  - tests/ is at the repo root, not inside app/. Standard Python convention;
+  integration tests can import from any subsystem.
+  - experiments/runs/ is gitignored except for a .gitkeep. Each run is
+  timestamped and self-contained: config, checkpoints, evals, tensorboard logs
+  all under one folder.
+  - .claude/, ralph/, app/docs/ already exist and stay where they are.
+  - Old typo techincal.md — keeping it for now to match what the user typed; can
+   rename later. (Flagging this since you might want me to fix the filename.)
+
+  Do you accept (single Python package, Python 3.12, uv, ruff, pyright, pytest, 
+  this directory layout)? And: rename techincal.md → technical.md while we're at
+   it, or leave the typo since it's already in idea.md?
+
+✻ Sautéed for 1m 2s
+
+> Yes that sounds good                                                          
+
+● Locked — and I'll rename techincal.md → technical.md when I write the docs.
+
+  ---
+  Question 14 of N — Sandbox-web toolchain (high-level only)
+
+  The web frontend is a thin viewer/editor — it consumes JSON state and replays
+  from the Python core, doesn't drive simulation. Three decisions, kept
+  high-level since the sandbox grilling session will go deep later:
+
+  1. Framework
+    - (a) React + PixiJS. React for UI panels (base browser, replay timeline,
+  scrubber), PixiJS (WebGL 2D) for the isometric grid and animations. Pro:
+  PixiJS handles thousands of sprites at 60fps, well-documented, and tile-based
+  rendering is its sweet spot. React handles all non-canvas UI.
+    - (b) Phaser 3. Full game framework, opinionated. Pro: built-in tilemap
+  support, physics, scenes. Con: opinionated routing, bundles a lot of stuff you
+   don't need (you're not making a game, you're making a viewer).
+    - (c) Plain HTML5 Canvas + a UI framework. Pro: minimum dependencies. Con:
+  you re-implement sprite batching, tweening, sprite sheets — weeks of work
+  PixiJS gives free.
+    - (d) Three.js / WebGL. Overkill — this is 2D isometric, not 3D.
+  2. Build tool + language
+    - Vite + TypeScript — the 2025 default. Fast dev server, native TS, ES
+  modules, no Webpack config hell.
+  3. Communication with the Python core
+    - File-based, not socketed. The Python core writes replay.json (and
+  base.json, state_*.json) to disk; the web frontend loads via fetch() from a
+  local static server (Vite dev server already serves the file tree). Pro: zero
+  IPC complexity, replays are first-class artifacts on disk anyway. Con: no
+  live-driving the sim from the web (which we don't want).
+    - For the manual base editor (where the user authors a base in the browser
+  and saves it as base.json), the web app exports a JSON file the user drops
+  into app/data/sample_bases/, or a small local-only HTTP endpoint the Python
+  side runs to receive saves. Either is fine for one developer.
+
+  My recommendation: React + PixiJS + Vite + TypeScript, file-based JSON 
+  contract.
+
+  Concretely:
+  - app/sandbox_web/ is a Vite+React+TS project.
+  - PixiJS handles the isometric tile renderer, sprite atlas loading,
+  troop/projectile animations, tweening between tick snapshots.
+  - React handles: app shell, the base picker, the replay timeline scrubber, the
+   entity inspector panel, the editor toolbox.
+  - Build output goes to app/sandbox_web/dist/. For dev, vite dev is the
+  workflow.
+  - The web app reads replays from a configurable path (defaults to
+  ../experiments/runs/<id>/replays/ relative to the web app, or via drag-drop
+  file upload).
+  - The manual base editor exports a base.json via download; user copies it into
+   app/data/sample_bases/. No need for a save-back HTTP endpoint in v1.
+  - Asset pipeline: placeholder shapes (colored circles for troops, colored
+  squares with type labels for buildings) for v1. The user has said sprites load
+   from local folders — when they're ready, drop PNGs into
+  app/sandbox_web/public/sprites/ and a sprite-atlas loader picks them up. v1
+  can ship without any sprites at all.
+
+  The cost being accepted: file-based JSON is a few hundred KB per replay loaded
+   into the browser at once. Fine. If replays grow to tens of MB at scale (full
+  TH6 attacks at 10 Hz are ~1–3 MB each based on the hybrid format), still fine.
+
+  A single concrete dependency list (locks the technical doc):
+  - react, react-dom, pixi.js, @pixi/react (or use Pixi standalone with a React
+  wrapper component you write)
+  - typescript, vite, @vitejs/plugin-react
+  - eslint + prettier for the JS side (or biome if you want one-tool — same role
+   as ruff for the Python side)
+  - A small UI lib if useful (e.g., lucide-react for icons). Avoid heavyweight
+  component libs (MUI/Chakra) — viewer UI is small.
+
+  Do you accept (React + PixiJS + Vite + TypeScript, file-based replay loading, 
+  placeholder shapes for v1)? Or push back on framework / build tool / asset 
+  strategy?
+
+✻ Brewed for 39s
+> I like your reccomendation. Let's go with that.                               
+
+● Locked.
+
+  ---
+  Question 15 of N — Inter-subsystem data contracts and config management
+
+  The three subsystems exchange information through JSON files on disk (the
+  spine of the architecture). Pinning their schemas down is what makes the
+  subsystems independently developable. Two coupled decisions:
+
+  1. Schema definition + validation
+    - (a) Pydantic v2 models as the source of truth. Each schema is a Python
+  class; JSON load/dump is automatic; validation is automatic; types are checked
+   at runtime; and TypeScript types for the web side are auto-generated via
+  datamodel-code-generator or by hand. Pro: single source of truth, runtime
+  errors caught at the boundary. Con: TypeScript side needs a generation step or
+   duplicate hand-written types.
+    - (b) JSON Schema as the source of truth. Both Python (via jsonschema) and
+  TypeScript (via json-schema-to-typescript) generate from the same JSON Schema
+  files. Pro: language-neutral. Con: writing JSON Schema by hand is verbose;
+  ergonomics worse than Pydantic.
+    - (c) Plain JSON, no validation. Pro: zero overhead. Con: silent corruption,
+   every data bug becomes a hours-long investigation.
+  2. Config management
+    - (a) Hydra. Hierarchical YAML configs, override syntax, multirun. Pro:
+  standard in RL/ML research. Con: imports a lot of machinery, magic that's a
+  pain to debug.
+    - (b) pydantic-settings + plain JSON/YAML. Pydantic models for config,
+  loaded from a single JSON or YAML per run, CLI overrides via simple
+  --key.subkey=value parsing. Pro: aligns with (1a) above; one validation system
+   for everything. Con: lacks Hydra's multirun ergonomics.
+    - (c) Plain argparse + JSON dumps. Simplest possible.
+
+  My recommendation: Pydantic v2 for all schemas (data + config), no Hydra.
+
+  Concretely, the schemas-as-Pydantic-models live in
+  app/sandbox_core/schemas.py:
+
+  # Static content (data/):
+  class BuildingType(BaseModel):
+      name: str  # "cannon", "town_hall", ...
+      footprint: tuple[int, int]
+      hp: int
+      is_wall: bool = False
+      # defense-only:
+      damage: int | None = None
+      range: float | None = None
+      cooldown_ticks: int | None = None
+      splash_radius: float | None = None
+      target_filter: Literal["any", "ground", "air", "resources"] = "any"
+      projectile_arc_ticks: int | None = None  # 0 = hitscan
+
+  class TroopType(BaseModel):
+      name: str
+      hp: int
+      damage: int
+      range: float
+      speed_tiles_per_tick: float
+      target_preference: Literal["any", "defenses", "resources", "walls"] =
+  "any"
+      splash_radius: float = 0.0
+      housing_space: int
+
+  class SpellType(BaseModel):
+      name: str  # "lightning"
+      radius: float
+      damage_per_hit: int
+      hits: int
+      hit_interval_ticks: int
+
+  # Per-base:
+  class BaseLayout(BaseModel):
+      schema_version: int = 1
+      grid_size: tuple[int, int] = (44, 44)
+      th_level: int = 6
+      placements: list[BuildingPlacement]
+      cc_contents: list[CCEntry] = []  # empty for v1 (CC is building-only)
+
+  class BuildingPlacement(BaseModel):
+      building_type: str  # FK to BuildingType.name
+      origin: tuple[int, int]
+      level: int = 1
+
+  # Per-attack input:
+  class DeploymentPlan(BaseModel):
+      schema_version: int = 1
+      actions: list[DeploymentAction]  # ordered, each has a tick
+
+  class DeploymentAction(BaseModel):
+      tick: int
+      kind: Literal["deploy", "spell"]
+      entity_type: str  # troop or spell name
+      position: tuple[int, int]  # tile coords
+
+  # Per-attack output:
+  class Replay(BaseModel):
+      schema_version: int = 1
+      base: BaseLayout
+      plan: DeploymentPlan
+      seed: int  # reserved for future RNG, fixed at 0 in v1
+      initial_state: WorldState
+      ticks: list[TickFrame]
+      final_score: Score
+
+  class TickFrame(BaseModel):
+      tick: int
+      state: WorldState  # full state per tick (Phase 1) or delta (Phase 2)
+      events: list[Event] = []
+
+  # Training:
+  class TrainingConfig(BaseModel):
+      run_id: str
+      algo: Literal["maskable_ppo"] = "maskable_ppo"
+      env: EnvConfig
+      policy: PolicyConfig
+      reward: RewardWeights
+      schedule: ScheduleConfig
+      eval: EvalConfig
+      seed: int
+
+  class RewardWeights(BaseModel):
+      star_thresholds: list[int] = [50, 200, 500]   # 1-star / 2-star / 3-star 
+  end-bonuses
+      delta_destruction_pct: float = 1.0
+      delta_th_destroyed: float = 20.0
+      time_penalty_per_tick: float = -0.001
+      troop_loss_coeff: float = -0.5
+      building_weights: dict[str, float] = {}  # filled per session
+
+  Reasoning:
+  - Pydantic v2 is the right call because it's the only choice that gives you
+  (1) runtime validation at every read/write boundary, (2) editor autocomplete,
+  (3) free JSON serialization, (4) self-documenting schema, and (5) easy
+  version-field-based migrations. Every JSON file written or read by the Python
+  core goes through a Pydantic model — no naked json.load(f) anywhere.
+  - TypeScript types for the web side: auto-generate from the Pydantic models
+  using datamodel-code-generator --input-file-type=jsonschema --output 
+  app/sandbox_web/src/generated_types.ts. Add a make types step to the build.
+  Source of truth is one place.
+  - schema_version field in every persisted JSON — not strictly necessary for v1
+   but free insurance. When you eventually evolve BaseLayout (e.g., to add CC
+  contents), old replays still load with a migration shim.
+  - No Hydra. Hydra is great when you have hundreds of experiment configs to
+  compose, dozens of override patterns, and multi-team usage. For a
+  one-developer research project, plain pydantic-settings + a single config.json
+   per run + CLI overrides is far easier to debug. Add Hydra later if multirun
+  becomes a regular need.
+  - Config-per-run, not config-per-CLI-flag. Every training run is launched with
+   python -m barracks.train --config app/experiments/configs/mvp_tiny.json, and
+  that JSON is copied into the run directory at start. Reproducing the run is
+  "rerun with the same config file." No CLI-flag soup.
+  - Data files (buildings.json, troops.json, etc.) are static. Pydantic loads
+  them at sim startup, validates, and exposes them as immutable singletons via
+  sandbox_core.content.
+
+  The cost being accepted: schema changes require re-generating TS types.
+  One-line script in make types. Acceptable.
+
+  Do you accept Pydantic v2 for all schemas + config, with version fields, and 
+  no Hydra? Or push back on any of: validation library, config tool, schema 
+  versioning?
+
+✻ Sautéed for 51s
+
+> I accept that                                                                 
+
+● Locked.
+
+  ---
+  Question 16 of N — Test strategy and CI
+
+  Two coupled architectural decisions that govern how the agentic-issue workflow
+   stays sane.
+
+  1. Test pyramid for this project
+    - Unit tests — small, fast, isolated. sandbox_core/grid.py, troop.py,
+  combat.py, pathfinding.py are mostly pure functions; trivial to unit-test.
+  Reward calculator is a pure function of state deltas; trivially testable.
+  Action mask construction is testable in isolation.
+    - Property tests — for the simulator core specifically. hypothesis library.
+  Examples: "after any sequence of valid steps, total destruction % is
+  monotonically non-decreasing," "no troop ever occupies a non-buildable tile,"
+  "no two buildings overlap in footprint." These catch determinism bugs and
+  invariant violations.
+    - Golden replay tests — the architectural keystone for a deterministic
+  simulator. Frozen (base.json, plan.json) → expected_replay.json fixtures
+  committed to tests/golden/replays/. Test runs the sim and asserts the produced
+   replay equals the golden one byte-for-byte (or with floating-point
+  tolerance). Any unintended sim behavior change breaks the test.
+    - Integration tests — full episode through the env: env.reset() → 
+  loop[env.step()] → terminated. Asserts final score, replay validity, no
+  exceptions. ~3–5 test cases covering different troop compositions.
+    - Smoke training test — a 1000-step PPO run on the tracer base, asserts it
+  doesn't crash and produces non-NaN losses. Catches integration breaks between
+  env and SB3.
+  2. CI / automation
+    - (a) Local-only pre-commit hooks. pre-commit runs ruff + pyright + pytest
+  before every commit. No GitHub Actions. Pro: fast feedback, no CI infra to
+  maintain. Con: nothing enforces it on non-local agents (e.g., the ralph loop
+  running unattended).
+    - (b) GitHub Actions on push/PR. Standard runner: ruff lint, pyright type
+  check, pytest unit + integration, no GPU training in CI. Pro: enforced. Con:
+  GitHub Actions Linux runners can run tests but the project is
+  Windows-developed (per environment) — minor flake risk for any
+  path/OS-dependent tests.
+    - (c) Both. Pre-commit for fast local feedback, GHA for enforcement.
+
+  My recommendation:
+
+  Test strategy: full pyramid as above, with golden replays as the architectural
+   keystone.
+
+  The golden-replay layer deserves emphasis. Because the sim is
+  deterministic-no-RNG, any change to the core that unintentionally changes
+  simulation outcome is a regression — even if the new outcome is "better."
+  Golden replays make those silent regressions impossible. Workflow:
+
+  - Author a (base.json, plan.json) pair that exercises a specific mechanic (one
+   for vanilla movement+attack, one for splash damage, one for Wall Breaker
+  behavior, one for Lightning, one for Mortar splash, one for full TH6 attack).
+  - First time: run sim, save resulting replay as
+  tests/golden/replays/<scenario>.json.
+  - On every CI run: run sim, diff against golden. Equal → pass.
+  - When a change is intentional (e.g., balance tweak), the test fails, the
+  developer eyeballs the diff, and pytest --update-golden regenerates the file.
+  The diff is part of the PR.
+
+  This is the single most valuable test layer for an agentic-issue codebase. The
+   agent can refactor freely as long as the goldens hold; if a golden breaks
+  unexpectedly, the agent is forced to investigate before committing.
+
+  CI: (c) both — pre-commit hooks + minimal GitHub Actions.
+
+  - Pre-commit hooks (pre-commit-config.yaml): ruff format, ruff lint, pyright,
+  pytest -m "fast" (unit tests only — under 10 seconds total). Local feedback
+  loop matches the ralph loop's npm run test / npm run typecheck aspiration.
+  - GitHub Actions (.github/workflows/ci.yml): one workflow on push/PR. Three
+  jobs run in parallel: ruff lint, pyright type check, pytest (full suite
+  including golden replays + integration tests). No GPU; no SB3 training run
+  beyond the smoke test (200 steps, asserts no crash).
+  - Skip Windows-specific GHA runner. Runs Linux only. Path-handling code in the
+   Python core uses pathlib.Path, never raw string paths, so OS-portability is
+  free. Anything OS-dependent that does crop up should be fixed (not papered
+  over with conditional imports).
+  - Web frontend has its own lint + typecheck + build as a separate GHA job (no
+  tests for the viewer in v1; manual visual QA is sufficient until viewer logic
+  gets complex).
+
+  Test commands the ralph loop will run before commit:
+
+  uv run ruff check .
+  uv run ruff format --check .
+  uv run pyright
+  uv run pytest -m "not slow"
+
+  With markers: @pytest.mark.slow for long-running golden replays / integration
+  tests / smoke training, run separately in CI.
+
+  The cost being accepted: writing/maintaining ~6 golden replay scenarios is
+  real authoring work. Each is ~20 lines of fixture + an expected_replay.json
+  blob. Worth it for the regression protection on a deterministic sim.
+
+  Do you accept (full test pyramid with golden replays as the architectural 
+  keystone) and (pre-commit hooks + minimal GitHub Actions for CI)? Or push back
+   on any of: skipping web tests in v1, Linux-only CI, golden-replay strategy, 
+  smoke training in CI?
+
+✻ Sautéed for 35s
+
+> sounds good                                                                   
+
+● Locked.
+
+  ---
+  Question 17 (final overall-architecture question) — Cartographer's place in 
+  the architecture
+
+  Cartographer is deferred to v2, but the PRD and technical doc need to commit
+  to its interface contract with the rest of the system so v1 doesn't
+  accidentally make assumptions that block v2. Three decisions:
+
+  1. Output contract
+    - The Cartographer's job, ultimately, is: input = a screenshot of a Clash 
+  base, output = a BaseLayout JSON. That JSON is the same Pydantic model the
+  Sandbox already consumes. The Cartographer is, architecturally, just another
+  producer of BaseLayout files — the simulator and RL env don't care whether a
+  base came from a hand-built editor, a procedural generator, or a CV pipeline.
+    - Lock this contract now: Cartographer outputs BaseLayout JSON conforming to
+   the v1 schema, no special types, no separate path through the system. This is
+   the single most important architectural decision for Cartographer because it
+  makes v2 a pure additive feature.
+  2. Pipeline shape
+    - The Cartographer is a separate Python package app/cartographer/ with a CLI
+   entry point: python -m cartographer ingest path/to/screenshot.png --out 
+  app/data/scraped_bases/scrape_001.json.
+    - High-level pipeline (each stage is a separate module, testable in
+  isolation):
+        - Stage 1 — Image preprocessing. Crop to play area, perspective-correct
+  the isometric tilt to a top-down 44×44 grid, normalize lighting/colors.
+      - Stage 2 — Tile classification. For each of the 1936 tiles, classify as
+  {empty, wall, building_class, building_class_other_part}. CNN classifier
+  trained on labeled tile crops.
+      - Stage 3 — Building reconstruction. Group adjacent same-class tiles into
+  footprints, deduplicate (a 3×3 cannon's 9 tiles all classify as "cannon" → one
+   cannon entity).
+      - Stage 4 — Schema emission. Write a BaseLayout JSON, validate against the
+   Pydantic schema, fail loudly if any field is uncertain.
+    - Each stage has a defined input/output type so v2 can iterate
+  stage-by-stage.
+  3. Training data for Cartographer
+    - Self-bootstrapping option — use the Sandbox itself to render synthetic
+  bases at the level of fidelity Cartographer expects. Generate thousands of
+  (synthetic_screenshot, ground_truth_BaseLayout) pairs. Train Cartographer's
+  tile classifier on those. Pro: infinite labeled data, perfect labels. Con:
+  synthetic-to-real gap — depends entirely on how realistic sandbox-web's
+  renderer becomes.
+    - Manual labeling option — hand-label tiles on real screenshots. Pro: real
+  distribution. Con: 1936 tiles × N screenshots = a lot of labels.
+    - Hybrid — synthetic for pretraining, ~100 hand-labeled real screenshots for
+   fine-tuning.
+
+  My recommendation:
+
+  - (1) Lock the output contract: Cartographer emits BaseLayout JSON, no 
+  separate types. Same schema as hand-built and procedurally-generated bases.
+  The downstream system is identical for all three sources. This is
+  non-negotiable for clean architecture.
+  - (2) Four-stage pipeline with stage-typed interfaces. Stages live as
+  cartographer/preprocess.py, cartographer/classify.py,
+  cartographer/reconstruct.py, cartographer/emit.py. CLI ties them together.
+  Each stage is independently testable.
+  - (3) Hybrid training, synthetic-first. Build the synthetic-data pipeline
+  first by reusing sandbox-web's renderer to capture screenshots at
+  deterministic camera angles. Pretrain on synthetic, evaluate on a small
+  hand-labeled real set, fine-tune if the synthetic-to-real gap is too wide. The
+   fact that we control the renderer means we can match whatever quirks of 
+  synthetic data the Cartographer is trained against — a unique advantage of 
+  doing both subsystems. This is also why deferring Cartographer to v2 doesn't
+  cost us anything: by then sandbox-web is mature, and we can render synthetic
+  data with confidence.
+  - One concrete v1 commitment: the BaseLayout JSON schema is frozen at v1 (with
+   schema_version field). No matter what Cartographer needs in v2, it must
+  conform to this schema or migrate it. This prevents the schema from being held
+   hostage by future Cartographer needs.
+  - One v1 placeholder: create the app/cartographer/ package with __init__.py, a
+   stub README.md saying "deferred to v2," and a one-line entry in the technical
+   doc. No code. This reserves the namespace and signals architectural intent.
+
+  The cost being accepted: zero in v1. The Cartographer architecture is
+  documented but not built. This is the correct discipline — the v1 PRD
+  acknowledges Cartographer exists, defines its contract, but commits no v1
+  engineering effort to it.
+
+  Do you accept (BaseLayout as the universal contract, four-stage pipeline, 
+  synthetic-first training, v1 commitment limited to package stub + frozen 
+  schema)? Or do you want to argue for any v1 Cartographer work — even just a 
+  screenshot-loader prototype — to start de-risking it?
+
+✻ Crunched for 35s
+
+> For Pipeline, it will use Roboflow that’s trained on a bunch of labelled      
+  images to identify each item on the grid. It takes a grid element and uses it 
+   to build the actual grid, checks where the bounding boxes align, and         
+  generates the JSON. That’s how it will work. But yes I accept that as a       
+  universal contract just make it a roboflow pipeline.                          
+
+● Locked: Roboflow-based pipeline emitting BaseLayout JSON. The architectural
+  implications I'll bake into the technical doc:
+
+  - Pipeline becomes: screenshot → Roboflow inference (bbox + class) → 
+  perspective/grid alignment → footprint reconstruction → BaseLayout JSON 
+  validation
+  - Roboflow model training happens off-codebase in Roboflow's UI; our repo only
+   consumes the trained model via the Roboflow Inference SDK
+  - API key via env var (ROBOFLOW_API_KEY), dataset/version pinned in
+  app/data/cartographer_config.json
+  - Synthetic-first training is the user's call inside Roboflow, not an
+  architectural concern
+
+  Grilling is complete. Let me lock the next-step task list and write the three
+  docs.
+
+● Writing the PRD first.
+  ⎿  Interrupted · What should Claude do instead?
+
+> you can also write an extra md file for some of the Rl stuff if you think     
+  theres stuff that shouldnt be in prd or technical                             
+
+● Good call. Pulling the RL specifics (obs channel schema, action space
+  construction, reward formula with coefficients, training curriculum, eval
+  protocol, hyperparameter notes) into a dedicated design doc keeps the PRD
+  outcome-focused and the technical doc architecture-focused. I'll put it at
+  app/docs/barracks/design.md so it lives with the future per-subsystem PRD when
+   that grilling session happens.
+
+● Now writing the PRD.
+
+● Write(app\docs\prd.md)
+  ⎿  Wrote 203 lines to app\docs\prd.md
+      2 # threestarRL — Product Requirements Document
+      4 ## 1. Vision
+      5 threestarRL is a research project that builds a Clash of Clans-st
+        ment learning environment, **The Barracks**, to study whether an 
+        agent can learn base-attacking strategy through repeated simulate
+        tually allows the agent to attack bases captured from real screen
+      6 shots.
+      7 The success goal is research insight, not a shippable game: *can 
+        ing, troop placement, pathing awareness, spell usage, and target 
+        prioritization well enough to consis
+     … +332 lines (ctrl+o to expand)
+● Now the technical doc.
+
+● Write(app\docs\technical.md)
+  ⎿  Wrote 445 lines to app\docs\technical.md
+       2 # threestarRL — Technical Design
+         po layout, data contracts, and cross-cutting infrastructure for 
+         threestarRL. It complements `prd.md` (what gets built and why) a
+         s live in per-subsystem design docs (e.g., `app/docs/barracks/de
+         sign.md`).
+       5 ## 1. Tech stack at a glance
+       7 | Layer | Choice |
+       8 |---|---|
+         e, barracks, cartographer) | (single language across sandbox-cor
+      10 | Web frontend | TypeScript + React + PixiJS, built with Vite |
+     … +624 lines (ctrl+o to expand)
+
+● Writing the dedicated RL design doc next.
+
+● Write(app\docs\barracks\design.md)
+  ⎿  Wrote 344 lines to app\docs\barracks\design.md
+      2 # The Barracks — RL Design
+        estarRL: observation space, action space, reward function, traini
+        ts `app/docs/technical.md` (architecture-only) and the future `ap
+        p/docs/barracks/prd.md` (per-subsystem PRD, written in a later gr
+      4 illing session).
+      6 ## 1. Problem framing
+      7 The Barracks wraps the Sandbox in a Gymnasium-compliant RL enviro
+        casts during a single TH6 attack to maximize stars + destruction.
+      9 **Episode definition.** One episode = one full attack on one base
+        . Episode terminates when: 3 stars
+     … +488 lines (ctrl+o to expand)
+
+● Now the roadmap.
+
+● Write(app\docs\roadmap.md)
+  ⎿  Wrote 264 lines to app\docs\roadmap.md
+       2 # threestarRL — Roadmap
+         tone ladder in `prd.md`. Each phase has a goal, exit criteria, a
+         op expands into individual issues. The roadmap is structured aro
+          **The Barracks**.ystems: **The Sandbox**, **The Cartographer**,
+       4 
+       6 ## Phasing summary
+       8 |---|---|---|---|Headline result | Subsystems active |
+         k and attack, see it on the screen | Sandbox-core (skeleton), Sa
+      10 | 1 | Sandbox content + MVP-Tiny RL | "PPO agent beats random ba
+         seline on the tra
+     … +413 lines (ctrl+o to expand)
+
+● Now the cleanup: delete the empty techincal.md typo file and fix the reference
+   in idea.md.
+
+● Bash(rm "C:/Users/EvanN/threestarRL/app/docs/techincal.md")
+  ⎿  Done
+
+● Update(app\docs\idea.md)
+  ⎿  Added 1 line, removed 1 line
+      71              idea.md: initial idea you are reading now
+      72              agent.md: explains the process I will be using to a
+          gentically grow this codebase
+      73              ubiquitous-language.md: a glossary for terms used i
+          n this coding project
+      74 -            techincal.md: the technical stack and implementatio
+         -n used for this project                                        
+      74 +            technical.md: the technical stack and implementatio
+         +n used for this project                                        
+      75              roadmap.md: the implementation plan for the project
+      76  
+      77              sandbox/
+
+● Done. Here's what landed:
+
+  Documents written
+  - app/docs/prd.md — full project PRD (vision, research question, milestone
+  ladder, FRs/acceptance criteria for all three subsystems, cross-cutting
+  requirements, risks).
+  - app/docs/technical.md — implementation/architecture (tech stack, repo
+  layout, determinism+tick model, data contracts, per-subsystem architecture
+  summaries, config, tests, CI, observability, reproducibility).
+  - app/docs/barracks/design.md — RL design specifics pulled out of the
+  technical doc per your request (full obs schema, action space + masking,
+  layered reward formula with coefficients, training distribution, curriculum,
+  eval protocol, SB3 integration code sketch, custom feature extractor).
+  - app/docs/roadmap.md — phased plan organized around the three subsystems
+  (Phase 0 tracer bullet → Phase 1 sandbox content + MVP-Tiny RL in parallel →
+  Phase 2 MVP-Real → Phase 3 Cartographer).
+
+  Cleanup
+  - Deleted empty app/docs/techincal.md typo file.
+  - Fixed the typo'd reference in app/docs/idea.md line 74.
+
+  Locked architectural decisions from the grilling (referenced across all four
+  docs):
+  Path-1 Python everywhere · hybrid replay format · MVP-Tiny → MVP-Real →
+  Cartographer-as-v2 milestone ladder · deterministic-no-RNG, 10 Hz,
+  decision-point action model · 44×44 grid + first-class footprints + tile-walls
+   · full TH6 in sim from start, data-driven, content lands parallel with
+  MVP-Tiny · CC building-only · spatial action space (Discrete(C_act*44*44 + 
+  n_scalar)) with masking · rich semantic grid obs · layered shaped reward
+  dominated by sparse stars + per-building weights · tiered training
+  distribution · SB3 MaskablePPO with 16-worker SubprocVecEnv · single Python
+  package, Python 3.12, uv, ruff, pyright, pytest · React+PixiJS+Vite for
+  sandbox-web · Pydantic v2 schemas with schema_version · golden-replay
+  regression tests · pre-commit + GitHub Actions · Cartographer as Roboflow
+  pipeline emitting universal BaseLayout.
+
+  What's next (deferred to per-subsystem grilling sessions, per your scope
+  guidance): sandbox-specific (balance numbers, manual editor UX, splash
+  falloff), barracks-specific (PPO hyperparameters, curriculum thresholds,
+  action-space variants, frame stacking vs LSTM), cartographer-specific
+  (Roboflow class taxonomy, perspective correction, hosted vs local inference).
+
+  Want me to /schedule an agent to kick off the Phase 0 tracer-bullet issues
+  into app/docs/sandbox/issues/open/ once you're ready to start, or run
+  /prd-to-issues against one of the new PRDs now?
+
+✻ Worked for 9m 12s
+
+> awesome i want you to now use the /ubiquitous-language skill                  
+
+● Skill(ubiquitous-language)
+  ⎿  Successfully loaded skill
+
+  Read 1 file, listed 1 directory (ctrl+o to expand)
+
+● The skill file is empty (0 bytes). Working from first principles — ubiquitous
+  language in DDD is a shared glossary of consistent domain vocabulary used
+  across docs and code. I'll populate the existing stub at
+  app/docs/ubiquitous-language.md with the terms used across the PRD, technical
+  doc, RL design doc, and roadmap so the codebase (and future agents) all speak
+  the same language.
+
+  Let me also check the existing stub and the other docs once more to make sure
+  I'm capturing the actual vocabulary in use.
+  Read 1 file (ctrl+o to expand)
+  ⎿  Interrupted · What should Claude do instead?
+
+> sorry the skill file should be non empty now. Use /ubiquitous-language        
+
+  Read 1 file (ctrl+o to expand)
+
+● I have the skill. Extracting the domain vocabulary from this conversation now
+  and writing to app/docs/ubiquitous-language.md (the location idea.md, prd.md,
+  technical.md, and roadmap.md all reference — overriding the skill's default
+  UBIQUITOUS_LANGUAGE.md at root to match project convention).
+
+● Write(app\docs\ubiquitous-language.md)
+  ⎿  Wrote 181 lines to app\docs\ubiquitous-language.md
+       2 # Ubiquitous Language
+         ssage, and code identifier should use these terms consistently. 
+         When you see an alias listed below, prefer the canonical term.
+       5 ## Subsystems and project structure
+       6 
+       8 | --- | --- | --- | | Aliases to avoid |
+         nd produces replays. Refers to the *whole* subsystem (core + web
+         ). | "the sim", "the engine", "Clash sim" |
+         andbox_core/`. Headless, deterministic, RL-importable. | "the co
+         re", "sim core" |
+     … +392 lines (ctrl+o to expand)
+
+● Done. app/docs/ubiquitous-language.md is populated.
+
+  What's in it
+  - 6 grouped term tables — Subsystems & structure · Milestones & process ·
+  Clash/TH6 game domain · Sandbox simulation · RL/Barracks · Data contracts
+  (schemas) · Cartographer
+  - Relationships section — explicit cardinality between key terms (Replay →
+  BaseLayout, TickFrame → WorldState + Events, Run → Replays, etc.)
+  - Example dialogue — a 5-exchange dev/domain-expert conversation showing the
+  terms used precisely together
+  - Flagged ambiguities section — 10 terms that drifted in our grilling and
+  their canonical resolutions
+
+  Key ambiguities I called out and resolved
+  - "step" → three distinct meanings (sim, env, training) — always qualify
+  - "state" → WorldState is the sim's truth; observation is the agent's encoded
+  view — not synonyms
+  - "action" vs "deployment" vs "DeploymentAction" → agent's choice vs world
+  side effect vs schema for scripted attacks
+  - "score" vs "stars" → schema vs field
+  - "run" vs "episode" → trainer execution vs single attack
+  - "phase" vs "milestone" → roadmap stage vs headline result (Phase 3 ≠ v2 —
+  they're the work and the result)
+  - "frozen eval set" preferred over "test set" / "validation set" because the
+  supervised-learning terms don't fit
+  - "The Sandbox" is the whole subsystem — never use it to mean only
+  sandbox_core or only sandbox_web
+  - "wait" is intentional, not a no-op
+
+  Note on file location — the skill defaults to UBIQUITOUS_LANGUAGE.md at the
+  working dir root, but I wrote to app/docs/ubiquitous-language.md since
+  idea.md, prd.md, technical.md, and roadmap.md all already reference that path.
+   Single source of truth, no orphan docs.
+
+  Want me to add a one-line index entry to MEMORY.md so future sessions reach
+  for this file when terminology questions come up?
+
+✻ Cogitated for 3m 19s
+
+※ recap: We grilled the threestarRL plan and wrote app/docs/prd.md, technical.md, roadmap.md, barracks/design.md, and ubiquitous-language.md. Next: kick off Phase 0 tracer-bullet issues, or run /prd-to-issues against one of the new PRDs. (disable recaps in /config)
+
+> Can you just add one more line to roadmap.md another row to the 4 phases with 
+   a coninuation phase whihc look like getting it train on higher town halls,   
+  higher troops, heros and hero abilities and more                              
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(app\docs\roadmap.md)
+  ⎿  Added 1 line
+      10  | 1 | Sandbox content + MVP-Tiny RL | "PPO agent beats random b
+          aseline on the tracer base" | Sandbox-core (full TH6), Sandbox-
+          web (viewer + editor), Barracks (env + first PPO) |
+      11  | 2 | MVP-Real | "PPO agent three-stars 50% of curated TH6 base
+          s" | All three of the above, full integration |
+      12  | 3 | Cartographer + generalization | "Agent attacks scraped re
+          al bases" | Cartographer (Roboflow pipeline), Barracks (transfe
+          r eval) |
+      13 +| 4 | Continuation — beyond TH6 | "Agent operates across higher
+         + town halls with full troop and hero rosters" | All subsystems,
+         + scope-expanded to TH7+ content |                              
+      14  
+      15  Phases overlap in practice. Phase 1 sandbox-content authoring r
+          uns in parallel with Phase 1 RL work because the simulator is d
+          ata-driven (FR-S3). The roadmap below describes the ideal compl
+          etion order; ralph-driven issues land in the order that unblock
+          s the most downstream work.
+      16  
+
+● Now adding the Phase 4 section so the table row has matching prose. Let me
+  find the right insertion point — after Phase 3's exit criteria and before
+  "Cross-phase concerns".
+
+  Searched for 1 pattern, read 1 file (ctrl+o to expand)
+
+● Update(app\docs\roadmap.md)
+  ⎿  Added 26 lines
+      237  
+      238  ---
+      239  
+      240 +## Phase 4 — Continuation (beyond TH6)                        
+      241 +                                                              
+      242 +**Goal.** Scale the simulator and the agent past the TH6 ceili
+          +ng locked into v1. Town Hall progression brings new defenses, 
+          +new troops, new spells, heroes with active abilities, and air 
+          +mechanics — each a meaningful addition to the strategic surfac
+          +e area. *Phase 4 is open-ended; specific TH levels and content
+          + cuts will be planned in dedicated grilling sessions before ea
+          +ch sub-phase begins.*                                         
+      243 +                                                              
+      244 +**Indicative content directions** (each lands as its own sub-p
+          +hase or grilling session):                                    
+      245 +                                                              
+      246 +- **TH7 content.** Healer, Barbarian King (first hero), Hidden
+          + Tesla, Heal Spell, additional army camp slots. Air troops + a
+          +ir-defense interactions become live (Air Defense stops being i
+          +nert).                                                        
+      247 +- **TH8 content.** Dragon, P.E.K.K.A, Wizard Tower upgrades, R
+          +age Spell, dark-elixir economy hooks (Minion, Hog Rider, Valky
+          +rie, Golem).                                                  
+      248 +- **TH9 content.** Archer Queen (second hero), X-Bow, Witch, L
+          +ava Hound, Jump Spell, Freeze Spell, Skeleton Spell. Two-hero 
+          +coordination becomes part of the action space.                
+      249 +- **TH10+ content.** Inferno Tower, Grand Warden, Bowler, Eagl
+          +e Artillery, additional spells, deeper hero ability trees.    
+      250 +- **Heroes and hero abilities.** Heroes are persistent, single
+          +-instance units with HP that regenerates between attacks (off-
+          +sim concern) and a *hero ability* — an active, agent-triggered
+          + cooldown skill (King's Iron Fist, Queen's Royal Cloak, Warden
+          +'s Eternal Tome, etc.). Adds a new action class to the action 
+          +space and a new obs channel for ability cooldowns.            
+      251 +- **Air units and anti-air mechanics.** Activate the inert Air
+          + Defense behavior wired in v1. Distinguish ground vs air targe
+          +ting in defense `target_filter` (already a data field). Add ai
+          +r-only troops (Healer, Dragon, Minion, Lava Hound).           
+      252 +- **Filled Clan Castle.** Defender troops spawn from the CC wh
+          +en the attacker enters trigger range. Adds defender-side troop
+          + AI — a meaningful but bounded extension of the existing troop
+          + AI.                                                          
+      253 +- **Procedural generator with TH-aware constraints.** Generali
+          +ze the deferred procedural generator from §2.8 to respect TH-l
+          +evel cap counts and unlocks.                                  
+      254 +- **Cross-TH agent generalization.** Train a single agent that
+          + selects strategy across TH levels, or train per-TH specialist
+          +s and study transfer.                                         
+      255 +                                                              
+      256 +**Why this phase is open-ended.** Each TH level adds 2–6 new e
+          +ntities and 0–2 new mechanics. Every addition is a JSON edit t
+          +o the data-driven core (FR-S3) plus minor obs-channel and acti
+          +on-channel extensions. The architecture committed in v1 is *in
+          +tended* to absorb this scope without re-design — this phase is
+          + the test of that claim. If any sub-phase requires breaking ch
+          +anges to `BaseLayout` or `Replay` schemas, those go through th
+          +e `schema_version` migration path (see `technical.md` §4.4).  
+      257 +                                                              
+      258 +**Exit criteria for Phase 4 (per sub-phase, not phase-wide).**
+      259 +                                                              
+      260 +- New TH-level content lands data-driven, with golden replays 
+          +for any new mechanic (heroes, hero abilities, air units, fille
+          +d CC).                                                        
+      261 +- Agent achieves a comparable star rate on the new TH level's 
+          +hand-built eval set.                                          
+      262 +- The Cartographer (if invoked at the new TH level) successful
+          +ly ingests bases at that level, gated by retraining the Robofl
+          +ow model on TH-level-appropriate labeled data.                
+      263 +                                                              
+      264 +---                                                           
+      265 +                                                              
+      266  ## Cross-phase concerns
+      267  
+      268  These run continuously across all phases and don't fit cleanly
+            into any one of them.
+
+● Done. Added Phase 4 — Continuation (beyond TH6) to app/docs/roadmap.md:
+
+  - One row added to the phasing summary table (between Phase 3 and the "Phases
+  overlap in practice" note).
+  - One section added between Phase 3's exit criteria and "Cross-phase
+  concerns," covering: indicative TH7 / TH8 / TH9 / TH10+ content directions,
+  heroes and hero abilities (with the action-space implication), activating the
+  inert air defense behavior + air troops, filled Clan Castle, TH-aware
+  procedural generator, and cross-TH generalization. Marked open-ended and
+  explicitly punts specifics to per-sub-phase grilling sessions, with exit
+  criteria stated per-sub-phase rather than phase-wide.
+
+  The architecture committed in v1 (data-driven core, frozen BaseLayout schema
+  with version migration, target-filter as a data field) was deliberately chosen
+   to absorb this expansion without re-design — Phase 4 is effectively the test
+  of that claim.
+
+✻ Worked for 1m 3s
+
+※ recap: Goal was to set up threestarRL planning docs from idea.md. Wrote prd.md, technical.md, roadmap.md, barracks/design.md, and ubiquitous-language.md, then added Phase 4 (continuation beyond TH6) to roadmap.md. Next: per-subsystem grilling sessions for sandbox, barracks, and cartographer.
+
+> Implement any more architecture stuff for the full repo you think is needed.  
+  Because after I'll be going into working on the phases and subsystems.        
+
+● Going to scaffold the repo infrastructure so you can start Phase 0 issue work
+  without spending a session on plumbing. Let me first audit what already exists
+   at the root so I don't clobber anything.
+
+  Read 2 files, listed 3 directories (ctrl+o to expand)
+
+● Found a wrinkle worth flagging: ralph/afk.sh reads issues from the root
+  issues/ directory (cat issues/*.md), but the architecture we locked specifies
+  per-subsystem app/docs/{sandbox,barracks,cartographer}/issues/{open,done}/.
+  I'll create both — the per-subsystem dirs for the architecture, and keep root
+  issues/ as the ralph entry point — and call out the discrepancy in the README
+  so you can decide how to reconcile when you start running ralph.
+
+  Setting up tasks for the scaffolding work.
+● Writing all the root config files in parallel.
+
+● Write(pyproject.toml)
+  ⎿  Wrote 60 lines to pyproject.toml
+       2 name = "threestarrl"
+       3 version = "0.1.0"
+       4 description = "A Clash of Clans-style attack simulator and RL en
+         vironment for studying base-attacking strategy."
+       5 readme = "README.md"
+       6 requires-python = ">=3.12"
+       7 license = { text = "MIT" }
+       8 authors = [{ name = "EvanJohnstone48" }]
+       9 dependencies = [
+      10     "pydantic>=2.6",
+     … +52 lines (ctrl+o to expand)
+
+● Write(ruff.toml)
+  ⎿  Wrote 32 lines to ruff.toml
+       1 target-version = "py312"
+       2 line-length = 100
+       3 extend-exclude = [
+       4     "app/sandbox_web",
+       5     "app/experiments/runs",
+       6     ".venv",
+       7 ]
+       8 
+       9 [lint]
+      10 select = [
+     … +23 lines (ctrl+o to expand)
+
+● Write(pyrightconfig.json)
+  ⎿  Wrote 24 lines to pyrightconfig.json
+       2   "include": ["app/sandbox_core", "app/barracks", "app/cartograp
+         her", "tests"],
+       3   "exclude": [
+       4     "**/__pycache__",
+       5     "**/.pytest_cache",
+       6     "**/.ruff_cache",
+       7     "app/experiments/runs",
+       8     "app/sandbox_web",
+       9     ".venv"
+      10   ],
+     … +15 lines (ctrl+o to expand)
+
+● Write(.pre-commit-config.yaml)
+  ⎿  Wrote 23 lines to .pre-commit-config.yaml
+       1 repos:
+       2   - repo: https://github.com/astral-sh/ruff-pre-commit
+       3     rev: v0.4.10
+       4     hooks:
+       5       - id: ruff
+       6         args: [--fix]
+       7       - id: ruff-format
+       8 
+       9   - repo: local
+      10     hooks:
+     … +13 lines (ctrl+o to expand)
+
+● Write(.gitignore)
+  ⎿  Wrote 69 lines to .gitignore
+       1 # Python
+       2 __pycache__/
+       3 *.py[cod]
+       4 *$py.class
+       5 *.so
+       6 .Python
+       7 *.egg-info/
+       8 build/
+       9 dist/
+      10 .eggs/
+     … +60 lines (ctrl+o to expand)
+
+● Write(README.md)
+  ⎿  Wrote 97 lines to README.md
+       2 # threestarRL
+         r (**The Sandbox**) and use it as a reinforcement learning envir
+         se-attacking strategy. A computer vision pipeline (**The Cartogr
+         om real screenshots.allows the agent to attack bases captured fr
+       4 
+       6 For the full spec, read in this order:
+         ch [`app/docs/idea.md`](app/docs/idea.md) — original project pit
+         on, milestones, FRs)`](app/docs/prd.md) — full project PRD (visi
+         tion architecturehnical.md`](app/docs/technical.md) — implementa
+      10 4. [`app/docs/barracks/design.md`](app/docs/barracks/design
+     … +125 lines (ctrl+o to expand)
+
+● Write(.github\workflows\ci.yml)
+  ⎿  Wrote 72 lines to .github\workflows\ci.yml
+       1 name: CI
+       2 
+       3 on:
+       4   push:
+       5     branches: [main]
+       6   pull_request:
+       7     branches: [main]
+       8 
+       9 concurrency:
+      10   group: ${{ github.workflow }}-${{ github.ref }}
+     … +62 lines (ctrl+o to expand)
+
+● Write(app\sandbox_core\__init__.py)  ⎿  Wrote 9 lines to app\sandbox_core\__init__.py
+        mulator.ox-core — pure-Python deterministic Clash-style attack si
+      2 
+      3 The simulator owns all world state and produces replays. It is he
+      4 RL-importable, and emits JSON artifacts validated by Pydantic v2 
+        models.
+      5 
+         §5.1 for FRs.echnical.md §5 for architecture and app/docs/prd.md
+      7 """
+      8 
+      9 __version__ = "0.1.0"
+     … +3 lines (ctrl+o to expand)
+
+● Write(app\barracks\__init__.py)
+  ⎿  Wrote 10 lines to app\barracks\__init__.py
+         ne.Barracks — the RL environment, training loop, and eval pipeli
+       2 
+       3 Wraps sandbox_core in a Gymnasium-compliant environment, trains 
+       4 Stable-Baselines3 MaskablePPO, and evaluates against the frozen 
+         held-out base set.
+       5 
+       7 app/docs/technical.md §6 for architecture summary.c design and
+       8 """
+       9 
+      10 __version__ = "0.1.0"
+     … +2 lines (ctrl+o to expand)
+
+● Write(app\cartographer\__init__.py)
+  ⎿  Wrote 10 lines to app\cartographer\__init__.py
+         Clash base screenshots.low-based CV pipeline for ingesting real 
+       2 
+         pace.RED TO v2. In v1 this package is a stub reserving the names
+       4 The architectural contract is committed (see app/docs/technical.
+         md §7), but
+          complete.tion does not begin until the MVP-Real RL milestone is
+       6 
+       8 """put contract: BaseLayout JSON conforming to the v1 schema.
+       9 
+      10 __version__ = "0.0.0"
+     … +4 lines (ctrl+o to expand)
+
+● Write(app\cartographer\README.md)
+  ⎿  Wrote 31 lines to app\cartographer\README.md
+       2 # Cartographer
+       3 **Status: deferred to v2.**
+       4 
+         itted in `app/docs/technical.md` §7 and `app/docs/prd.md` §5.3. 
+         Implementation does not begin until the MVP-Real milestone is co
+         mplete.
+       7 ## Pipeline (planned, v2)
+       8 
+       9 ```
+      10 screenshot.png
+     … +31 lines (ctrl+o to expand)
+
+● Now the web project skeleton.
+
+● Write(app\sandbox_web\package.json)
+  ⎿  Wrote 37 lines to app\sandbox_web\package.json
+       2   "name": "sandbox-web",
+       3   "private": true,
+       4   "version": "0.1.0",
+       5   "type": "module",
+       6   "description": "Sandbox-web — replay viewer and manual base ed
+         itor for threestarRL.",
+       7   "scripts": {
+       8     "dev": "vite",
+       9     "build": "tsc -b && vite build",
+      10     "preview": "vite preview",
+     … +28 lines (ctrl+o to expand)
+
+● Write(app\sandbox_web\vite.config.ts)
+  ⎿  Wrote 19 lines to app\sandbox_web\vite.config.ts
+       1 import { defineConfig } from "vite";
+       2 import react from "@vitejs/plugin-react";
+       3 import path from "node:path";
+       4 
+       5 export default defineConfig({
+       6   plugins: [react()],
+       7   resolve: {
+       8     alias: {
+       9       "@": path.resolve(__dirname, "src"),
+      10     },
+     … +11 lines (ctrl+o to expand)
+
+● Write(app\sandbox_web\tsconfig.json)
+  ⎿  Wrote 27 lines to app\sandbox_web\tsconfig.json
+       1 {
+       2   "compilerOptions": {
+       3     "target": "ES2022",
+       4     "lib": ["ES2022", "DOM", "DOM.Iterable"],
+       5     "module": "ESNext",
+       6     "moduleResolution": "bundler",
+       7     "jsx": "react-jsx",
+       8     "strict": true,
+       9     "noUnusedLocals": true,
+      10     "noUnusedParameters": true,
+     … +17 lines (ctrl+o to expand)
+
+● Write(app\sandbox_web\index.html)
+  ⎿  Wrote 12 lines to app\sandbox_web\index.html
+       2 <html lang="en">
+       3   <head>
+       4     <meta charset="UTF-8" />
+       5     <meta name="viewport" content="width=device-width, initial-s
+         cale=1.0" />
+       6     <title>threestarRL — Sandbox</title>
+       7   </head>
+       8   <body>
+       9     <div id="root"></div>
+      10     <script type="module" src="/src/main.tsx"></script>
+     … +3 lines (ctrl+o to expand)
+
+● Write(app\sandbox_web\src\main.tsx)
+  ⎿  Wrote 10 lines to app\sandbox_web\src\main.tsx
+       1 import React from "react";
+       2 import ReactDOM from "react-dom/client";
+       3 import App from "./App";
+       4 import "./styles.css";
+       5 
+       6 ReactDOM.createRoot(document.getElementById("root")!).render(
+       7   <React.StrictMode>
+       8     <App />
+       9   </React.StrictMode>,
+      10 );
+
+● Write(app\sandbox_web\src\App.tsx)
+  ⎿  Wrote 11 lines to app\sandbox_web\src\App.tsx
+       2   return (ault function App() {
+       3     <main>
+       4       <h1>threestarRL — Sandbox</h1>
+       5       <p>
+       6         Phase 0 placeholder. The replay viewer and manual base e
+       7         See <code>app/docs/roadmap.md</code> for the build order
+         .
+       8       </p>
+       9     </main>
+      10   );
+     … +2 lines (ctrl+o to expand)
+
+● Write(app\sandbox_web\src\styles.css)
+  ⎿  Wrote 32 lines to app\sandbox_web\src\styles.css
+       1 :root {
+       2   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+       3   color-scheme: dark;
+       4   background: #0e1116;
+       5   color: #e6edf3;
+       6 }
+       7 
+       8 * {
+       9   box-sizing: border-box;
+      10 }
+     … +22 lines (ctrl+o to expand)
+
+● Write(app\sandbox_web\.eslintrc.cjs)
+  ⎿  Wrote 16 lines to app\sandbox_web\.eslintrc.cjs
+       1 module.exports = {
+       2   root: true,
+       3   env: { browser: true, es2022: true },
+       4   extends: [
+       5     "eslint:recommended",
+       6     "plugin:@typescript-eslint/recommended",
+       7     "plugin:react-hooks/recommended",
+       8   ],
+       9   ignorePatterns: ["dist", ".eslintrc.cjs", "vite.config.ts"],
+      10   parser: "@typescript-eslint/parser",
+     … +8 lines (ctrl+o to expand)
+
+● Write(app\sandbox_web\.prettierrc)
+  ⎿  Wrote 7 lines to app\sandbox_web\.prettierrc
+      1 {
+      2   "semi": true,
+      3   "singleQuote": false,
+      4   "trailingComma": "all",
+      5   "printWidth": 100,
+      6   "tabWidth": 2
+      7 }
+
+● Write(app\sandbox_web\.gitignore)
+  ⎿  Wrote 5 lines to app\sandbox_web\.gitignore
+      1 node_modules/
+      2 dist/
+      3 .vite/
+      4 *.tsbuildinfo
+      5 .DS_Store
+
+● Write(app\sandbox_web\public\sprites\.gitkeep)
+  ⎿  Wrote 1 lines to app\sandbox_web\public\sprites\.gitkeep
+      1 (No content)
+
+● Write(tests\__init__.py)
+  ⎿  Wrote 1 lines to tests\__init__.py
+      1 (No content)
+● Write(tests\conftest.py)
+  ⎿  Wrote 17 lines to tests\conftest.py
+       2 """Shared pytest fixtures for threestarRL.
+       3 Add fixtures here that span multiple subsystems. Per-subsystem f
+         ixtures live in
+       4 the subsystem's own conftest.py (e.g., tests/unit/sandbox_core/c
+         onftest.py).
+       6 """
+       7 from __future__ import annotations
+       8 
+       9 import sys
+      10 from pathlib import Path
+     … +10 lines (ctrl+o to expand)
+
+● Write(tests\unit\__init__.py)
+  ⎿  Wrote 1 lines to tests\unit\__init__.py
+      1 (No content)
+
+● Write(tests\unit\sandbox_core\__init__.py)
+  ⎿  Wrote 1 lines to tests\unit\sandbox_core\__init__.py
+      1 (No content)
+
+● Write(tests\unit\sandbox_core\test_smoke.py)
+  ⎿  Wrote 9 lines to tests\unit\sandbox_core\test_smoke.py
+      1 """Smoke test confirming sandbox_core is importable. Replace once
+         Phase 0.1 lands."""
+      2 
+      3 from __future__ import annotations
+      4 
+      5 
+      6 def test_sandbox_core_importable() -> None:
+      7     import sandbox_core
+      8 
+      9     assert sandbox_core.__version__
+
+● Write(tests\unit\barracks\__init__.py)
+  ⎿  Wrote 1 lines to tests\unit\barracks\__init__.py
+      1 (No content)
+
+● Write(tests\unit\barracks\test_smoke.py)
+  ⎿  Wrote 9 lines to tests\unit\barracks\test_smoke.py
+      1 """Smoke test confirming barracks is importable. Replace once Pha
+        se 1.2 lands."""
+      2 
+      3 from __future__ import annotations
+      4 
+      5 
+      6 def test_barracks_importable() -> None:
+      7     import barracks
+      8 
+      9     assert barracks.__version__
+
+● Write(tests\unit\cartographer\__init__.py)
+  ⎿  Wrote 1 lines to tests\unit\cartographer\__init__.py
+      1 (No content)
+
+● Write(tests\unit\cartographer\test_smoke.py)
+  ⎿  Wrote 9 lines to tests\unit\cartographer\test_smoke.py
+      1 """Smoke test confirming the cartographer stub is importable."""
+      2 
+      3 from __future__ import annotations
+      4 
+      5 
+      6 def test_cartographer_stub_importable() -> None:
+      7     import cartographer
+      8 
+      9     assert cartographer.__version__ == "0.0.0", "v1 cartographer 
+        is a stub"
+
+● Write(tests\integration\__init__.py)
+  ⎿  Wrote 1 lines to tests\integration\__init__.py
+      1 (No content)
+
+● Write(tests\integration\.gitkeep)
+  ⎿  Wrote 1 lines to tests\integration\.gitkeep
+      1 (No content)
+
+● Write(tests\golden\replays\.gitkeep)
+  ⎿  Wrote 1 lines to tests\golden\replays\.gitkeep
+      1 (No content)
+
+● Write(tests\golden\README.md)
+  ⎿  Wrote 16 lines to tests\golden\README.md
+      2 # Golden replays
+      3 Frozen `(base.json, plan.json) → expected_replay.json` fixtures.
+      4 
+      5 The architectural keystone for a deterministic simulator: any cha
+        nge that unintentionally alters simulation output breaks the corr
+         --update-golden` and the diff is part of the PR.rate via `pytest
+      6 
+      7 See `app/docs/technical.md` §9.3 for the strategy.
+      8 
+      9 ## Planned scenarios (Phase 1)
+     … +10 lines (ctrl+o to expand)
+
+● Subsystem doc placeholders and issue folders.
+
+● Write(app\docs\sandbox\prd.md)
+  ⎿  Wrote 33 lines to app\docs\sandbox\prd.md
+      2 # The Sandbox — PRD (placeholder)
+      3 **Status: stub.** This per-subsystem PRD will be authored in a de
+        dicated grilling session before Phase 1 sandbox-content work begi
+        ns. The overall project PRD already commits to:
+      4 
+      5 - v1 functional requirements: see `app/docs/prd.md` §5.1.
+      6 - Architecture: see `app/docs/technical.md` §3 and §5.
+      7 - Phase plan: see `app/docs/roadmap.md` Phases 0 and 1.
+      8 
+      9 ## Scope of the future grilling
+     … +32 lines (ctrl+o to expand)
+
+● Write(app\docs\barracks\prd.md)
+  ⎿  Wrote 35 lines to app\docs\barracks\prd.md
+       2 # The Barracks — PRD (placeholder)
+       3 **Status: stub.** This per-subsystem PRD will be authored in a d
+         edicated grilling session before Phase 1.2 RL work begins. The o
+         verall project PRD already commits to:
+       4 
+       6 - Architecture: see `app/docs/technical.md` §6..md` §5.2.
+       7 - RL design specifics: see `app/docs/barracks/design.md`.
+       8 - Phase plan: see `app/docs/roadmap.md` Phases 1 and 2.
+       9 
+      10 ## Scope of the future grilling
+     … +38 lines (ctrl+o to expand)
+
+● Write(app\docs\cartographer\prd.md)
+  ⎿  Wrote 36 lines to app\docs\cartographer\prd.md
+      2 # The Cartographer — PRD (placeholder)
+      3 **Status: stub. Cartographer is deferred to v2.** This per-subsys
+        tem PRD will be authored in a dedicated grilling session before P
+        hase 3 work begins. The overall project PRD already commits to:
+      4 
+      5 - v1 + v2 functional requirements: see `app/docs/prd.md` §5.3.
+      6 - Architecture: see `app/docs/technical.md` §7.
+      7 - Phase plan: see `app/docs/roadmap.md` Phase 3.
+      8 
+      9 ## Scope of the future grilling
+     … +44 lines (ctrl+o to expand)
+
+● Write(app\docs\sandbox\issues\open\.gitkeep)
+  ⎿  Wrote 1 lines to app\docs\sandbox\issues\open\.gitkeep
+      1 (No content)
+
+● Write(app\docs\sandbox\issues\done\.gitkeep)
+  ⎿  Wrote 1 lines to app\docs\sandbox\issues\done\.gitkeep
+      1 (No content)
+
+● Write(app\docs\barracks\issues\open\.gitkeep)  ⎿  Wrote 1 lines to app\docs\barracks\issues\open\.gitkeep
+      1 (No content)
+
+● Write(app\docs\barracks\issues\done\.gitkeep)
+  ⎿  Wrote 1 lines to app\docs\barracks\issues\done\.gitkeep
+      1 (No content)
+
+● Write(app\docs\cartographer\issues\open\.gitkeep)
+  ⎿  Wrote 1 lines to app\docs\cartographer\issues\open\.gitkeep
+      1 (No content)
+
+● Write(app\docs\cartographer\issues\done\.gitkeep)
+  ⎿  Wrote 1 lines to app\docs\cartographer\issues\done\.gitkeep
+      1 (No content)
+
+● Write(issues\.gitkeep)
+  ⎿  Wrote 1 lines to issues\.gitkeep
+      1 (No content)
+
+● Last batch — data and experiments directories.
+
+● Write(app\data\README.md)
+  ⎿  Wrote 28 lines to app\data\README.md
+       2 # Data
+          configuration for threestarRL. Everything here is loaded by `sa
+          entity stats.d `barracks` at startup; nothing in code hardcodes
+       5 ## Files
+       6 
+       8 | --- | --- | --- |Authored in phase |
+         ge, range, cooldown, splash, target filter, projectile arc, ...)
+         ) |Phase 0.1 (skeleton: 2 entries) → Phase 1.1.1–1.1.4 (full TH6
+          target preference, splash, housing space) | Phase 0.1 (skeleton
+         : 2 entries) → Phase 1.1.2 (full TH6) |
+     … +39 lines (ctrl+o to expand)
+
+● Write(app\data\reward_weights.json)
+  ⎿  Wrote 28 lines to app\data\reward_weights.json
+       1 {
+       2   "schema_version": 1,
+       3   "delta_star": 100.0,
+       4   "delta_destruction_pct": 1.0,
+       5   "delta_town_hall_destroyed": 20.0,
+       6   "time_penalty_per_tick": 0.001,
+       7   "troop_loss_coeff": 0.5,
+       8   "final_bonus_per_star": [0, 50, 200, 500],
+       9   "building_weights": {
+      10     "town_hall": 0.0,
+     … +18 lines (ctrl+o to expand)
+
+● Write(app\data\sample_bases\.gitkeep)
+  ⎿  Wrote 1 lines to app\data\sample_bases\.gitkeep
+      1 (No content)
+
+● Write(app\data\scraped_bases\.gitkeep)
+  ⎿  Wrote 1 lines to app\data\scraped_bases\.gitkeep
+      1 (No content)
+
+● Write(app\experiments\runs\.gitkeep)
+  ⎿  Wrote 1 lines to app\experiments\runs\.gitkeep
+      1 (No content)
+
+● Write(app\experiments\configs\.gitkeep)
+  ⎿  Wrote 1 lines to app\experiments\configs\.gitkeep
+      1 (No content)
+
+● Write(app\experiments\README.md)
+  ⎿  Wrote 34 lines to app\experiments\README.md
+       1 # Experiments
+       2 
+       3 Per-run training artifacts and the configs that produced them.
+       4 
+       5 ## Layout
+       6 
+       7 ```
+       8 experiments/
+       9   configs/
+      10     mvp_tiny.json        # training config for MVP-Tiny
+     … +33 lines (ctrl+o to expand)
+
+● Let me verify everything by listing the resulting tree.
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+● I see agent.md is now at app/docs/agents/agent.md — let me confirm the layout
+  there.
+
+  Listed 1 directory (ctrl+o to expand)
+
+● The user has reorganized agent.md into app/docs/agents/agent.md (with a
+  sessions/ sibling). My README and idea.md both link to the old path. Fixing
+  those references.
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+● Update(README.md)
+  ⎿  Added 2 lines, removed 2 lines
+      10  4. [`app/docs/barracks/design.md`](app/docs/barracks/design.md)
+           — RL design specifics (obs/action/reward)
+      11  5. [`app/docs/roadmap.md`](app/docs/roadmap.md) — phased plan (
+          Phase 0–4)
+      12  6. [`app/docs/ubiquitous-language.md`](app/docs/ubiquitous-lang
+          uage.md) — the project glossary
+      13 -7. [`app/docs/agent.md`](app/docs/agent.md) — the agentic-issue
+         - operating process                                             
+      13 +7. [`app/docs/agents/agent.md`](app/docs/agents/agent.md) — the
+         + agentic-issue operating process                               
+      14  
+      15  ## Status
+      16  
+     ...
+      63  
+      64  ## Issues and the ralph loop
+      65  
+      66 -The agentic operating process (see [`app/docs/agent.md`](app/do
+         -cs/agent.md)) is built on small, vertical-slice issues that the
+         - ralph loop executes one at a time.                            
+      66 +The agentic operating process (see [`app/docs/agents/agent.md`]
+         +(app/docs/agents/agent.md)) is built on small, vertical-slice i
+         +ssues that the ralph loop executes one at a time.              
+      67  
+      68  **There are two issue locations** that need a brief explanation
+          :
+      69  
+● Update(app\docs\technical.md)
+  ⎿  Added 3 lines, removed 1 line
+      30  ├── app/
+      31  │   ├── docs/                             # All project documen
+          tation
+      32  │   │   ├── idea.md                        # Original project p
+          itch
+      33 -│   │   ├── agent.md                       # Agent operating pr
+         -ocess                                                          
+      33 +│   │   ├── agents/                                            
+      34 +│   │   │   ├── agent.md                   # Agent operating pr
+         +ocess                                                          
+      35 +│   │   │   └── sessions/                  # Per-grilling-sessi
+         +on notes                                                       
+      36  │   │   ├── prd.md                         # Full project PRD
+      37  │   │   ├── technical.md                   # This file
+      38  │   │   ├── roadmap.md                     # Phased roadmap
+
+● Let me do a final sanity check on the import paths so the smoke tests actually
+   pass when you run them.
+
+  Read 1 file (ctrl+o to expand)
+
+● Done. Repo infrastructure is in place — you can start Phase 0.1 issue work
+  without spending a session on plumbing.
+
+  What landed
+
+  - Root config — pyproject.toml (deps + dev/cartographer/wandb extras),
+  ruff.toml (lint+format), pyrightconfig.json (strict mode),
+  .pre-commit-config.yaml, .gitignore, README.md.
+  - CI — .github/workflows/ci.yml with parallel lint/typecheck/test/web jobs on
+  Linux runners, using astral-sh/setup-uv for fast Python setup and pnpm for the
+   web build.
+  - Python packages — app/sandbox_core/__init__.py, app/barracks/__init__.py,
+  app/cartographer/__init__.py + cartographer README.md documenting v2 deferral.
+  - Web project — app/sandbox_web/ Vite + React 18 + PixiJS 8 + TypeScript
+  skeleton with package.json, vite.config.ts, tsconfig.json, index.html,
+  src/{main,App}.tsx, styles.css, ESLint, Prettier, .gitignore, and a
+  public/sprites/ placeholder.
+  - Tests — tests/conftest.py (adds app/ to sys.path so import sandbox_core
+  works without packaging), unit/integration/golden subdirectories, three smoke
+  tests asserting each Python package imports.
+  - Per-subsystem doc placeholders —
+  app/docs/{sandbox,barracks,cartographer}/prd.md stubs that link forward to the
+   architecture commitments and list what their dedicated grilling sessions will
+   resolve. Plus issues/{open,done}/.gitkeep folders matching the architecture.
+  - Data + experiments — app/data/README.md, app/data/reward_weights.json with
+  the values from barracks/design.md, app/experiments/README.md, and
+  .gitkeep-tracked sample_bases/, scraped_bases/, runs/, configs/ subdirs.
+  - Reference fixes — Updated README and technical.md repo layout to point at
+  the new app/docs/agents/agent.md location (you moved it between turns).
+
+  Two things flagged in the README, not silently resolved
+
+  - Issue location reconciliation. ralph/afk.sh reads from root issues/, but the
+   architecture specifies per-subsystem app/docs/{X}/issues/. README documents
+  three options for reconciling and ships the repo configured to support the
+  simplest (root issues/ is the active queue, per-subsystem folders receive
+  completed issues). Decide before kicking off ralph.
+  - Old root issues/ directory — kept and added a .gitkeep so the ralph loop's
+  cat issues/*.md still works without complaint.
+
+  First commands you'll run
+
+  uv sync --all-extras --dev
+  uv run pre-commit install
+  uv run pytest -m "not slow"          # 3 smoke tests should pass
+  cd app/sandbox_web && pnpm install && pnpm dev
+
+  You're ready for Phase 0 issue work. The natural next step is to run
+  /prd-to-issues against app/docs/sandbox/prd.md (or the roadmap's Phase 0.1
+  cluster) to author the first batch of tracer-bullet issues — want me to do
+  that now?
+
+✻ Crunched for 6m 54s
+
+※ recap: We grilled the threestarRL plan, wrote the four core docs (prd, technical, roadmap, barracks/design), populated the ubiquitous-language glossary, and scaffolded the full repo infrastructure so Phase 0 issue work can begin. Next: run /prd-to-issues to author the first batch of Phase 0 tracer-bullet issues.
+
+> one last thing. i decided I just want the root issues folder then when I work 
+   on any phase the issues go the that root folder and afk.sh runs them.        
+  There's open and done and just that one folder.                               
+
+● Locking in: single root issues/open/ + issues/done/, no per-subsystem issue
+  folders. I'll create the subdirs, delete the per-subsystem ones, update both
+  ralph scripts to glob issues/open/*.md, and update the docs that referenced
+  the per-subsystem layout.
+
+● First, create the new structure and delete the old per-subsystem issue
+  folders.
+
+● Write(issues\open\.gitkeep)
+  ⎿  Wrote 1 lines to issues\open\.gitkeep
+      1 (No content)
+
+● Write(issues\done\.gitkeep)
+  ⎿  Wrote 1 lines to issues\done\.gitkeep
+      1 (No content)
+
+● Bash(rm "C:/Users/EvanN/threestarRL/issues/.gitkeep" && rm -rf
+      "C:/Users/EvanN/threestarRL/app/docs/sandbox/issues"
+      "C:/Users/EvanN/threestarRL/app/docs/barracks/iss…)
+  ⎿  Done
+
+● Now update both ralph scripts to read from issues/open/*.md.
+
+● Update(ralph\afk.sh)
+  ⎿  Added 1 line, removed 1 line
+      17    trap "rm -f $tmpfile" EXIT
+      18  
+      19    commits=$(git log -n 5 --format="%H%n%ad%n%B---" --date=short
+           2>/dev/null || echo "No commits found")
+      20 -  issues=$(cat issues/*.md 2>/dev/null || echo "No issues found
+         -")                                                             
+      20 +  issues=$(cat issues/open/*.md 2>/dev/null || echo "No issues 
+         +found")                                                        
+      21    prompt=$(cat ralph/prompt.md)
+      22  
+      23    docker sandbox run claude . -- \
+
+● Update(ralph\once.sh)
+  ⎿  Added 1 line, removed 1 line
+      1  #!/bin/bash
+      2  
+      3 -issues=$(cat issues/*.md 2>/dev/null || echo "No issues found") 
+      3 +issues=$(cat issues/open/*.md 2>/dev/null || echo "No issues fou
+        +nd")                                                            
+      4  commits=$(git log -n 5 --format="%H%n%ad%n%B---" --date=short 2>
+         /dev/null || echo "No commits found")
+      5  
+      6  {
+
+● Update ralph/prompt.md to reflect the canonical location.
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(ralph\prompt.md)
+  ⎿  Added 1 line, removed 1 line
+      1  # ISSUES
+      2  
+      3 -Local issue files from `issues/` (in some parent docs folder) ar
+        -e provided at start of context. Parse them to understand the ope
+        -n issues.                                                       
+      3 +Local issue files from the root `issues/open/` directory are pro
+        +vided at start of context. Parse them to understand the open iss
+        +ues.                                                            
+      4  
+      5  You will work on the AFK issues only, not the HITL ones.
+      6  
+
+● Update(ralph\prompt.md)
+  ⎿  Added 1 line, removed 1 line
+      51  
+      52  # THE ISSUE
+      53  
+      54 -If the task is complete, move the issue file to `issues/done/` 
+         -inside of whatever folder the issues are in.                   
+      54 +If the task is complete, move the issue file from `issues/open/
+         +` to `issues/done/`.                                           
+      55  
+      56  If the task is not complete, add a note to the issue file with 
+          what was done.
+      57  
+
+● Now updating the docs that referenced the per-subsystem issues layout.
+
+● Update(README.md)
+  ⎿  Added 9 lines, removed 13 lines
+      58    experiments/runs/        # Per-run training artifacts (gitign
+          ored)
+      59  tests/                     # Unit + integration + golden replay
+      60  ralph/                     # Issue execution loop
+      61 -issues/                    # Active issues fed to the ralph loo
+         -p (see "Issues" below)                                         
+      61 +issues/                                                        
+      62 +  open/                    # Active issues fed to the ralph loo
+         +p                                                              
+      63 +  done/                    # Completed issues, moved by the ral
+         +ph loop                                                        
+      64  ```
+      65  
+      66  ## Issues and the ralph loop
+      67  
+      68  The agentic operating process (see [`app/docs/agents/agent.md`]
+          (app/docs/agents/agent.md)) is built on small, vertical-slice i
+          ssues that the ralph loop executes one at a time.
+      69  
+      68 -**There are two issue locations** that need a brief explanation
+         -:                                                              
+      70 +**Single issue queue.** All issues live in the root `issues/` d
+         +irectory:                                                      
+      71  
+      70 -- `app/docs/{sandbox,barracks,cartographer}/issues/{open,done}/
+         -` — the canonical, per-subsystem location specified in the arch
+         -itecture. Each subsystem owns its own issue queue.             
+      71 -- `issues/` (root) — what `ralph/afk.sh` currently reads via `c
+         -at issues/*.md`. The ralph loop's current implementation aggreg
+         -ates from this single directory.                               
+      72 +- `issues/open/` — active issues that ralph picks up.          
+      73 +- `issues/done/` — completed issues, moved here by ralph after 
+         +the work commits.                                              
+      74  
+      73 -**Reconciliation options** (decide before kicking off ralph):  
+      75 +When you start working on a phase, drop the issue files for tha
+         +t phase into `issues/open/` (regardless of which subsystem they
+         + belong to — sandbox, barracks, and cartographer issues all sha
+         +re this one queue). The ralph loop globs `issues/open/*.md` and
+         + works one at a time.                                          
+      76  
+      75 -1. Update `ralph/afk.sh` to read from `app/docs/*/issues/open/*
+         -.md` instead of `issues/*.md`.                                 
+      76 -2. Keep root `issues/` as the active queue; copy or symlink act
+         -ive issues from per-subsystem `issues/open/` into root before e
+         -ach ralph run.                                                 
+      77 -3. Have root `issues/` *be* the active queue and only move to s
+         -ubsystem folders on completion.                                
+      78 -                                                               
+      79 -The repo as-shipped supports option (3) with empty per-subsyste
+         -m `issues/open/` folders ready to receive promoted issues. Opti
+         -on (1) is the cleanest if you don't mind a small ralph script u
+         -pdate.                                                         
+      80 -                                                               
+      77  ## Development workflow
+      78  
+      79  1. Pick a phase from [`app/docs/roadmap.md`](app/docs/roadmap.m
+          d).
+      80  2. Decompose the phase's high-level issue clusters into individ
+          ual issue files (or use the `prd-to-issues` skill).
+      85 -3. Place issue files in `issues/` (current ralph location) or `
+         -app/docs/{subsystem}/issues/open/` (architecture).             
+      81 +3. Place issue files in `issues/open/`.                        
+      82  4. Run `ralph/once.sh` for a single iteration or `ralph/afk.sh 
+          <N>` for N iterations.
+      87 -5. The ralph loop picks an issue, executes it via TDD (`/tdd` s
+         -kill), runs feedback loops (`pytest`, `pyright`, `ruff`), commi
+         -ts, and moves the issue to `done/`.                            
+      83 +5. The ralph loop picks an issue, executes it via TDD (`/tdd` s
+         +kill), runs feedback loops (`pytest`, `pyright`, `ruff`), commi
+         +ts, and moves the issue to `issues/done/`.                     
+      84  
+      85  ## Determinism guarantee
+      86  
+
+● Updating technical.md repo layout to drop the per-subsystem issue folders.
+
+● Update(app\docs\technical.md)
+  ⎿  Added 3 lines, removed 6 lines
+      39  │   │   ├── ubiquitous-language.md         # Glossary
+      40  │   │   ├── sandbox/
+      41  │   │   │   ├── prd.md                     # (later) per-subsys
+          tem PRD
+      42 -│   │   │   ├── design.md                  # (later) per-subsys
+         -tem design                                                     
+      43 -│   │   │   └── issues/{open,done}/        # Tracer-bullet issu
+         -es for ralph loop                                              
+      42 +│   │   │   └── design.md                  # (later) per-subsys
+         +tem design                                                     
+      43  │   │   ├── barracks/
+      44  │   │   │   ├── design.md                  # RL design doc (obs
+          /action/reward/training)
+      46 -│   │   │   ├── prd.md                     # (later)           
+      47 -│   │   │   └── issues/{open,done}/                            
+      45 +│   │   │   └── prd.md                     # (later)           
+      46  │   │   └── cartographer/
+      49 -│   │       ├── prd.md                     # (later)           
+      50 -│   │       └── issues/{open,done}/                            
+      47 +│   │       └── prd.md                     # (later)           
+      48  │   ├── sandbox_core/                     # Pure simulator (Pyt
+          hon package)
+      49  │   │   ├── __init__.py
+      50  │   │   ├── schemas.py                     # Pydantic models fo
+          r all data contracts
+
+  Read 1 file (ctrl+o to expand)
+● Adding the issues/ tree to the technical doc layout so it's documented.
+
+● Update(app\docs\technical.md)
+  ⎿  Added 6 lines, removed 1 line
+      117  │   └── golden/
+      118  │       └── replays/                       # Frozen replay fix
+           tures
+      119  ├── ralph/
+      120 -│   └── prompt.md                          # Existing — issue 
+          -execution loop                                                
+      120 +│   ├── afk.sh                             # Multi-iteration r
+          +alph loop                                                     
+      121 +│   ├── once.sh                            # Single-iteration 
+          +ralph                                                         
+      122 +│   └── prompt.md                          # Issue execution l
+          +oop prompt                                                    
+      123 +├── issues/                                                   
+      124 +│   ├── open/                              # Active issues (ra
+          +lph reads via cat issues/open/*.md)                           
+      125 +│   └── done/                              # Completed issues 
+          +(ralph moves them here)                                       
+      126  ├── .github/
+      127  │   └── workflows/
+      128  │       └── ci.yml                         # Lint + typecheck 
+           + test
+
+● Now updating the per-subsystem PRD stubs to drop the issue-folder mention.
+
+  Searched for 1 pattern, read 1 file (ctrl+o to expand)
+
+● Updating agent.md's example structure to match the locked single-root-issues
+  layout, plus the stale references in roadmap.md and ubiquitous-language.md.
+
+● Update(app\docs\agents\agent.md)
+  ⎿  Added 13 lines, removed 13 lines
+      24  
+      25  This codebase may contain multiple PRDs.
+      26  
+      27 -Each PRD belongs to a specific documentation folder. The agent 
+         -should treat each documentation folder as its own planning cont
+         -ext.                                                           
+      27 +Each PRD belongs to a specific documentation folder. The agent 
+         +should treat each documentation folder as its own planning cont
+         +ext. Issues, however, all live in a **single root queue** at `i
+         +ssues/open/` (active) and `issues/done/` (completed). The ralph
+         + loop globs `issues/open/*.md` and works one at a time.        
+      28  
+      29  Example structure:
+      30  
+      31  ```md
+      32 -docs/                                                          
+      32 +issues/                                                        
+      33 +  open/                                                        
+      34 +    issue-001.md                                               
+      35 +    issue-002.md                                               
+      36 +  done/                                                        
+      37 +    issue-000.md                                               
+      38 +                                                               
+      39 +app/docs/                                                      
+      40    sandbox/
+      41      prd.md
+      35 -    issues/                                                    
+      36 -      issue-001.md                                             
+      37 -      issue-002.md                                             
+      42 +    design.md                                                  
+      43  
+      44    barracks/
+      45      prd.md
+      41 -    issues/                                                    
+      42 -      issue-001.md                                             
+      43 -      issue-002.md                                             
+      46 +    design.md                                                  
+      47  
+      45 -  image-to-grid/                                               
+      46 -    prd.md                                                     
+      47 -    issues/                                                    
+      48 -      issue-001.md                                             
+      49 -      issue-002.md                                             
+      48   No newline at end of file
+      49 +  cartographer/                                                
+      50 +    prd.md                                                     
+      51   No newline at end of file
+
+● Update(app\docs\roadmap.md)
+  ⎿  Added 2 lines, removed 2 lines
+      279  Each phase decomposes into issue clusters that the agentic ral
+           ph loop expands into individual issue files.
+      280  
+      281  - High-level issue clusters live as headers in this roadmap (e
+           .g., "1.1.1 Defenses + splash damage").
+      282 -- Concrete issues are authored in `app/docs/{subsystem}/issues
+          -/open/*.md` per the structure described in `agent.md`.        
+      283 -- An issue's done state is marked by moving it to `app/docs/{s
+          -ubsystem}/issues/done/`.                                      
+      282 +- Concrete issues are authored in the root `issues/open/*.md` 
+          +queue per the structure described in `agent.md`. Issues from a
+          +ll subsystems share this single queue.                        
+      283 +- An issue's done state is marked by moving it to `issues/done
+          +/`.                                                           
+      284  - The `prd-to-issues` skill (`/prd-to-issues`) can decompose a
+            per-subsystem PRD into a starting set of issues; that's the k
+           ickoff for each phase.
+      285  
+      286  ## Risks and contingencies (roadmap-specific)
+
+● Update(app\docs\ubiquitous-language.md)
+  ⎿  Added 1 line, removed 1 line
+      22  | **Tracer bullet** | A thin, working slice through the full sy
+          stem that proves the architecture end-to-end. The Phase 0 deliv
+          erable. | "spike", "POC", "skeleton" |
+      23  | **Phase** | A roadmap stage (Phase 0, 1, 2, 3). Distinct from
+           milestones — phases are time-boxed work, milestones are headli
+          ne results. | "stage", "iteration" |
+      24  | **Ralph loop** | The issue-execution loop driven by `ralph/pr
+          ompt.md`. Picks an open issue, executes it, commits, marks it d
+          one. | "the agent", "the runner" |
+      25 -| **Issue** | A markdown task file under `app/docs/{subsystem}/
+         -issues/open/`. Moves to `issues/done/` when complete. | "ticket
+         -", "todo" |                                                    
+      25 +| **Issue** | A markdown task file in the root `issues/open/` q
+         +ueue. Moves to `issues/done/` when complete. All subsystems sha
+         +re the single queue. | "ticket", "todo" |                      
+      26  
+      27  ## Clash / TH6 game domain
+      28  
+
+● Final verification — confirm the new tree shape and that no stale
+  app/docs/{subsystem}/issues references remain.
+
+  Searched for 1 pattern, listed 1 directory (ctrl+o to expand)
+
+● Done. Single root issue queue is now the canonical layout.
+
+  What changed
+
+  - Created issues/open/ and issues/done/ (each with .gitkeep).
+  - Deleted issues/.gitkeep (root) — no longer needed since subdirs exist.
+  - Deleted per-subsystem issue folders: app/docs/sandbox/issues/,
+  app/docs/barracks/issues/, app/docs/cartographer/issues/ (and their open/done
+  children).
+  - Updated ralph/afk.sh and ralph/once.sh to glob issues/open/*.md.
+  - Updated ralph/prompt.md — issues source path and the "move to done"
+  instruction now point at issues/open/ and issues/done/.
+  - Updated docs: README.md (rewrote the Issues section), app/docs/technical.md
+  (repo layout shows root issues/open + issues/done and removes the
+  per-subsystem entries), app/docs/roadmap.md (issue authorship workflow),
+  app/docs/ubiquitous-language.md (Issue glossary entry),
+  app/docs/agents/agent.md (example structure now shows root issues/ plus
+  subsystem folders without their own issue trees).
+
+  Final shape
+
+  threestarRL/
+  ├── issues/
+  │   ├── open/        # active queue, ralph reads via cat issues/open/*.md
+  │   └── done/        # ralph moves completed issues here
+  ├── app/docs/
+  │   ├── sandbox/     # prd.md, design.md (later)
+  │   ├── barracks/    # prd.md, design.md
+  │   └── cartographer/  # prd.md
+  └── ralph/           # afk.sh, once.sh, prompt.md
+
+  Workflow when you start a phase: drop the issue files into issues/open/, run
+  ralph/once.sh (single iteration) or ralph/afk.sh <N> (N iterations), and ralph
+   moves each to issues/done/ after the work commits.
+
+✻ Baked for 2m 4s
+
+※ recap: We scoped threestarRL (a TH6 Clash sim + RL agent + future CV pipeline), wrote the PRD, technical, RL design, roadmap, and glossary docs, and scaffolded the full repo with a single root issues/open/ + issues/done/ queue. Next: author Phase 0 tracer-bullet issues into issues/open/.

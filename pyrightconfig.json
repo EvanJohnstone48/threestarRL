@@ -1,0 +1,24 @@
+{
+  "include": ["app/sandbox_core", "app/barracks", "app/cartographer", "tests"],
+  "exclude": [
+    "**/__pycache__",
+    "**/.pytest_cache",
+    "**/.ruff_cache",
+    "app/experiments/runs",
+    "app/sandbox_web",
+    ".venv"
+  ],
+  "extraPaths": ["app"],
+  "pythonVersion": "3.12",
+  "typeCheckingMode": "strict",
+  "reportMissingImports": "error",
+  "reportMissingTypeStubs": "warning",
+  "reportImplicitOverride": "warning",
+  "reportUnnecessaryTypeIgnoreComment": "warning",
+  "reportPrivateImportUsage": "none",
+  "reportUnknownMemberType": "warning",
+  "reportUnknownArgumentType": "warning",
+  "reportUnknownVariableType": "warning",
+  "reportUnknownParameterType": "warning",
+  "reportMissingParameterType": "error"
+}
