@@ -4,7 +4,7 @@ threestarRL is a research project that builds a Clash of Clans attack simulator,
 
 ## Project premise
 
-The goal is to train a reinforcement learning agent to attack a base in a simplified Clash-style environment. This is not meant to interact with the real game, automate gameplay, or function as a live bot. The project is a research system built around a custom simulator that has similar strategic structure: base layouts, grid-based buildings, walls, troops, defenses, pathfinding, deployment decisions, and attack scoring.
+The goal is to train a reinforcement learning agent to attack a base in a Clash-style environment. The project is a research system built around a custom simulator that simulates clash's strategic structure: base layouts, grid-based buildings, walls, troops, defenses, pathfinding, deployment decisions, and attack scoring.
 
 The core research question is:
 
@@ -15,12 +15,12 @@ Can an RL agent learn useful attack strategy, such as deployment timing, troop p
 The project has three major parts.
 
 1. The Sandbox  
-   A custom Clash-style simulator where bases can be built, attacked, visualized, and replayed.
+   A custom Clash-style simulator where bases can be built, attacked, visualized, and maybe replayed.
 
-2. Base extraction  
+2. The Cartographer 
    A future computer vision pipeline that turns an image of a base into a structured grid representation.
 
-3. RL training  
+3. The Barracks  
    A reinforcement learning environment built on top of The Sandbox, where agents learn to attack bases through simulation.
 
 ## The Sandbox
@@ -43,8 +43,9 @@ It should support:
 - Attack scoring
 - Replay logging
 - Eventually, RL-compatible reset and step functions
+- More that I haven't figured out yet
 
-The Sandbox should not start as a full game clone. It should start as a deterministic simulator core with a visual interface built around it.
+The Sandbox should start as a deterministic simulator core with a visual interface built around it. For the start of the project we will only be using troops and buildings up to town hall 6 in the game. The rest can come later as we want to scale it.
 
 The simulator core should be separate from the renderer.
 
@@ -52,53 +53,78 @@ The core owns the game state.
 
 The frontend only displays the state.
 
-This matters because RL training needs a fast, headless environment. The model should be able to run thousands or millions of simulation steps without needing animations, sprites, or a browser window.
+Since the RL training needs a fast, headless environment. 
 
 ## Suggested architecture
 
+Important: this is just the suggested architecture, you can make it however you want for the deepest modules and cleanest codebase.
+
 ```text
-siege-mind/
-    sandbox-core/
-        Pure simulator logic
-        Grid system
-        Buildings
-        Troops
-        Defenses
-        Combat
-        Pathfinding
-        Attack scoring
-        Replay data
+threestarRL/
+    .claude/
+        claude stuff
 
-    sandbox-web/
-        Visual editor
-        Isometric grid renderer
-        Manual base builder
-        Manual attack tester
-        Replay viewer
+    app/
+        docs/
+            all documentation for different parts of the project to be referenced by the AI:
+            three folders for the major parts, each will have PRDs and other documentation as we build it out in the future
+            idea.md: initial idea you are reading now
+            agent.md: explains the process I will be using to agentically grow this codebase
+            ubiquitous-language.md: a glossary for terms used in this coding project
+            techincal.md: the technical stack and implementation used for this project
+            roadmap.md: the implementation plan for the project
 
-    sandbox-env/
-        RL environment wrapper
-        Observation builder
-        Action parser
-        Reward functions
-        Curriculum configs
+            sandbox/
+                The Sandbox PRD and implementation issues
 
-    data/
-        buildings.json
-        troops.json
-        spells.json
-        sample_bases/
-        th6_rules.json
+            cartographer/
+                The Cartographer PRD and implementation issues
 
-    experiments/
-        Training scripts
-        Evaluation scripts
-        Saved models
-        Logs
-        Plots
+            barracks/
+                The Barracks PRD and implementation issues
 
-    docs/
-        idea.md
-        simulator_design.md
-        rl_plan.md
-        assumptions.md
+            any other documentation you want
+
+        sandbox-core/
+            Pure simulator logic
+            Grid system
+            Buildings
+            Troops
+            Defenses
+            Combat
+            Pathfinding
+            Attack scoring
+            Replay data
+
+        sandbox-web/
+            Visual editor
+            Isometric grid renderer
+            Manual base builder
+            Manual attack tester
+            Replay viewer
+
+        barracks/
+            RL environment wrapper
+            Observation builder
+            Action parser
+            Reward functions
+            Curriculum configs
+
+        data/
+            buildings.json
+            troops.json
+            spells.json
+            sample_bases/
+            th6_rules.json
+
+        experiments/
+            Training scripts
+            Evaluation scripts
+            Saved models
+            Logs
+            Plots
+    issues/
+        contains docs for all current issues generated
+    raplh/
+        script to run a raplh loop that runs the issues
+```
