@@ -10,6 +10,7 @@ This roadmap organizes the project into phases tied to the milestone ladder in `
 | 1 | Sandbox content + MVP-Tiny RL | "PPO agent beats random baseline on the tracer base" | Sandbox-core (full TH6), Sandbox-web (viewer + editor), Barracks (env + first PPO) |
 | 2 | MVP-Real | "PPO agent three-stars 50% of curated TH6 bases" | All three of the above, full integration |
 | 3 | Cartographer + generalization | "Agent attacks scraped real bases" | Cartographer (Roboflow pipeline), Barracks (transfer eval) |
+| 4 | Continuation — beyond TH6 | "Agent operates across higher town halls with full troop and hero rosters" | All subsystems, scope-expanded to TH7+ content |
 
 Phases overlap in practice. Phase 1 sandbox-content authoring runs in parallel with Phase 1 RL work because the simulator is data-driven (FR-S3). The roadmap below describes the ideal completion order; ralph-driven issues land in the order that unblocks the most downstream work.
 
@@ -233,6 +234,32 @@ Roughly 6–10 weeks. *Cartographer-specific architecture details will be revisi
 - AC-C1, AC-C2, AC-C3 satisfied.
 - ≥20 scraped bases ingested and rendered correctly in sandbox-web.
 - A writeup at `app/experiments/notes/cartographer_results.md` summarizing detection accuracy, transfer performance, and ergonomic notes on the Roboflow workflow.
+
+---
+
+## Phase 4 — Continuation (beyond TH6)
+
+**Goal.** Scale the simulator and the agent past the TH6 ceiling locked into v1. Town Hall progression brings new defenses, new troops, new spells, heroes with active abilities, and air mechanics — each a meaningful addition to the strategic surface area. *Phase 4 is open-ended; specific TH levels and content cuts will be planned in dedicated grilling sessions before each sub-phase begins.*
+
+**Indicative content directions** (each lands as its own sub-phase or grilling session):
+
+- **TH7 content.** Healer, Barbarian King (first hero), Hidden Tesla, Heal Spell, additional army camp slots. Air troops + air-defense interactions become live (Air Defense stops being inert).
+- **TH8 content.** Dragon, P.E.K.K.A, Wizard Tower upgrades, Rage Spell, dark-elixir economy hooks (Minion, Hog Rider, Valkyrie, Golem).
+- **TH9 content.** Archer Queen (second hero), X-Bow, Witch, Lava Hound, Jump Spell, Freeze Spell, Skeleton Spell. Two-hero coordination becomes part of the action space.
+- **TH10+ content.** Inferno Tower, Grand Warden, Bowler, Eagle Artillery, additional spells, deeper hero ability trees.
+- **Heroes and hero abilities.** Heroes are persistent, single-instance units with HP that regenerates between attacks (off-sim concern) and a *hero ability* — an active, agent-triggered cooldown skill (King's Iron Fist, Queen's Royal Cloak, Warden's Eternal Tome, etc.). Adds a new action class to the action space and a new obs channel for ability cooldowns.
+- **Air units and anti-air mechanics.** Activate the inert Air Defense behavior wired in v1. Distinguish ground vs air targeting in defense `target_filter` (already a data field). Add air-only troops (Healer, Dragon, Minion, Lava Hound).
+- **Filled Clan Castle.** Defender troops spawn from the CC when the attacker enters trigger range. Adds defender-side troop AI — a meaningful but bounded extension of the existing troop AI.
+- **Procedural generator with TH-aware constraints.** Generalize the deferred procedural generator from §2.8 to respect TH-level cap counts and unlocks.
+- **Cross-TH agent generalization.** Train a single agent that selects strategy across TH levels, or train per-TH specialists and study transfer.
+
+**Why this phase is open-ended.** Each TH level adds 2–6 new entities and 0–2 new mechanics. Every addition is a JSON edit to the data-driven core (FR-S3) plus minor obs-channel and action-channel extensions. The architecture committed in v1 is *intended* to absorb this scope without re-design — this phase is the test of that claim. If any sub-phase requires breaking changes to `BaseLayout` or `Replay` schemas, those go through the `schema_version` migration path (see `technical.md` §4.4).
+
+**Exit criteria for Phase 4 (per sub-phase, not phase-wide).**
+
+- New TH-level content lands data-driven, with golden replays for any new mechanic (heroes, hero abilities, air units, filled CC).
+- Agent achieves a comparable star rate on the new TH level's hand-built eval set.
+- The Cartographer (if invoked at the new TH level) successfully ingests bases at that level, gated by retraining the Roboflow model on TH-level-appropriate labeled data.
 
 ---
 
