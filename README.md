@@ -4,7 +4,7 @@ A research project: build a Clash of Clans-style attack simulator (**The Sandbox
 
 For the full spec, read in this order:
 
-1. [`app/docs/idea.md`](app/docs/idea.md) — original project pitch
+1. [`app/docs/idea.md`](app/docs/idea.md) — original project idea
 2. [`app/docs/prd.md`](app/docs/prd.md) — full project PRD (vision, milestones, FRs)
 3. [`app/docs/technical.md`](app/docs/technical.md) — implementation architecture
 4. [`app/docs/barracks/design.md`](app/docs/barracks/design.md) — RL design specifics (obs/action/reward)
@@ -58,36 +58,5 @@ app/
   experiments/runs/        # Per-run training artifacts (gitignored)
 tests/                     # Unit + integration + golden replay
 ralph/                     # Issue execution loop
-issues/
-  open/                    # Active issues fed to the ralph loop
-  done/                    # Completed issues, moved by the ralph loop
+issues/                    # Active issues fed to the ralph loop (see "Issues" below)
 ```
-
-## Issues and the ralph loop
-
-The agentic operating process (see [`app/docs/agents/agent.md`](app/docs/agents/agent.md)) is built on small, vertical-slice issues that the ralph loop executes one at a time.
-
-**Single issue queue.** All issues live in the root `issues/` directory:
-
-- `issues/open/` — active issues that ralph picks up.
-- `issues/done/` — completed issues, moved here by ralph after the work commits.
-
-When you start working on a phase, drop the issue files for that phase into `issues/open/` (regardless of which subsystem they belong to — sandbox, barracks, and cartographer issues all share this one queue). The ralph loop globs `issues/open/*.md` and works one at a time.
-
-## Development workflow
-
-1. Pick a phase from [`app/docs/roadmap.md`](app/docs/roadmap.md).
-2. Decompose the phase's high-level issue clusters into individual issue files (or use the `prd-to-issues` skill).
-3. Place issue files in `issues/open/`.
-4. Run `ralph/once.sh` for a single iteration or `ralph/afk.sh <N>` for N iterations.
-5. The ralph loop picks an issue, executes it via TDD (`/tdd` skill), runs feedback loops (`pytest`, `pyright`, `ruff`), commits, and moves the issue to `issues/done/`.
-
-## Determinism guarantee
-
-The simulator is **deterministic with no RNG** in v1. The same `(base.json, plan.json)` always produces a bit-identical `replay.json`. Golden replay tests in `tests/golden/replays/` enforce this against regressions.
-
-If you need to update a golden replay (e.g., after an intentional balance change), regenerate via `pytest --update-golden` and review the diff in your PR.
-
-## License
-
-MIT.
