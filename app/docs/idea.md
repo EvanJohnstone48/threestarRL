@@ -71,7 +71,7 @@ threestarRL/
             idea.md: initial idea you are reading now
             agent.md: explains the process I will be using to agentically grow this codebase
             ubiquitous-language.md: a glossary for terms used in this coding project
-            techincal.md: the technical stack and implementation used for this project
+            technical.md: the technical stack and implementation used for this project
             roadmap.md: the implementation plan for the project
 
             sandbox/
