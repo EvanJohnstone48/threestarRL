@@ -21,3 +21,10 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
+
+      - id: generated-types-drift
+        name: generated TS types drift check
+        entry: uv run python -m sandbox_core.tools.generate_types --check
+        language: system
+        pass_filenames: false
+        files: ^(app/sandbox_core/schemas\.py|app/sandbox_web/src/generated_types\.ts)$

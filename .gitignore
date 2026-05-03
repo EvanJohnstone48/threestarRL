@@ -64,6 +64,3 @@ app/data/scraped_bases/*
 
 # Logs
 *.log
-
-# Generated TS types
-app/sandbox_web/src/generated_types.ts

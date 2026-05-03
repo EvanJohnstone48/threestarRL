@@ -23,6 +23,8 @@ jobs:
       - run: uv sync --extra dev
       - run: uv run ruff check .
       - run: uv run ruff format --check .
+      - name: Check generated TS types are up to date
+        run: uv run python -m sandbox_core.tools.generate_types --check
 
   typecheck:
     name: Typecheck (pyright)

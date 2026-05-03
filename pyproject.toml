@@ -33,6 +33,9 @@ dev = [
     "datamodel-code-generator>=0.25",
 ]
 
+[project.scripts]
+generate-types = "sandbox_core.tools.generate_types:main"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

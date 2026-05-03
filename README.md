@@ -86,6 +86,22 @@ npm.cmd install
 npm.cmd run dev
 ```
 
+### Generated TypeScript types
+
+Sandbox-web reads the sim's data contracts from
+`app/sandbox_web/src/generated_types.ts`, which is auto-generated from the
+Pydantic schemas in `app/sandbox_core/schemas.py`. Regenerate after editing the
+schemas:
+
+```bash
+uv run generate-types
+# or, equivalently:
+uv run python -m sandbox_core.tools.generate_types
+```
+
+Pre-commit and CI fail if the committed file drifts from the schemas. The same
+check runs locally as a unit test (`tests/unit/sandbox_core/test_generate_types.py`).
+
 ## Repo Layout
 
 ```text
