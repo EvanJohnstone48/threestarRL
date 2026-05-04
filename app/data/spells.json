@@ -1,0 +1,31 @@
+{
+  "entries": [
+    {
+      "damages_walls": false,
+      "hit_interval_ticks": 1,
+      "housing_space": 1,
+      "levels": [
+        {
+          "damage_per_hit": 30,
+          "level": 1,
+          "unlocked_at_th": 5
+        },
+        {
+          "damage_per_hit": 36,
+          "level": 2,
+          "unlocked_at_th": 5
+        },
+        {
+          "damage_per_hit": 42,
+          "level": 3,
+          "unlocked_at_th": 6
+        }
+      ],
+      "name": "lightning_spell",
+      "num_hits": 5,
+      "radius_tiles": 3.0,
+      "target_filter": "all_except_walls"
+    }
+  ],
+  "schema_version": 1
+}

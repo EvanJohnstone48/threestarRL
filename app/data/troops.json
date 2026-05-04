@@ -1,55 +1,358 @@
 {
-  "schema_version": 1,
   "entries": [
     {
-      "name": "barbarian",
       "category": "ground",
-      "footprint": [1, 1],
+      "damage_multiplier_default": 1.0,
+      "damage_multipliers": {},
+      "damages_walls_on_suicide": false,
+      "footprint": [
+        1,
+        1
+      ],
       "hitbox_radius_tiles": 0.5,
       "housing_space": 1,
-      "speed_tiles_per_sec": 2.0,
-      "target_filter": "ground",
-      "target_preference": "none",
-      "splash_radius_tiles": 0.0,
-      "splash_damages_walls": false,
-      "projectile_speed_tiles_per_sec": null,
-      "projectile_homing": true,
-      "damages_walls_on_suicide": false,
-      "damage_multipliers": {},
-      "damage_multiplier_default": 1.0,
       "levels": [
-        { "level": 1, "hp": 45, "base_damage": 8, "range_tiles": 0.4, "attack_cooldown_ticks": 10, "unlocked_at_th": 1 },
-        { "level": 2, "hp": 54, "base_damage": 11, "range_tiles": 0.4, "attack_cooldown_ticks": 10, "unlocked_at_th": 1 },
-        { "level": 3, "hp": 65, "base_damage": 14, "range_tiles": 0.4, "attack_cooldown_ticks": 10, "unlocked_at_th": 3 },
-        { "level": 4, "hp": 78, "base_damage": 18, "range_tiles": 0.4, "attack_cooldown_ticks": 10, "unlocked_at_th": 5 },
-        { "level": 5, "hp": 95, "base_damage": 23, "range_tiles": 0.4, "attack_cooldown_ticks": 10, "unlocked_at_th": 6 },
-        { "level": 6, "hp": 110, "base_damage": 26, "range_tiles": 0.4, "attack_cooldown_ticks": 10, "unlocked_at_th": 6 }
-      ]
+        {
+          "attack_cooldown_ticks": 10,
+          "base_damage": 8,
+          "hp": 45,
+          "level": 1,
+          "range_tiles": 0.4,
+          "unlocked_at_th": 1
+        },
+        {
+          "attack_cooldown_ticks": 10,
+          "base_damage": 11,
+          "hp": 54,
+          "level": 2,
+          "range_tiles": 0.4,
+          "unlocked_at_th": 1
+        },
+        {
+          "attack_cooldown_ticks": 10,
+          "base_damage": 14,
+          "hp": 65,
+          "level": 3,
+          "range_tiles": 0.4,
+          "unlocked_at_th": 3
+        },
+        {
+          "attack_cooldown_ticks": 10,
+          "base_damage": 18,
+          "hp": 78,
+          "level": 4,
+          "range_tiles": 0.4,
+          "unlocked_at_th": 5
+        },
+        {
+          "attack_cooldown_ticks": 10,
+          "base_damage": 23,
+          "hp": 95,
+          "level": 5,
+          "range_tiles": 0.4,
+          "unlocked_at_th": 6
+        },
+        {
+          "attack_cooldown_ticks": 10,
+          "base_damage": 26,
+          "hp": 110,
+          "level": 6,
+          "range_tiles": 0.4,
+          "unlocked_at_th": 6
+        }
+      ],
+      "name": "barbarian",
+      "projectile_homing": true,
+      "projectile_speed_tiles_per_sec": null,
+      "speed_tiles_per_sec": 1.6,
+      "splash_damages_walls": false,
+      "splash_radius_tiles": 0.0,
+      "target_filter": "ground",
+      "target_preference": "none"
     },
     {
-      "name": "giant",
       "category": "ground",
-      "footprint": [1, 1],
+      "damage_multiplier_default": 1.0,
+      "damage_multipliers": {},
+      "damages_walls_on_suicide": false,
+      "footprint": [
+        1,
+        1
+      ],
+      "hitbox_radius_tiles": 0.5,
+      "housing_space": 1,
+      "levels": [
+        {
+          "attack_cooldown_ticks": 9,
+          "base_damage": 7,
+          "hp": 20,
+          "level": 1,
+          "range_tiles": 3.5,
+          "unlocked_at_th": 1
+        },
+        {
+          "attack_cooldown_ticks": 9,
+          "base_damage": 9,
+          "hp": 23,
+          "level": 2,
+          "range_tiles": 3.5,
+          "unlocked_at_th": 2
+        },
+        {
+          "attack_cooldown_ticks": 9,
+          "base_damage": 12,
+          "hp": 28,
+          "level": 3,
+          "range_tiles": 3.5,
+          "unlocked_at_th": 3
+        },
+        {
+          "attack_cooldown_ticks": 9,
+          "base_damage": 16,
+          "hp": 33,
+          "level": 4,
+          "range_tiles": 3.5,
+          "unlocked_at_th": 5
+        },
+        {
+          "attack_cooldown_ticks": 9,
+          "base_damage": 20,
+          "hp": 40,
+          "level": 5,
+          "range_tiles": 3.5,
+          "unlocked_at_th": 6
+        }
+      ],
+      "name": "archer",
+      "projectile_homing": true,
+      "projectile_speed_tiles_per_sec": 30.0,
+      "speed_tiles_per_sec": 2.4,
+      "splash_damages_walls": false,
+      "splash_radius_tiles": 0.0,
+      "target_filter": "both",
+      "target_preference": "none"
+    },
+    {
+      "category": "ground",
+      "damage_multiplier_default": 1.0,
+      "damage_multipliers": {
+        "resource_collector": 2.0,
+        "resource_storage": 2.0
+      },
+      "damages_walls_on_suicide": false,
+      "footprint": [
+        1,
+        1
+      ],
+      "hitbox_radius_tiles": 0.5,
+      "housing_space": 1,
+      "levels": [
+        {
+          "attack_cooldown_ticks": 10,
+          "base_damage": 11,
+          "hp": 25,
+          "level": 1,
+          "range_tiles": 0.4,
+          "unlocked_at_th": 2
+        },
+        {
+          "attack_cooldown_ticks": 10,
+          "base_damage": 14,
+          "hp": 30,
+          "level": 2,
+          "range_tiles": 0.4,
+          "unlocked_at_th": 3
+        },
+        {
+          "attack_cooldown_ticks": 10,
+          "base_damage": 19,
+          "hp": 36,
+          "level": 3,
+          "range_tiles": 0.4,
+          "unlocked_at_th": 4
+        },
+        {
+          "attack_cooldown_ticks": 10,
+          "base_damage": 24,
+          "hp": 44,
+          "level": 4,
+          "range_tiles": 0.4,
+          "unlocked_at_th": 6
+        }
+      ],
+      "name": "goblin",
+      "projectile_homing": true,
+      "projectile_speed_tiles_per_sec": null,
+      "speed_tiles_per_sec": 3.2,
+      "splash_damages_walls": false,
+      "splash_radius_tiles": 0.0,
+      "target_filter": "ground",
+      "target_preference": "resources"
+    },
+    {
+      "category": "ground",
+      "damage_multiplier_default": 1.0,
+      "damage_multipliers": {},
+      "damages_walls_on_suicide": false,
+      "footprint": [
+        1,
+        1
+      ],
       "hitbox_radius_tiles": 0.7,
       "housing_space": 5,
-      "speed_tiles_per_sec": 1.25,
-      "target_filter": "ground",
-      "target_preference": "defenses",
-      "splash_radius_tiles": 0.0,
-      "splash_damages_walls": false,
-      "projectile_speed_tiles_per_sec": null,
-      "projectile_homing": true,
-      "damages_walls_on_suicide": false,
-      "damage_multipliers": {},
-      "damage_multiplier_default": 1.0,
       "levels": [
-        { "level": 1, "hp": 280, "base_damage": 11, "range_tiles": 0.5, "attack_cooldown_ticks": 15, "unlocked_at_th": 3 },
-        { "level": 2, "hp": 340, "base_damage": 14, "range_tiles": 0.5, "attack_cooldown_ticks": 15, "unlocked_at_th": 3 },
-        { "level": 3, "hp": 410, "base_damage": 19, "range_tiles": 0.5, "attack_cooldown_ticks": 15, "unlocked_at_th": 4 },
-        { "level": 4, "hp": 460, "base_damage": 24, "range_tiles": 0.5, "attack_cooldown_ticks": 15, "unlocked_at_th": 6 },
-        { "level": 5, "hp": 520, "base_damage": 31, "range_tiles": 0.5, "attack_cooldown_ticks": 15, "unlocked_at_th": 6 },
-        { "level": 6, "hp": 580, "base_damage": 43, "range_tiles": 0.5, "attack_cooldown_ticks": 15, "unlocked_at_th": 6 }
-      ]
+        {
+          "attack_cooldown_ticks": 15,
+          "base_damage": 11,
+          "hp": 280,
+          "level": 1,
+          "range_tiles": 0.5,
+          "unlocked_at_th": 3
+        },
+        {
+          "attack_cooldown_ticks": 15,
+          "base_damage": 14,
+          "hp": 340,
+          "level": 2,
+          "range_tiles": 0.5,
+          "unlocked_at_th": 3
+        },
+        {
+          "attack_cooldown_ticks": 15,
+          "base_damage": 19,
+          "hp": 410,
+          "level": 3,
+          "range_tiles": 0.5,
+          "unlocked_at_th": 4
+        },
+        {
+          "attack_cooldown_ticks": 15,
+          "base_damage": 24,
+          "hp": 460,
+          "level": 4,
+          "range_tiles": 0.5,
+          "unlocked_at_th": 6
+        },
+        {
+          "attack_cooldown_ticks": 15,
+          "base_damage": 31,
+          "hp": 520,
+          "level": 5,
+          "range_tiles": 0.5,
+          "unlocked_at_th": 6
+        },
+        {
+          "attack_cooldown_ticks": 15,
+          "base_damage": 43,
+          "hp": 580,
+          "level": 6,
+          "range_tiles": 0.5,
+          "unlocked_at_th": 6
+        }
+      ],
+      "name": "giant",
+      "projectile_homing": true,
+      "projectile_speed_tiles_per_sec": null,
+      "speed_tiles_per_sec": 1.25,
+      "splash_damages_walls": false,
+      "splash_radius_tiles": 0.0,
+      "target_filter": "ground",
+      "target_preference": "defenses"
+    },
+    {
+      "category": "ground",
+      "damage_multiplier_default": 0.04,
+      "damage_multipliers": {
+        "wall": 1.0
+      },
+      "damages_walls_on_suicide": true,
+      "footprint": [
+        1,
+        1
+      ],
+      "hitbox_radius_tiles": 0.5,
+      "housing_space": 2,
+      "levels": [
+        {
+          "attack_cooldown_ticks": 1,
+          "base_damage": 12,
+          "hp": 20,
+          "level": 1,
+          "range_tiles": 0.4,
+          "unlocked_at_th": 3
+        },
+        {
+          "attack_cooldown_ticks": 1,
+          "base_damage": 16,
+          "hp": 24,
+          "level": 2,
+          "range_tiles": 0.4,
+          "unlocked_at_th": 3
+        },
+        {
+          "attack_cooldown_ticks": 1,
+          "base_damage": 25,
+          "hp": 29,
+          "level": 3,
+          "range_tiles": 0.4,
+          "unlocked_at_th": 5
+        },
+        {
+          "attack_cooldown_ticks": 1,
+          "base_damage": 38,
+          "hp": 35,
+          "level": 4,
+          "range_tiles": 0.4,
+          "unlocked_at_th": 6
+        }
+      ],
+      "name": "wall_breaker",
+      "projectile_homing": true,
+      "projectile_speed_tiles_per_sec": null,
+      "speed_tiles_per_sec": 2.4,
+      "splash_damages_walls": true,
+      "splash_radius_tiles": 1.5,
+      "target_filter": "ground",
+      "target_preference": "walls"
+    },
+    {
+      "category": "ground",
+      "damage_multiplier_default": 1.0,
+      "damage_multipliers": {},
+      "damages_walls_on_suicide": false,
+      "footprint": [
+        1,
+        1
+      ],
+      "hitbox_radius_tiles": 0.5,
+      "housing_space": 4,
+      "levels": [
+        {
+          "attack_cooldown_ticks": 15,
+          "base_damage": 50,
+          "hp": 75,
+          "level": 1,
+          "range_tiles": 3.0,
+          "unlocked_at_th": 5
+        },
+        {
+          "attack_cooldown_ticks": 15,
+          "base_damage": 70,
+          "hp": 90,
+          "level": 2,
+          "range_tiles": 3.0,
+          "unlocked_at_th": 6
+        }
+      ],
+      "name": "wizard",
+      "projectile_homing": true,
+      "projectile_speed_tiles_per_sec": 16.0,
+      "speed_tiles_per_sec": 2.4,
+      "splash_damages_walls": true,
+      "splash_radius_tiles": 0.3,
+      "target_filter": "both",
+      "target_preference": "none"
     }
-  ]
+  ],
+  "schema_version": 1
 }

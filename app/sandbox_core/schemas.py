@@ -402,9 +402,8 @@ MIGRATIONS: dict[str, list[MigrationStep]] = {
     "Replay": [],
 }
 
-def migrate_to_latest(
-    payload: dict[str, Any], target_schema: type[BaseModel]
-) -> dict[str, Any]:
+
+def migrate_to_latest(payload: dict[str, Any], target_schema: type[BaseModel]) -> dict[str, Any]:
     """Apply registered migrations to bring `payload` to the latest schema version.
 
     Looks up the migration chain via `target_schema.__name__`. The starting
@@ -414,9 +413,7 @@ def migrate_to_latest(
     """
     schema_name = target_schema.__name__
     if schema_name not in MIGRATIONS:
-        raise SchemaMigrationError(
-            f"no migration chain registered for schema {schema_name!r}"
-        )
+        raise SchemaMigrationError(f"no migration chain registered for schema {schema_name!r}")
     chain = MIGRATIONS[schema_name]
     raw_version = payload.get("schema_version", 1)
     if not isinstance(raw_version, int) or raw_version < 1:

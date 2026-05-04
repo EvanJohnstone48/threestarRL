@@ -33,11 +33,15 @@ def _cmd_run(args: argparse.Namespace) -> int:
 
     catalogue = load_catalogue(data_dir)
 
+    spells_path = data_dir / "spells.json"
+    overrides_path = data_dir / "manual_overrides.json"
     config_hash = compute_config_hash(
         base_raw,
         plan_raw,
         json.loads((data_dir / "buildings.json").read_text(encoding="utf-8")),
         json.loads((data_dir / "troops.json").read_text(encoding="utf-8")),
+        json.loads(spells_path.read_text(encoding="utf-8")) if spells_path.exists() else {},
+        json.loads(overrides_path.read_text(encoding="utf-8")) if overrides_path.exists() else {},
     )
 
     sim = Sim(

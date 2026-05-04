@@ -57,6 +57,9 @@ app/experiments/runs/*
 app/data/scraped_bases/*
 !app/data/scraped_bases/.gitkeep
 
+# Wiki scraper HTML cache (PRD §9.3 — gitignored)
+app/data/.wiki_cache/
+
 # Secrets / env
 .env
 .env.local

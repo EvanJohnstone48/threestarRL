@@ -49,9 +49,7 @@ def test_v1_fixture_validates_against_current_schema(
 
 
 @pytest.mark.parametrize(("fixture_name", "schema_cls"), V1_FIXTURES)
-def test_migrate_to_latest_is_noop_at_v1(
-    fixture_name: str, schema_cls: type[BaseModel]
-) -> None:
+def test_migrate_to_latest_is_noop_at_v1(fixture_name: str, schema_cls: type[BaseModel]) -> None:
     raw = _load_fixture(fixture_name)
     migrated = migrate_to_latest(raw, schema_cls)
     assert migrated == raw
@@ -117,9 +115,7 @@ def test_migration_chain_runs_when_versions_differ() -> None:
     original = MIGRATIONS["BaseLayout"]
     MIGRATIONS["BaseLayout"] = [step_one, step_two]
     try:
-        result = _migrate_with_target_version(
-            {"schema_version": 1}, BaseLayout, target_version=3
-        )
+        result = _migrate_with_target_version({"schema_version": 1}, BaseLayout, target_version=3)
         assert calls == [1, 2]
         assert result["schema_version"] == 3
         assert result["field_added_in_v2"] is True

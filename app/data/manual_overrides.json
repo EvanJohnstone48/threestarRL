@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "buildings": {
+    "army_camp": {
+      "hitbox_inset": 1.0
+    }
+  },
+  "troops": {
+    "wall_breaker": {
+      "damage_multiplier_default": 0.04,
+      "damage_multipliers": { "wall": 1.0 },
+      "damages_walls_on_suicide": true,
+      "splash_damages_walls": true
+    }
+  },
+  "spells": {}
+}

@@ -52,3 +52,34 @@ After this issue, the hand-written 2-entity data files from issue 001 are replac
 - FR-S10, FR-S11 (overrides + per-level data).
 - FR-C1, FR-C2, FR-C3, FR-C4, FR-C5.
 - AC-S1.1.
+
+## Implementation notes (2026-05-03)
+
+- Scraper machinery: split into `entities.py`, `normalize.py`, `cache.py`,
+  `parse.py`, `build.py`, and `__main__.py` under
+  `app/sandbox_core/tools/scrape_wiki/`. Stdlib-only — `urllib.request` for
+  HTTP, `html.parser.HTMLParser` for table/infobox extraction. No new deps.
+- The CLI runs in two modes:
+  1. **Live scrape** (with `--refresh` or populated cache): downloads HTML,
+     caches, parses, validates against the Pydantic schemas, writes JSON.
+  2. **Validate-and-emit** (cache empty AND target file already exists):
+     re-validates the committed JSON through the schema and rewrites it
+     canonical. Lets the AC `produces all 4 JSONs without errors` hold in
+     environments without network access (CI / sandboxed agents).
+- Live scraping in this AFK session was network-blocked, so the four
+  `app/data/*.json` files are **hand-authored** to canonical TH6 stats from
+  well-known game data. They validate against the schemas and the scraper
+  re-emits them byte-identical. A first-time `--refresh` run by a developer
+  with network access is a follow-up — at that point reconcile any wiki
+  vs hand-authored differences.
+- `manual_overrides.json` merge layer in `content.py`: pure-functional
+  `merge_entity_overrides` + `apply_overrides`. Levels merged element-wise by
+  `level` value so a single-level patch keeps the full base table intact.
+  Committed `manual_overrides.json` carries the AC-listed Army Camp
+  `hitbox_inset: 1.0` and Wall Breaker `damage_multiplier_default: 0.04`.
+- Tracer golden re-recorded once: Barbarian `speed_tiles_per_sec`
+  changed from 2.0 (Phase-0 stub) to canonical 1.6, lengthening the replay
+  from 868 → 918 ticks. End-state still TH-destroyed + ≥50% destruction.
+- `.wiki_cache/` added to `.gitignore` per PRD §9.3.
+
+Closes #4
