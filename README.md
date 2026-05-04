@@ -122,6 +122,28 @@ ralph/                     # issue execution loop scripts and prompts
 issues/                    # active issues for the agentic workflow
 ```
 
+## Performance suite
+
+The `tests/performance/` directory benchmarks sandbox-core throughput and replay
+size against the §12.1 budgets. These tests are marked `@pytest.mark.slow` and are
+excluded from the pre-commit hook, but run in CI.
+
+Run locally:
+
+```bash
+python -m pytest -m slow tests/performance/ -v
+```
+
+Results are written to `tests/performance/results/<git-sha>.json` (gitignored).
+The four benchmarks and their §12.1 thresholds:
+
+| Test | Threshold |
+|---|---|
+| `test_throughput_tracer` | ≥ 100 ep/sec |
+| `test_throughput_full_th6` | ≥ 50 ep/sec |
+| `test_replay_size_full_th6` | pretty ≤ 3 MB, minified ≤ 1.5 MB |
+| `test_sim_startup_time` | ≤ 100 ms |
+
 ## Research Question
 
 Can an RL agent learn useful attack strategy, including deployment timing,
