@@ -349,7 +349,7 @@
       "projectile_speed_tiles_per_sec": 16.0,
       "speed_tiles_per_sec": 2.4,
       "splash_damages_walls": true,
-      "splash_radius_tiles": 0.3,
+      "splash_radius_tiles": 2.0,
       "target_filter": "both",
       "target_preference": "none"
     }

@@ -67,3 +67,5 @@ app/data/.wiki_cache/
 
 # Logs
 *.log
+
+app/sandbox_web/public/sprites/*

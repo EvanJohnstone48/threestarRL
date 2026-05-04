@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "name": "wizard_splash_walls",
+    "notes": "Issue 008 — Wizard level 2 deployed from the south edge. Walks north toward the Gold Mine at (20,22), fires ranged projectiles; each impact splashes the two adjacent walls at (23,23) and (21,21). Both walls take progressive splash damage and are destroyed before the Gold Mine.",
+    "author": "issue-008",
+    "created_at": "2026-05-03T00:00:00Z"
+  },
+  "actions": [
+    { "tick": 0, "kind": "deploy_troop", "entity_type": "wizard", "position": [47.5, 23.5], "level": 2 }
+  ]
+}

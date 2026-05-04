@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "name": "wizard_splash_walls",
+    "th_level": 6,
+    "tags": ["phase-1", "wizard", "walls", "splash"],
+    "notes": "Issue 008 — Gold Mine at (20,22) is the Wizard's target. Two walls at (23,23) and (21,21) sit at exactly 2.0 tiles from the Gold Mine's footprint center (21.5,23.5), placing them on the splash-radius boundary. Wizard level 2 walks south-to-north, fires at the Gold Mine; each shot splashes both walls. Both walls destroyed before the Gold Mine (300 HP vs 400 HP at 70 damage/shot). TH sits in the far-north corner as required.",
+    "author": "issue-008",
+    "created_at": "2026-05-03T00:00:00Z"
+  },
+  "th_level": 6,
+  "placements": [
+    { "building_type": "town_hall", "origin": [3, 3], "level": 1 },
+    { "building_type": "gold_mine", "origin": [20, 22], "level": 1 },
+    { "building_type": "wall", "origin": [23, 23], "level": 1 },
+    { "building_type": "wall", "origin": [21, 21], "level": 1 }
+  ],
+  "cc_contents": []
+}
