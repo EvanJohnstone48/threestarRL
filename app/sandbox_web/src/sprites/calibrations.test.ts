@@ -15,9 +15,7 @@ beforeEach(() => {
 
 describe("getCalibration", () => {
   it("returns the default when entity has no entry", () => {
-    expect(getCalibration(emptyCalibrations(), "buildings", "cannon")).toEqual(
-      DEFAULT_CALIBRATION,
-    );
+    expect(getCalibration(emptyCalibrations(), "buildings", "cannon")).toEqual(DEFAULT_CALIBRATION);
   });
 
   it("returns the stored entry when set", () => {
@@ -29,12 +27,11 @@ describe("getCalibration", () => {
 
 describe("loadCalibrations / saveCalibrationsLocal", () => {
   it("round-trips through localStorage", () => {
-    const cals = setCalibration(
-      emptyCalibrations(),
-      "troops",
-      "barbarian",
-      { offset_x: 1, offset_y: 2, scale: 0.5 },
-    );
+    const cals = setCalibration(emptyCalibrations(), "troops", "barbarian", {
+      offset_x: 1,
+      offset_y: 2,
+      scale: 0.5,
+    });
     saveCalibrationsLocal(cals);
     const loaded = loadCalibrations();
     expect(getCalibration(loaded, "troops", "barbarian")).toEqual({
@@ -61,7 +58,7 @@ describe("loadCalibrations / saveCalibrationsLocal", () => {
       }),
     );
     const loaded = loadCalibrations();
-    expect(loaded.buildings.cannon).toBeUndefined();
+    expect(loaded.buildings.cannon?.scale).toBeGreaterThan(0);
   });
 });
 

@@ -16,19 +16,18 @@ import {
   FederatedPointerEvent,
 } from "pixi.js";
 
-import type { TickFrame } from "@/generated_types";
+import type { BuildingState, TickFrame } from "@/generated_types";
 import type { InterpolatedFrame } from "@/replay/interpolation";
 import {
   COLOR_BUILDABLE,
   COLOR_GRID_BG,
-  COLOR_GRID_LINE,
   COLOR_PROJECTILE,
   buildingLabel,
   hpBarColor,
 } from "./colors";
 import { footprintFor, TROOP_VISUAL_RADIUS_TILES } from "./footprints";
 import { gridToIsoScreen, ISO_TILE_H, ISO_TILE_W } from "./isoProjection";
-import { BUILDABLE_MAX_EXCLUSIVE, BUILDABLE_MIN, GRID_SIZE, TILE_SIZE } from "./projection";
+import { GRID_SIZE, TILE_SIZE, isInDeployRing } from "./projection";
 import type { SpriteMap } from "./spriteLoader";
 import {
   DEFAULT_CALIBRATION,
@@ -80,6 +79,7 @@ export class IsoRenderer {
   private hpBarLayer: Container;
   private sprites: SpriteMap;
   private calibrations: SpriteCalibrations;
+  private terrainSignature: string | null = null;
 
   private dragging = false;
   private lastPointer: { x: number; y: number } | null = null;
@@ -104,7 +104,6 @@ export class IsoRenderer {
     this.camera.addChild(this.hpBarLayer);
     this.app.stage.addChild(this.camera);
 
-    this.drawGrid();
     this.attachInteractions();
     this.fitToGrid();
   }
@@ -113,42 +112,8 @@ export class IsoRenderer {
     this.camera.visible = visible;
   }
 
-  private drawGrid(): void {
-    // Outer diamond — deploy ring color (same dark tone as top-down bg)
-    const outer = new Graphics();
-    const N = gridToIsoScreen(0, 0);
-    const E = gridToIsoScreen(0, GRID_SIZE);
-    const S = gridToIsoScreen(GRID_SIZE, GRID_SIZE);
-    const W = gridToIsoScreen(GRID_SIZE, 0);
-    outer.poly([N.x, N.y, E.x, E.y, S.x, S.y, W.x, W.y]).fill(COLOR_GRID_BG);
-    this.gridLayer.addChild(outer);
-
-    // Inner buildable region
-    const inner = new Graphics();
-    const iN = gridToIsoScreen(BUILDABLE_MIN, BUILDABLE_MIN);
-    const iE = gridToIsoScreen(BUILDABLE_MIN, BUILDABLE_MAX_EXCLUSIVE);
-    const iS = gridToIsoScreen(BUILDABLE_MAX_EXCLUSIVE, BUILDABLE_MAX_EXCLUSIVE);
-    const iW = gridToIsoScreen(BUILDABLE_MAX_EXCLUSIVE, BUILDABLE_MIN);
-    inner.poly([iN.x, iN.y, iE.x, iE.y, iS.x, iS.y, iW.x, iW.y]).fill(COLOR_BUILDABLE);
-    this.gridLayer.addChild(inner);
-
-    // Grid lines — row-parallel and col-parallel diagonals
-    const lines = new Graphics();
-    for (let r = 0; r <= GRID_SIZE; r++) {
-      const a = gridToIsoScreen(r, 0);
-      const b = gridToIsoScreen(r, GRID_SIZE);
-      lines.moveTo(a.x, a.y).lineTo(b.x, b.y);
-    }
-    for (let c = 0; c <= GRID_SIZE; c++) {
-      const a = gridToIsoScreen(0, c);
-      const b = gridToIsoScreen(GRID_SIZE, c);
-      lines.moveTo(a.x, a.y).lineTo(b.x, b.y);
-    }
-    lines.stroke({ color: COLOR_GRID_LINE, width: 1, alpha: 0.5 });
-    this.gridLayer.addChild(lines);
-  }
-
   renderFrame(frame: InterpolatedFrame, currentTickFrame: TickFrame): void {
+    this.updateTerrain(currentTickFrame.state.buildings);
     this.entityLayer.removeChildren();
     this.hpBarLayer.removeChildren();
     this.entityHitAreas = [];
@@ -272,7 +237,13 @@ export class IsoRenderer {
             : undefined,
       });
 
-      this.entityHitAreas.push({ kind: "troop", id: t.id, cx: pos.x, cy: pos.y, r: TROOP_ISO_RADIUS });
+      this.entityHitAreas.push({
+        kind: "troop",
+        id: t.id,
+        cx: pos.x,
+        cy: pos.y,
+        r: TROOP_ISO_RADIUS,
+      });
     }
 
     items.sort((a, b) => a.z - b.z);
@@ -280,6 +251,81 @@ export class IsoRenderer {
       item.draw();
       item.hp?.();
     }
+  }
+
+  private updateTerrain(buildings: BuildingState[]): void {
+    const signature = this.terrainMaskSignature(buildings);
+    if (signature === this.terrainSignature) return;
+    this.terrainSignature = signature;
+    this.gridLayer.removeChildren();
+
+    const buildingTiles = this.buildingFootprintTiles(buildings);
+    for (let row = 0; row < GRID_SIZE; row++) {
+      for (let col = 0; col < GRID_SIZE; col++) {
+        const terrainKey = this.terrainKeyForTile(row, col, buildingTiles);
+        this.drawTerrainTile(row, col, terrainKey);
+      }
+    }
+  }
+
+  private terrainMaskSignature(buildings: BuildingState[]): string {
+    return buildings
+      .map((b) => `${b.id}:${b.building_type}:${b.origin[0]},${b.origin[1]}`)
+      .sort()
+      .join("|");
+  }
+
+  private buildingFootprintTiles(buildings: BuildingState[]): Set<string> {
+    const out = new Set<string>();
+    for (const building of buildings) {
+      const [fh, fw] = footprintFor(building.building_type);
+      const [r0, c0] = building.origin;
+      for (let row = r0; row < r0 + fh; row++) {
+        for (let col = c0; col < c0 + fw; col++) {
+          if (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE) {
+            out.add(`${row},${col}`);
+          }
+        }
+      }
+    }
+    return out;
+  }
+
+  private terrainKeyForTile(row: number, col: number, buildingTiles: Set<string>): string {
+    if (isInDeployRing(row, col)) return "deploy_zone";
+    if (buildingTiles.has(`${row},${col}`)) return "building_grass";
+    return (row + col) % 2 === 0 ? "grass" : "darkgrass";
+  }
+
+  private drawTerrainTile(row: number, col: number, terrainKey: string): void {
+    const tex = this.sprites.get(`terrain:${terrainKey}`) ?? null;
+    const north = gridToIsoScreen(row, col);
+    if (tex) {
+      const tile = new Sprite(tex);
+      tile.anchor.set(0.5, 0);
+      tile.x = north.x;
+      tile.y = north.y;
+      tile.width = ISO_TILE_W;
+      tile.height = ISO_TILE_H;
+      this.gridLayer.addChild(tile);
+      return;
+    }
+
+    const N = north;
+    const E = gridToIsoScreen(row, col + 1);
+    const S = gridToIsoScreen(row + 1, col + 1);
+    const W = gridToIsoScreen(row + 1, col);
+    const color =
+      terrainKey === "deploy_zone"
+        ? COLOR_GRID_BG
+        : terrainKey === "building_grass"
+          ? COLOR_BUILDABLE
+          : terrainKey === "grass"
+            ? 0x20331f
+            : 0x182818;
+    const fallback = new Graphics();
+    fallback.poly([N.x, N.y, E.x, E.y, S.x, S.y, W.x, W.y]).fill(color);
+    this.gridLayer.addChild(fallback);
   }
 
   private drawPlaceholderBuilding(
@@ -297,7 +343,11 @@ export class IsoRenderer {
 
     const g = new Graphics();
     g.poly([N.x, N.y, E.x, E.y, S.x, S.y, W.x, W.y]).fill(0xff00ff);
-    g.poly([N.x, N.y, E.x, E.y, S.x, S.y, W.x, W.y]).stroke({ color: 0x000000, width: 1, alpha: 0.4 });
+    g.poly([N.x, N.y, E.x, E.y, S.x, S.y, W.x, W.y]).stroke({
+      color: 0x000000,
+      width: 1,
+      alpha: 0.4,
+    });
     this.entityLayer.addChild(g);
 
     const label = buildingLabel(buildingType, level) || buildingType.slice(0, 3);

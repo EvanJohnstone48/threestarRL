@@ -3,30 +3,22 @@
 // return a Texture; missing files resolve to null (caller renders magenta placeholder).
 
 import { Assets, Texture } from "pixi.js";
-
-export const BUILDING_TYPES = [
-  "town_hall",
-  "clan_castle",
-  "army_camp",
-  "cannon",
-  "archer_tower",
-  "mortar",
-  "air_defense",
-  "wizard_tower",
-  "barracks",
-  "laboratory",
-  "spell_factory",
-  "gold_mine",
-  "elixir_collector",
-  "gold_storage",
-  "elixir_storage",
-  "builders_hut",
-  "wall",
-];
-
-export const TROOP_TYPES = ["barbarian", "archer", "giant", "goblin", "wall_breaker", "wizard"];
-
-export const EFFECT_TYPES = ["explosion", "bolt", "splash"];
+import {
+  BUILDING_TYPES,
+  EFFECT_TYPES,
+  TERRAIN_TYPES,
+  TROOP_TYPES,
+  buildingSpriteUrlCandidates,
+  terrainSpriteUrlCandidates,
+} from "./spritePaths";
+export {
+  BUILDING_TYPES,
+  EFFECT_TYPES,
+  TERRAIN_TYPES,
+  TROOP_TYPES,
+  buildingSpriteUrlCandidates,
+  terrainSpriteUrlCandidates,
+} from "./spritePaths";
 
 export type SpriteMap = Map<string, Texture | null>;
 
@@ -38,10 +30,18 @@ async function tryLoad(url: string): Promise<Texture | null> {
   }
 }
 
+async function tryLoadFirst(urls: string[]): Promise<Texture | null> {
+  for (const url of urls) {
+    const tex = await tryLoad(url);
+    if (tex !== null) return tex;
+  }
+  return null;
+}
+
 export async function loadAllSprites(): Promise<SpriteMap> {
   const entries = await Promise.all([
     ...BUILDING_TYPES.map(async (t) => {
-      const tex = await tryLoad(`/sprites/buildings/${t}.png`);
+      const tex = await tryLoadFirst(buildingSpriteUrlCandidates(t));
       return [`building:${t}`, tex] as const;
     }),
     ...TROOP_TYPES.map(async (t) => {
@@ -51,6 +51,10 @@ export async function loadAllSprites(): Promise<SpriteMap> {
     ...EFFECT_TYPES.map(async (t) => {
       const tex = await tryLoad(`/sprites/effects/${t}.png`);
       return [`effect:${t}`, tex] as const;
+    }),
+    ...TERRAIN_TYPES.map(async (t) => {
+      const tex = await tryLoadFirst(terrainSpriteUrlCandidates(t));
+      return [`terrain:${t}`, tex] as const;
     }),
   ]);
   // Maintain backward-compat: also register building sprites under their bare
