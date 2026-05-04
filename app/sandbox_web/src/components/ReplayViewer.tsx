@@ -24,13 +24,21 @@ import {
 import { computeEventMarks, type EventMark } from "@/replay/eventMarks";
 import { getInspectorData, type InspectorData, type SelectedEntity } from "@/replay/inspector";
 import { TopDownRenderer } from "@/render/topdown";
+import { IsoRenderer } from "@/render/iso";
+import { loadAllSprites, anySpritesLoaded, type SpriteMap } from "@/render/spriteLoader";
 
 const RUNTIME_SIM_VERSION = "0.1.0";
 const SPEEDS = [0.25, 0.5, 1, 2, 4, 8];
+const LS_VIEW_KEY = "threestarRL.viewMode";
+
+type ViewMode = "topdown" | "iso";
 
 interface RendererHandle {
   app: Application;
-  renderer: TopDownRenderer;
+  topdown: TopDownRenderer;
+  iso: IsoRenderer | null;
+  sprites: SpriteMap;
+  viewMode: ViewMode;
 }
 
 // ---- Sub-components ---------------------------------------------------------
@@ -132,8 +140,10 @@ export function ReplayViewer() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("topdown");
+  const [isoAvailable, setIsoAvailable] = useState(false);
 
-  // Mount Pixi app once.
+  // Mount Pixi app once. Sprite loading happens concurrently with app init.
   useEffect(() => {
     const container = canvasContainerRef.current;
     if (!container) return;
@@ -152,19 +162,20 @@ export function ReplayViewer() {
         return;
       }
       container.appendChild(app.canvas);
-      const renderer = new TopDownRenderer(app);
-      handleRef.current = { app, renderer };
 
-      renderer.onEntityClick = (kind, id) => setSelectedEntity({ kind, id });
-      renderer.onBackgroundClick = () => setSelectedEntity(null);
+      const topdown = new TopDownRenderer(app);
+      topdown.onEntityClick = (kind, id) => setSelectedEntity({ kind, id });
+      topdown.onBackgroundClick = () => setSelectedEntity(null);
 
+      // Ticker references handleRef so it picks up iso renderer once ready.
       app.ticker.add(() => {
+        const h = handleRef.current;
         const playback = playbackRef.current;
         const r = replayRef.current;
         const now = performance.now();
         const last = lastFrameTsRef.current;
         lastFrameTsRef.current = now;
-        if (!playback || !r || r.frames.length === 0) return;
+        if (!h || !playback || !r || r.frames.length === 0) return;
         if (playback.playing && last !== null) {
           const dt = now - last;
           const next = advance(playback, dt);
@@ -179,8 +190,36 @@ export function ReplayViewer() {
         const cur = r.frames[idx];
         const nxt = idx + 1 < r.frames.length ? r.frames[idx + 1] : null;
         const interp = interpolateFrame(cur, nxt, alpha);
-        renderer.renderFrame(interp, cur);
+        const activeRenderer = h.viewMode === "iso" && h.iso ? h.iso : h.topdown;
+        activeRenderer.renderFrame(interp, cur);
       });
+
+      // Load sprites — may take a moment on first load.
+      const sprites = await loadAllSprites();
+      if (cancelled) {
+        app.destroy(true, { children: true });
+        return;
+      }
+
+      let iso: IsoRenderer | null = null;
+      if (anySpritesLoaded(sprites)) {
+        iso = new IsoRenderer(app, sprites);
+        iso.setVisible(false);
+        iso.onEntityClick = (kind, id) => setSelectedEntity({ kind, id });
+        iso.onBackgroundClick = () => setSelectedEntity(null);
+      }
+
+      const saved = localStorage.getItem(LS_VIEW_KEY) as ViewMode | null;
+      let initialView: ViewMode = "topdown";
+      if (saved === "iso" && iso !== null) {
+        initialView = "iso";
+        topdown.setVisible(false);
+        iso.setVisible(true);
+      }
+
+      handleRef.current = { app, topdown, iso, sprites, viewMode: initialView };
+      setViewMode(initialView);
+      setIsoAvailable(iso !== null);
 
       cleanup = () => {
         app.destroy(true, { children: true });
@@ -282,7 +321,24 @@ export function ReplayViewer() {
   const onCloseInspector = useCallback(() => setSelectedEntity(null), []);
 
   const onFitToGrid = useCallback(() => {
-    handleRef.current?.renderer.fitToGrid();
+    const h = handleRef.current;
+    if (!h) return;
+    if (h.viewMode === "iso" && h.iso) {
+      h.iso.fitToGrid();
+    } else {
+      h.topdown.fitToGrid();
+    }
+  }, []);
+
+  const onToggleView = useCallback(() => {
+    const h = handleRef.current;
+    if (!h || !h.iso) return;
+    const next: ViewMode = h.viewMode === "topdown" ? "iso" : "topdown";
+    h.viewMode = next;
+    h.topdown.setVisible(next === "topdown");
+    h.iso.setVisible(next === "iso");
+    localStorage.setItem(LS_VIEW_KEY, next);
+    setViewMode(next);
   }, []);
 
   // Keyboard shortcuts
@@ -310,11 +366,14 @@ export function ReplayViewer() {
         if (idx < SPEEDS.length - 1) onSetSpeed(SPEEDS[idx + 1]);
       } else if (ev.code === "Escape") {
         onCloseInspector();
+      } else if (ev.key === "v" || ev.key === "V") {
+        ev.preventDefault();
+        onToggleView();
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [onTogglePlay, onStep, onSetSpeed, onCloseInspector]);
+  }, [onTogglePlay, onStep, onSetSpeed, onCloseInspector, onToggleView]);
 
   const banner =
     replay && crossVersionBanner(replay, RUNTIME_SCHEMA_VERSION)
@@ -343,6 +402,11 @@ export function ReplayViewer() {
           <button type="button" onClick={onFitToGrid}>
             Fit to grid
           </button>
+          {isoAvailable && (
+            <button type="button" onClick={onToggleView} title="Toggle view (V)">
+              {viewMode === "iso" ? "ISO" : "TOP"} view
+            </button>
+          )}
           <label className="file-picker">
             Load replay…
             <input

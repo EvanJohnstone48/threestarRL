@@ -328,6 +328,10 @@ export class TopDownRenderer {
     });
   }
 
+  setVisible(visible: boolean): void {
+    this.camera.visible = visible;
+  }
+
   destroy(): void {
     this.camera.destroy({ children: true });
   }
