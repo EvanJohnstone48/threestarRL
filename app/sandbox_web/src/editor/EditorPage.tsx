@@ -20,6 +20,16 @@ import {
 import { validateLayout, type ConstraintResult } from "./validator";
 import { EditorRenderer } from "./EditorRenderer";
 import { categoryForBuilding } from "@/render/colors";
+import {
+  createHistoryState,
+  pushHistory,
+  undo,
+  redo,
+  canUndo,
+  canRedo,
+  type HistoryState,
+} from "./historyState";
+import { saveToLocalStorage, loadFromLocalStorage, clearLocalStorage } from "./autosave";
 
 // --- Palette configuration ---
 
@@ -86,7 +96,6 @@ function countPlaced(placements: BuildingPlacement[], type: string): number {
 }
 
 function buildingDisplayColor(type: string): string {
-  // We can't use Pixi hex numbers in CSS directly — map category to CSS color
   const cat = categoryForBuilding(type);
   switch (cat) {
     case "town_hall":
@@ -174,6 +183,11 @@ interface ValidationPanelProps {
   metadata: BaseLayoutMetadata;
   onMetadataChange: (meta: BaseLayoutMetadata) => void;
   onExport: () => void;
+  onImport: () => void;
+  canUndoFlag: boolean;
+  canRedoFlag: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
 }
 
 function ValidationPanel({
@@ -183,6 +197,11 @@ function ValidationPanel({
   metadata,
   onMetadataChange,
   onExport,
+  onImport,
+  canUndoFlag,
+  canRedoFlag,
+  onUndo,
+  onRedo,
 }: ValidationPanelProps) {
   const allPassing = constraints.every((c) => c.passing);
   const metaValid = metadata.name.trim().length > 0 && metadata.author.trim().length > 0;
@@ -210,6 +229,35 @@ function ValidationPanel({
           {c.label}
         </div>
       ))}
+
+      <div style={{ marginTop: 12, display: "flex", gap: 4 }}>
+        <button
+          disabled={!canUndoFlag}
+          onClick={onUndo}
+          title="Undo (Ctrl+Z)"
+          style={{
+            ...styles.actionBtn,
+            opacity: canUndoFlag ? 1 : 0.4,
+            cursor: canUndoFlag ? "pointer" : "not-allowed",
+            flex: 1,
+          }}
+        >
+          ↩ Undo
+        </button>
+        <button
+          disabled={!canRedoFlag}
+          onClick={onRedo}
+          title="Redo (Ctrl+Shift+Z)"
+          style={{
+            ...styles.actionBtn,
+            opacity: canRedoFlag ? 1 : 0.4,
+            cursor: canRedoFlag ? "pointer" : "not-allowed",
+            flex: 1,
+          }}
+        >
+          ↪ Redo
+        </button>
+      </div>
 
       <div style={{ marginTop: 16, marginBottom: 8, ...styles.panelTitle }}>Metadata</div>
       <MetaField
@@ -244,6 +292,13 @@ function ValidationPanel({
       <div style={{ marginBottom: 8, fontSize: 11, color: "#888" }}>
         Buildings: {placements.length}
       </div>
+      <button
+        onClick={onImport}
+        style={{ ...styles.actionBtn, width: "100%", marginBottom: 4 }}
+        title="Open base.json"
+      >
+        Open base.json
+      </button>
       <button
         disabled={!allPassing || !metaValid}
         title={
@@ -292,12 +347,23 @@ interface ContextMenu {
   tile: [number, number] | null;
 }
 
+const DEFAULT_METADATA: BaseLayoutMetadata = {
+  name: "",
+  th_level: 6,
+  tags: [],
+  notes: null,
+  author: "",
+  created_at: new Date().toISOString(),
+};
+
 export function EditorPage() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Application | null>(null);
   const rendererRef = useRef<EditorRenderer | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [editorState, setEditorState] = useState<EditorState>(createEditorState);
+  const [history, setHistory] = useState<HistoryState>(() => createHistoryState([]));
   const [ghostOrigin, setGhostOrigin] = useState<[number, number] | null>(null);
   const [hoverTile, setHoverTile] = useState<[number, number] | null>(null);
   const [paintCurrentTile, setPaintCurrentTile] = useState<[number, number] | null>(null);
@@ -307,18 +373,27 @@ export function EditorPage() {
     validateLayout([]),
   );
   const [_highlightedIndices, setHighlightedIndices] = useState<number[]>([]);
-  const [metadata, setMetadata] = useState<BaseLayoutMetadata>({
-    name: "",
-    th_level: 6,
-    tags: [],
-    notes: null,
-    author: "",
-    created_at: new Date().toISOString(),
-  });
+  const [metadata, setMetadata] = useState<BaseLayoutMetadata>(DEFAULT_METADATA);
+  const [autosavePrompt, setAutosavePrompt] = useState(false);
+  const pendingDraftRef = useRef<{ placements: BuildingPlacement[]; metadata: BaseLayoutMetadata } | null>(null);
 
   // Keep a ref to editorState for callbacks inside Pixi
   const editorStateRef = useRef(editorState);
   editorStateRef.current = editorState;
+
+  // Check for autosave draft on mount
+  useEffect(() => {
+    const draft = loadFromLocalStorage();
+    if (draft && (draft.placements.length > 0 || draft.metadata.name)) {
+      pendingDraftRef.current = { placements: draft.placements, metadata: draft.metadata };
+      setAutosavePrompt(true);
+    }
+  }, []);
+
+  // Autosave on every placement mutation
+  useEffect(() => {
+    saveToLocalStorage(editorState.placements, metadata);
+  }, [editorState.placements, metadata]);
 
   // Init Pixi once
   useEffect(() => {
@@ -357,6 +432,7 @@ export function EditorPage() {
             setEditorState((prev) => {
               const [next, result] = placeBuildingAt(prev, [row, col]);
               if (result === "placed") {
+                setHistory((h) => pushHistory(h, prev.placements));
                 setConstraints(validateLayout(next.placements));
               }
               return next;
@@ -364,7 +440,10 @@ export function EditorPage() {
           } else if (s.mode === "erasing") {
             setEditorState((prev) => {
               const next = eraseAtTile(prev, [row, col]);
-              setConstraints(validateLayout(next.placements));
+              if (next.placements !== prev.placements) {
+                setHistory((h) => pushHistory(h, prev.placements));
+                setConstraints(validateLayout(next.placements));
+              }
               return next;
             });
           }
@@ -375,6 +454,7 @@ export function EditorPage() {
           if (s.mode === "erasing" || s.mode === "idle") {
             setEditorState((prev) => {
               const next = removeBuilding(prev, index);
+              setHistory((h) => pushHistory(h, prev.placements));
               setConstraints(validateLayout(next.placements));
               return next;
             });
@@ -407,7 +487,10 @@ export function EditorPage() {
           if (s.mode !== "painting" || s.paintStart === null) return;
           setEditorState((prev) => {
             const [next, result] = commitWallPaint(prev, [row, col]);
-            setConstraints(validateLayout(next.placements));
+            if (result !== "noop") {
+              setHistory((h) => pushHistory(h, prev.placements));
+              setConstraints(validateLayout(next.placements));
+            }
             if (result === "capped") {
               setWallCapTooltip(true);
               setTimeout(() => setWallCapTooltip(false), 2500);
@@ -426,6 +509,7 @@ export function EditorPage() {
       app.destroy(true);
       appRef.current = null;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Sync renderer when state changes
@@ -484,6 +568,27 @@ export function EditorPage() {
       } else if (e.key === "e" || e.key === "E") {
         setEditorState((prev) => enterEraseMode(prev));
         setGhostOrigin(null);
+      } else if (e.key === "z" && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
+        e.preventDefault();
+        setHistory((h) => {
+          if (!canUndo(h)) return h;
+          const next = undo(h);
+          setEditorState((es) => ({ ...es, placements: next.present }));
+          setConstraints(validateLayout(next.present));
+          return next;
+        });
+      } else if (
+        (e.key === "z" && (e.ctrlKey || e.metaKey) && e.shiftKey) ||
+        (e.key === "y" && (e.ctrlKey || e.metaKey))
+      ) {
+        e.preventDefault();
+        setHistory((h) => {
+          if (!canRedo(h)) return h;
+          const next = redo(h);
+          setEditorState((es) => ({ ...es, placements: next.present }));
+          setConstraints(validateLayout(next.present));
+          return next;
+        });
       }
     };
     window.addEventListener("keydown", onKey);
@@ -504,6 +609,7 @@ export function EditorPage() {
         if (contextMenu.buildingIndex !== null) {
           setEditorState((prev) => {
             const next = removeBuilding(prev, contextMenu.buildingIndex!);
+            setHistory((h) => pushHistory(h, prev.placements));
             setConstraints(validateLayout(next.placements));
             return next;
           });
@@ -541,6 +647,72 @@ export function EditorPage() {
     URL.revokeObjectURL(url);
   }, [metadata, editorState.placements]);
 
+  const handleImport = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const layout = JSON.parse(ev.target?.result as string) as BaseLayout;
+          const placements = layout.placements ?? [];
+          const meta: BaseLayoutMetadata = layout.metadata ?? DEFAULT_METADATA;
+          setEditorState((prev) => {
+            setHistory((h) => pushHistory(h, prev.placements));
+            setConstraints(validateLayout(placements));
+            return { ...prev, placements };
+          });
+          setMetadata(meta);
+        } catch {
+          // silently ignore invalid JSON
+        }
+      };
+      reader.readAsText(file);
+      // Reset so the same file can be re-imported
+      e.target.value = "";
+    },
+    [],
+  );
+
+  const handleContinueDraft = useCallback(() => {
+    const draft = pendingDraftRef.current;
+    if (!draft) return;
+    setEditorState((prev) => ({ ...prev, placements: draft.placements }));
+    setMetadata(draft.metadata);
+    setConstraints(validateLayout(draft.placements));
+    setHistory(createHistoryState(draft.placements));
+    setAutosavePrompt(false);
+  }, []);
+
+  const handleStartFresh = useCallback(() => {
+    clearLocalStorage();
+    setAutosavePrompt(false);
+  }, []);
+
+  const handleUndo = useCallback(() => {
+    setHistory((h) => {
+      if (!canUndo(h)) return h;
+      const next = undo(h);
+      setEditorState((es) => ({ ...es, placements: next.present }));
+      setConstraints(validateLayout(next.present));
+      return next;
+    });
+  }, []);
+
+  const handleRedo = useCallback(() => {
+    setHistory((h) => {
+      if (!canRedo(h)) return h;
+      const next = redo(h);
+      setEditorState((es) => ({ ...es, placements: next.present }));
+      setConstraints(validateLayout(next.present));
+      return next;
+    });
+  }, []);
+
   const modeLabel = (() => {
     switch (editorState.mode) {
       case "placing":
@@ -550,12 +722,21 @@ export function EditorPage() {
       case "erasing":
         return "Erase mode: click to remove (E=toggle, Esc=exit)";
       default:
-        return "Click a palette item to place | W=paint walls | E=erase";
+        return "Click a palette item to place | W=paint walls | E=erase | Ctrl+Z=undo";
     }
   })();
 
   return (
     <div style={styles.root} onClick={() => setContextMenu(null)}>
+      {/* Hidden file input for import */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json,application/json"
+        style={{ display: "none" }}
+        onChange={handleFileChange}
+      />
+
       <Palette
         placements={editorState.placements}
         selectedType={editorState.selectedType}
@@ -575,17 +756,40 @@ export function EditorPage() {
         metadata={metadata}
         onMetadataChange={setMetadata}
         onExport={handleExport}
+        onImport={handleImport}
+        canUndoFlag={canUndo(history)}
+        canRedoFlag={canRedo(history)}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
       />
 
       {wallCapTooltip && (
         <div style={styles.wallCapTooltip}>TH6 wall cap: 75 of 75 placed.</div>
       )}
 
+      {autosavePrompt && (
+        <div style={styles.overlay} onClick={(e) => e.stopPropagation()}>
+          <div style={styles.dialog}>
+            <div style={styles.dialogTitle}>Resume draft?</div>
+            <div style={styles.dialogBody}>
+              A saved draft was found. Continue editing it or start fresh?
+            </div>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button style={styles.dialogBtn} onClick={handleStartFresh}>
+                Start fresh
+              </button>
+              <button style={{ ...styles.dialogBtn, background: "#238636", borderColor: "#2ea043" }} onClick={handleContinueDraft}>
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {contextMenu && (
         <div
           style={{
             ...styles.contextMenu,
-            // For now anchor to bottom-right of canvas area
             position: "fixed",
             top: "50%",
             left: "50%",
@@ -704,6 +908,15 @@ const styles = {
     boxSizing: "border-box" as const,
     outline: "none",
   } as React.CSSProperties,
+  actionBtn: {
+    padding: "5px 0",
+    background: "#1e2a3a",
+    border: "1px solid #2a3a4a",
+    borderRadius: 4,
+    color: "#cdd9e5",
+    fontSize: 11,
+    fontFamily: "monospace",
+  } as React.CSSProperties,
   exportBtn: {
     width: "100%",
     padding: "7px 0",
@@ -749,6 +962,43 @@ const styles = {
     fontSize: 12,
     fontFamily: "monospace",
     textAlign: "left" as const,
+    cursor: "pointer",
+  } as React.CSSProperties,
+  overlay: {
+    position: "fixed" as const,
+    inset: 0,
+    background: "rgba(0,0,0,0.6)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2000,
+  } as React.CSSProperties,
+  dialog: {
+    background: "#161b22",
+    border: "1px solid #30363d",
+    borderRadius: 8,
+    padding: 20,
+    width: 320,
+  } as React.CSSProperties,
+  dialogTitle: {
+    fontSize: 14,
+    fontWeight: "bold",
+    marginBottom: 8,
+    color: "#cdd9e5",
+  } as React.CSSProperties,
+  dialogBody: {
+    fontSize: 12,
+    color: "#8b949e",
+    marginBottom: 16,
+  } as React.CSSProperties,
+  dialogBtn: {
+    padding: "6px 14px",
+    background: "#21262d",
+    border: "1px solid #30363d",
+    borderRadius: 4,
+    color: "#cdd9e5",
+    fontSize: 12,
+    fontFamily: "monospace",
     cursor: "pointer",
   } as React.CSSProperties,
 } as const;
