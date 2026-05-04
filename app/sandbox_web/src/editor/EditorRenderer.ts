@@ -51,7 +51,7 @@ export class EditorRenderer {
   onBuildingClick: ((index: number) => void) | null = null;
   onBuildingRightClick: ((index: number) => void) | null = null;
   onTileRightClick: ((row: number, col: number) => void) | null = null;
-  onPaintStart: ((row: number, col: number) => void) | null = null;
+  onPaintStart: ((row: number, col: number) => boolean) | null = null;
   onPaintMove: ((row: number, col: number) => void) | null = null;
   onPaintEnd: ((row: number, col: number) => void) | null = null;
 
@@ -228,8 +228,8 @@ export class EditorRenderer {
       this.pointerDownPos = { x: e.global.x, y: e.global.y };
       if (e.button === 0 && this.onPaintStart) {
         const tile = this.screenToTile(e.global.x, e.global.y);
-        this._isPainting = true;
-        this.onPaintStart(tile.row, tile.col);
+        const accepted = this.onPaintStart(tile.row, tile.col);
+        if (accepted) this._isPainting = true;
       }
     });
 

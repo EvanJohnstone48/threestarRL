@@ -444,18 +444,24 @@ export function EditorPage() {
   // Init Pixi once
   useEffect(() => {
     if (!canvasRef.current) return;
+    const container = canvasRef.current;
+    let cancelled = false;
+    let cleanup: (() => void) | null = null;
     const app = new Application();
-    appRef.current = app;
 
     app
       .init({
         background: 0x141a22,
-        resizeTo: canvasRef.current,
+        resizeTo: container,
         antialias: true,
       })
       .then(() => {
-        if (!canvasRef.current) return;
-        canvasRef.current.appendChild(app.canvas);
+        if (cancelled) {
+          app.destroy(true);
+          return;
+        }
+        appRef.current = app;
+        container.appendChild(app.canvas);
         const renderer = new EditorRenderer(app);
         rendererRef.current = renderer;
 
@@ -517,9 +523,10 @@ export function EditorPage() {
 
         renderer.onPaintStart = (row, col) => {
           const s = editorStateRef.current;
-          if (s.mode !== "painting") return;
+          if (s.mode !== "painting") return false;
           setEditorState((prev) => startPaintDrag(prev, [row, col]));
           setPaintCurrentTile([row, col]);
+          return true;
         };
 
         renderer.onPaintMove = (row, col) => {
@@ -547,13 +554,18 @@ export function EditorPage() {
         };
 
         renderer.renderBuildings([]);
+
+        cleanup = () => {
+          rendererRef.current?.destroy();
+          rendererRef.current = null;
+          app.destroy(true);
+          appRef.current = null;
+        };
       });
 
     return () => {
-      rendererRef.current?.destroy();
-      rendererRef.current = null;
-      app.destroy(true);
-      appRef.current = null;
+      cancelled = true;
+      if (cleanup) cleanup();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

@@ -8,7 +8,15 @@ export default function App() {
   const [tab, setTab] = useState<Tab>("viewer");
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#0d1117" }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100dvh",
+        minHeight: 0,
+        background: "#0d1117",
+      }}
+    >
       <div
         style={{
           display: "flex",
@@ -38,7 +46,7 @@ export default function App() {
           </button>
         ))}
       </div>
-      <div style={{ flex: 1, overflow: "hidden" }}>
+      <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
         {tab === "viewer" ? <ReplayViewer /> : <EditorPage />}
       </div>
     </div>
