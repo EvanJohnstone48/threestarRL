@@ -38,6 +38,7 @@ from sandbox_core.schemas import BuildingType, SpellType, TroopType
 DEFAULT_DATA_DIR: Path = Path(__file__).resolve().parents[1] / "data"
 
 OVERRIDES_FILENAME = "manual_overrides.json"
+TH_CAPS_FILENAME = "th_caps.json"
 
 
 _BuildingListAdapter = TypeAdapter(list[BuildingType])
@@ -205,11 +206,20 @@ def _load_entries_optional(path: Path) -> list[dict[str, Any]]:
     return _load_entries(path)
 
 
+def load_th_caps(data_dir: Path | None = None) -> dict[int, dict[str, Any]]:
+    """Load th_caps.json and return a dict keyed by TH level (int)."""
+    base = data_dir or DEFAULT_DATA_DIR
+    raw: Any = json.loads((base / TH_CAPS_FILENAME).read_text(encoding="utf-8"))
+    return {int(k): v for k, v in raw["town_hall_levels"].items()}
+
+
 __all__ = [
     "DEFAULT_DATA_DIR",
     "OVERRIDES_FILENAME",
+    "TH_CAPS_FILENAME",
     "ContentCatalogue",
     "apply_overrides",
     "load_catalogue",
+    "load_th_caps",
     "merge_entity_overrides",
 ]

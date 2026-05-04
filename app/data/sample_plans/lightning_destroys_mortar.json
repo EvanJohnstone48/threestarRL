@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "name": "lightning_destroys_mortar",
+    "notes": "Two Lightning level-3 casts at (26.5,26.5): 5 bolts x 42 dmg x 2 casts = 420 total > 400 Mortar HP. Wall in radius takes 0 damage (target_filter=all_except_walls). Uses full TH6 spell capacity (2 spells, housing_space=1 each).",
+    "author": "claude",
+    "created_at": "2026-05-03T00:00:00Z"
+  },
+  "actions": [
+    {"tick": 0, "kind": "cast_spell", "entity_type": "lightning_spell", "position": [26.5, 26.5], "level": 3},
+    {"tick": 6, "kind": "cast_spell", "entity_type": "lightning_spell", "position": [26.5, 26.5], "level": 3}
+  ]
+}

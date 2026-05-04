@@ -52,6 +52,8 @@ from sandbox_core.schemas import (
     ReplayMetadata,
     Score,
     SimTerminatedError,
+    SpellCast,
+    SpellType,
     TickFrame,
     TroopLevelStats,
     TroopState,
@@ -84,6 +86,7 @@ class _SimContext:
     troop_target: dict[int, int | None] = field(default_factory=lambda: dict[int, int | None]())
     end_attack_emitted: bool = False
     spells_cast_count: int = 0
+    spells_cast_total_housing: int = 0
     pending_damage: dict[int, list[DamageEvent]] = field(
         default_factory=lambda: dict[int, list[DamageEvent]]()
     )
@@ -104,6 +107,7 @@ class Sim:
         "_plan",
         "_replay_frames",
         "_sim_version",
+        "_spell_capacity_total",
         "_terminated",
         "_world",
     )
@@ -115,7 +119,8 @@ class Sim:
         *,
         catalogue_buildings: dict[str, BuildingType],
         catalogue_troops: dict[str, TroopType],
-        catalogue_spells: dict[str, object] | None = None,
+        catalogue_spells: dict[str, SpellType] | None = None,
+        spell_capacity_total: int = 0,
         sim_version: str = "0.1.0",
         config_hash: str = "",
     ) -> None:
@@ -123,7 +128,8 @@ class Sim:
         self._plan = deployment_plan
         self._catalogue_buildings = catalogue_buildings
         self._catalogue_troops = catalogue_troops
-        self._catalogue_spells = catalogue_spells or {}
+        self._catalogue_spells: dict[str, SpellType] = catalogue_spells or {}
+        self._spell_capacity_total = spell_capacity_total
         self._sim_version = sim_version
         self._config_hash = config_hash
 
@@ -151,6 +157,7 @@ class Sim:
             catalogue_buildings=self._catalogue_buildings,
             catalogue_troops=self._catalogue_troops,
             catalogue_spells=self._catalogue_spells,
+            spell_capacity_total=self._spell_capacity_total,
             sim_version=self._sim_version,
             config_hash=self._config_hash,
         )
@@ -561,12 +568,145 @@ class Sim:
                     )
                 )
             elif action.kind == "cast_spell":
-                # Spells deferred to issue 009; placeholder cast bookkeeping.
+                st = self._catalogue_spells[action.entity_type]
+                level = action.level if action.level is not None else self._base.th_level
+                level = min(level, max(s.level for s in st.levels))
+                if (
+                    self._spell_capacity_total > 0
+                    and self._ctx.spells_cast_total_housing + st.housing_space
+                    > self._spell_capacity_total
+                ):
+                    raise InvalidDeploymentError(
+                        f"spell capacity exceeded: capacity={self._spell_capacity_total}, "
+                        f"already used={self._ctx.spells_cast_total_housing}, "
+                        f"new spell housing_space={st.housing_space}"
+                    )
+                self._ctx.spells_cast_total_housing += st.housing_space
                 self._ctx.spells_cast_count += 1
+                sid = self._next_id()
+                self._world.spells.append(
+                    SpellCast(
+                        id=sid,
+                        spell_type=st.name,
+                        level=level,
+                        center=action.position,
+                        cast_tick=tick,
+                        bolts_remaining=st.num_hits,
+                        next_bolt_tick=tick + 1,
+                    )
+                )
+                events.append(
+                    Event(
+                        type=EventType.SPELL_CAST,
+                        tick=tick,
+                        payload={
+                            "spell_id": sid,
+                            "spell_type": st.name,
+                            "level": level,
+                            "center": list(action.position),
+                        },
+                    )
+                )
 
     def _step_tick_spell_casts(self, tick: int, events: list[Event]) -> None:
-        # Phase 0 has no spells. Issue 009 implements bolt cadence.
-        _ = (tick, events)
+        if not self._world.spells:
+            return
+        active: list[SpellCast] = []
+        for sc in sorted(self._world.spells, key=lambda s: s.id):
+            if tick != sc.next_bolt_tick:
+                active.append(sc)
+                continue
+            st = self._catalogue_spells[sc.spell_type]
+            stats = st.stats_at(sc.level)
+            bolt_hits = self._resolve_spell_bolt(sc, stats.damage_per_hit, tick)
+            self._enqueue_damage(tick, bolt_hits)
+            for de in bolt_hits:
+                events.append(
+                    Event(
+                        type=EventType.DAMAGE,
+                        tick=tick,
+                        payload={
+                            "target_id": de.target_id,
+                            "damage": de.damage,
+                            "attacker_id": de.attacker_id,
+                            "kind": AttackKind.SPELL_BOLT.value,
+                        },
+                    )
+                )
+            events.append(
+                Event(
+                    type=EventType.BOLT_STRUCK,
+                    tick=tick,
+                    payload={
+                        "spell_id": sc.id,
+                        "spell_type": sc.spell_type,
+                        "center": list(sc.center),
+                        "damage": stats.damage_per_hit,
+                        "bolts_remaining_after": sc.bolts_remaining - 1,
+                    },
+                )
+            )
+            new_bolts = sc.bolts_remaining - 1
+            if new_bolts > 0:
+                active.append(
+                    sc.model_copy(
+                        update={
+                            "bolts_remaining": new_bolts,
+                            "next_bolt_tick": tick + st.hit_interval_ticks,
+                        }
+                    )
+                )
+            # bolts_remaining == 0: despawn (not appended to active)
+        self._world.spells = active
+
+    def _resolve_spell_bolt(
+        self,
+        sc: SpellCast,
+        damage: float,
+        tick: int,
+    ) -> list[DamageEvent]:
+        """Apply one Lightning bolt: damages non-wall buildings + all troops (including friendly)."""
+        splash_buildings: list[SplashTargetBuilding] = []
+        for b in self._world.buildings:
+            bt = self._catalogue_buildings[b.building_type]
+            inset = (
+                bt.hitbox_inset
+                if bt.hitbox_inset is not None
+                else default_hitbox_inset(bt.footprint)
+            )
+            splash_buildings.append(
+                SplashTargetBuilding(
+                    id=b.id,
+                    origin=b.origin,
+                    footprint=bt.footprint,
+                    hitbox_inset=inset,
+                    is_wall=bt.is_wall,
+                    destroyed=b.destroyed,
+                )
+            )
+        splash_troops: list[SplashTargetTroop] = []
+        for t in self._world.troops:
+            splash_troops.append(
+                SplashTargetTroop(
+                    id=t.id,
+                    position=t.position,
+                    destroyed=t.destroyed,
+                    is_friendly=False,
+                )
+            )
+        st = self._catalogue_spells[sc.spell_type]
+        return resolve_splash(
+            center=sc.center,
+            radius=st.radius_tiles,
+            damage=damage,
+            attacker_id=sc.id,
+            buildings=splash_buildings,
+            troops=splash_troops,
+            splash_damages_walls=False,
+            hits_buildings=True,
+            hits_troops=True,
+            hits_friendly_troops=True,
+        )
 
     def _step_troop_attacks(self, tick: int, events: list[Event]) -> None:
         # Placeholder per PRD §13.3: each troop walks straight at the nearest
@@ -1043,18 +1183,24 @@ class Sim:
     # ----- termination -----------------------------------------------------
 
     def _check_termination(self) -> bool:
-        # Count remaining future deployments (for "nothing left" condition).
-        future_actions = sum(
-            len(actions)
-            for tick, actions in self._pending_deployments.items()
-            if tick > self._world.tick
+        # Current tick's actions are already popped by _step_apply_deployments;
+        # only future-tick entries remain in _pending_deployments here.
+        troops_in_pipeline = sum(
+            1
+            for actions in self._pending_deployments.values()
+            for a in actions
+            if a.kind == "deploy_troop"
         )
-        same_tick_pending = len(self._pending_deployments.get(self._world.tick, []))
-        troops_in_pipeline = future_actions + same_tick_pending
+        pending_spells = sum(
+            1
+            for actions in self._pending_deployments.values()
+            for a in actions
+            if a.kind == "cast_spell"
+        )
         return is_terminal(
             world=self._world,
             troops_remaining_in_camps=troops_in_pipeline,
-            spells_remaining=0,
+            spells_remaining=pending_spells,
             end_attack_emitted=self._ctx.end_attack_emitted,
         )
 

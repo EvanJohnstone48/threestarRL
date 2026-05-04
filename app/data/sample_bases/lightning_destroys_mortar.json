@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "name": "lightning_destroys_mortar",
+    "th_level": 6,
+    "tags": ["lightning", "golden", "issue-009"],
+    "notes": "Lightning spell golden: two level-3 casts destroy a Mortar (400 HP). Wall at (24,28) is inside the 3.0-tile radius but never damaged (target_filter=all_except_walls).",
+    "author": "claude",
+    "created_at": "2026-05-03T00:00:00Z"
+  },
+  "th_level": 6,
+  "placements": [
+    {"building_type": "town_hall", "origin": [3, 3], "level": 1},
+    {"building_type": "mortar", "origin": [25, 25], "level": 1},
+    {"building_type": "wall", "origin": [24, 28], "level": 1}
+  ],
+  "cc_contents": []
+}
