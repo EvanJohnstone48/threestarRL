@@ -73,11 +73,15 @@ Requires Node 20+.
 ```bash
 cd app/sandbox_web
 npm install
-npm run dev
+npm run dev          # boot the replay viewer at http://localhost:5173
 npm run build
 npm run lint
 npm run typecheck
+npm test             # vitest (jsdom)
 ```
+
+To view a replay, drag a `*.json` produced by `uv run sandbox-core` onto
+the canvas, click "Load replay…", or pass `?replay=<path>` in the URL.
 
 On Windows PowerShell, use `npm.cmd` if `npm` is blocked by execution policy:
 
