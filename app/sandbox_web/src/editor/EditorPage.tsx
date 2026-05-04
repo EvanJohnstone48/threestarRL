@@ -15,6 +15,10 @@ import {
   startPaintDrag,
   commitWallPaint,
   resolveOrthoLine,
+  clearAll,
+  mirrorHorizontal,
+  mirrorVertical,
+  rotate90CW,
   type EditorState,
 } from "./editorState";
 import { validateLayout, type ConstraintResult } from "./validator";
@@ -188,6 +192,10 @@ interface ValidationPanelProps {
   canRedoFlag: boolean;
   onUndo: () => void;
   onRedo: () => void;
+  onClearAll: () => void;
+  onMirrorH: () => void;
+  onMirrorV: () => void;
+  onRotateCW: () => void;
 }
 
 function ValidationPanel({
@@ -202,6 +210,10 @@ function ValidationPanel({
   canRedoFlag,
   onUndo,
   onRedo,
+  onClearAll,
+  onMirrorH,
+  onMirrorV,
+  onRotateCW,
 }: ValidationPanelProps) {
   const allPassing = constraints.every((c) => c.passing);
   const metaValid = metadata.name.trim().length > 0 && metadata.author.trim().length > 0;
@@ -258,6 +270,38 @@ function ValidationPanel({
           ↪ Redo
         </button>
       </div>
+
+      <div style={{ marginTop: 16, marginBottom: 8, ...styles.panelTitle }}>Mass Actions</div>
+      <button
+        onClick={onClearAll}
+        style={{ ...styles.actionBtn, width: "100%", marginBottom: 4 }}
+        title="Clear all buildings (undoable)"
+      >
+        Clear all
+      </button>
+      <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
+        <button
+          onClick={onMirrorH}
+          style={{ ...styles.actionBtn, flex: 1 }}
+          title="Mirror horizontal (across vertical axis)"
+        >
+          ↔ Mirror H
+        </button>
+        <button
+          onClick={onMirrorV}
+          style={{ ...styles.actionBtn, flex: 1 }}
+          title="Mirror vertical (across horizontal axis)"
+        >
+          ↕ Mirror V
+        </button>
+      </div>
+      <button
+        onClick={onRotateCW}
+        style={{ ...styles.actionBtn, width: "100%", marginBottom: 4 }}
+        title="Rotate 90° clockwise"
+      >
+        ↻ Rotate 90° CW
+      </button>
 
       <div style={{ marginTop: 16, marginBottom: 8, ...styles.panelTitle }}>Metadata</div>
       <MetaField
@@ -375,6 +419,8 @@ export function EditorPage() {
   const [_highlightedIndices, setHighlightedIndices] = useState<number[]>([]);
   const [metadata, setMetadata] = useState<BaseLayoutMetadata>(DEFAULT_METADATA);
   const [autosavePrompt, setAutosavePrompt] = useState(false);
+  const [confirmClearAll, setConfirmClearAll] = useState(false);
+  const [errorToast, setErrorToast] = useState<string | null>(null);
   const pendingDraftRef = useRef<{ placements: BuildingPlacement[]; metadata: BaseLayoutMetadata } | null>(null);
 
   // Keep a ref to editorState for callbacks inside Pixi
@@ -713,6 +759,63 @@ export function EditorPage() {
     });
   }, []);
 
+  const showErrorToast = useCallback((msg: string) => {
+    setErrorToast(msg);
+    setTimeout(() => setErrorToast(null), 2500);
+  }, []);
+
+  const handleClearAllConfirmed = useCallback(() => {
+    setConfirmClearAll(false);
+    setEditorState((prev) => {
+      setHistory((h) => pushHistory(h, prev.placements));
+      const next = clearAll(prev);
+      setConstraints(validateLayout(next.placements));
+      return next;
+    });
+  }, []);
+
+  const handleMirrorH = useCallback(() => {
+    setEditorState((prev) => {
+      const newPlacements = mirrorHorizontal(prev.placements);
+      const errors = validateLayout(newPlacements).filter((c) => !c.passing);
+      if (errors.length > 0) {
+        showErrorToast(`Mirror H failed: ${errors[0].label}`);
+        return prev;
+      }
+      setHistory((h) => pushHistory(h, prev.placements));
+      setConstraints(validateLayout(newPlacements));
+      return { ...prev, placements: newPlacements };
+    });
+  }, [showErrorToast]);
+
+  const handleMirrorV = useCallback(() => {
+    setEditorState((prev) => {
+      const newPlacements = mirrorVertical(prev.placements);
+      const errors = validateLayout(newPlacements).filter((c) => !c.passing);
+      if (errors.length > 0) {
+        showErrorToast(`Mirror V failed: ${errors[0].label}`);
+        return prev;
+      }
+      setHistory((h) => pushHistory(h, prev.placements));
+      setConstraints(validateLayout(newPlacements));
+      return { ...prev, placements: newPlacements };
+    });
+  }, [showErrorToast]);
+
+  const handleRotateCW = useCallback(() => {
+    setEditorState((prev) => {
+      const newPlacements = rotate90CW(prev.placements);
+      const errors = validateLayout(newPlacements).filter((c) => !c.passing);
+      if (errors.length > 0) {
+        showErrorToast(`Rotate failed: ${errors[0].label}`);
+        return prev;
+      }
+      setHistory((h) => pushHistory(h, prev.placements));
+      setConstraints(validateLayout(newPlacements));
+      return { ...prev, placements: newPlacements };
+    });
+  }, [showErrorToast]);
+
   const modeLabel = (() => {
     switch (editorState.mode) {
       case "placing":
@@ -761,6 +864,10 @@ export function EditorPage() {
         canRedoFlag={canRedo(history)}
         onUndo={handleUndo}
         onRedo={handleRedo}
+        onClearAll={() => setConfirmClearAll(true)}
+        onMirrorH={handleMirrorH}
+        onMirrorV={handleMirrorV}
+        onRotateCW={handleRotateCW}
       />
 
       {wallCapTooltip && (
@@ -784,6 +891,32 @@ export function EditorPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {confirmClearAll && (
+        <div style={styles.overlay} onClick={(e) => e.stopPropagation()}>
+          <div style={styles.dialog}>
+            <div style={styles.dialogTitle}>Clear all buildings?</div>
+            <div style={styles.dialogBody}>
+              This will remove all placed buildings. The action is undoable.
+            </div>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button style={styles.dialogBtn} onClick={() => setConfirmClearAll(false)}>
+                Cancel
+              </button>
+              <button
+                style={{ ...styles.dialogBtn, background: "#b91c1c", borderColor: "#dc2626" }}
+                onClick={handleClearAllConfirmed}
+              >
+                Clear all
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {errorToast && (
+        <div style={styles.errorToast}>{errorToast}</div>
       )}
 
       {contextMenu && (
@@ -934,6 +1067,20 @@ const styles = {
     left: "50%",
     transform: "translateX(-50%)",
     background: "#f44336",
+    color: "#fff",
+    padding: "6px 14px",
+    borderRadius: 4,
+    fontSize: 12,
+    fontFamily: "monospace",
+    zIndex: 1000,
+    pointerEvents: "none" as const,
+  } as React.CSSProperties,
+  errorToast: {
+    position: "fixed" as const,
+    bottom: 56,
+    left: "50%",
+    transform: "translateX(-50%)",
+    background: "#b91c1c",
     color: "#fff",
     padding: "6px 14px",
     borderRadius: 4,

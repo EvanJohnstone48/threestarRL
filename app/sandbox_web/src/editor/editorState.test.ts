@@ -13,6 +13,10 @@ import {
   startPaintDrag,
   commitWallPaint,
   eraseAtTile,
+  clearAll,
+  mirrorHorizontal,
+  mirrorVertical,
+  rotate90CW,
 } from "./editorState";
 
 describe("editorState — initial state", () => {
@@ -316,5 +320,115 @@ describe("editorState — eraseAtTile", () => {
     [state] = placeBuildingAt(state, [10, 10]);
     const next = eraseAtTile(state, [20, 20]);
     expect(next.placements).toHaveLength(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Mass actions
+// ---------------------------------------------------------------------------
+
+describe("clearAll", () => {
+  it("empties placements and preserves mode", () => {
+    let state = enterPlaceMode(createEditorState(), "cannon");
+    [state] = placeBuildingAt(state, [10, 10]);
+    const next = clearAll(state);
+    expect(next.placements).toHaveLength(0);
+    expect(next.mode).toBe("placing");
+  });
+
+  it("is a no-op on an already-empty state (returns empty placements)", () => {
+    const state = createEditorState();
+    const next = clearAll(state);
+    expect(next.placements).toHaveLength(0);
+  });
+});
+
+describe("mirrorHorizontal", () => {
+  it("reflects a 1×1 wall across the vertical center axis", () => {
+    // wall at col 10 → col 50-10-1 = 39
+    const result = mirrorHorizontal([{ building_type: "wall", origin: [10, 10], level: 1 }]);
+    expect(result[0].origin).toEqual([10, 39]);
+  });
+
+  it("reflects a 3×3 cannon correctly", () => {
+    // cannon at col 10, width 3 → col 50-10-3 = 37
+    const result = mirrorHorizontal([{ building_type: "cannon", origin: [10, 10], level: 1 }]);
+    expect(result[0].origin).toEqual([10, 37]);
+  });
+
+  it("rows are unchanged", () => {
+    const result = mirrorHorizontal([{ building_type: "cannon", origin: [15, 20], level: 1 }]);
+    expect(result[0].origin[0]).toBe(15);
+  });
+
+  it("double mirror returns to original position", () => {
+    const original = [{ building_type: "cannon", origin: [10, 10], level: 1 }];
+    expect(mirrorHorizontal(mirrorHorizontal(original))[0].origin).toEqual([10, 10]);
+  });
+
+  it("two buildings swap positions correctly", () => {
+    const p1 = { building_type: "wall", origin: [5, 10] as [number, number], level: 1 };
+    const p2 = { building_type: "wall", origin: [5, 39] as [number, number], level: 1 };
+    const result = mirrorHorizontal([p1, p2]);
+    expect(result[0].origin).toEqual([5, 39]);
+    expect(result[1].origin).toEqual([5, 10]);
+  });
+});
+
+describe("mirrorVertical", () => {
+  it("reflects a 1×1 wall across the horizontal center axis", () => {
+    // wall at row 10 → row 50-10-1 = 39
+    const result = mirrorVertical([{ building_type: "wall", origin: [10, 10], level: 1 }]);
+    expect(result[0].origin).toEqual([39, 10]);
+  });
+
+  it("reflects a 3×3 cannon correctly", () => {
+    // cannon at row 10, height 3 → row 50-10-3 = 37
+    const result = mirrorVertical([{ building_type: "cannon", origin: [10, 10], level: 1 }]);
+    expect(result[0].origin).toEqual([37, 10]);
+  });
+
+  it("cols are unchanged", () => {
+    const result = mirrorVertical([{ building_type: "cannon", origin: [15, 20], level: 1 }]);
+    expect(result[0].origin[1]).toBe(20);
+  });
+
+  it("double mirror returns to original position", () => {
+    const original = [{ building_type: "cannon", origin: [10, 10], level: 1 }];
+    expect(mirrorVertical(mirrorVertical(original))[0].origin).toEqual([10, 10]);
+  });
+});
+
+describe("rotate90CW", () => {
+  it("rotates a 1×1 wall 90° clockwise", () => {
+    // tile (r,c) → (c, 49-r) for 1×1. wall at (10,20) → (20, 39)
+    const result = rotate90CW([{ building_type: "wall", origin: [10, 20], level: 1 }]);
+    expect(result[0].origin).toEqual([20, 39]);
+  });
+
+  it("rotates a 3×3 cannon 90° clockwise", () => {
+    // cannon at (10,10), n=3: new_r=10, new_c=50-10-3=37
+    const result = rotate90CW([{ building_type: "cannon", origin: [10, 10], level: 1 }]);
+    expect(result[0].origin).toEqual([10, 37]);
+  });
+
+  it("four rotations return to original position", () => {
+    const original = [{ building_type: "cannon", origin: [5, 20], level: 1 }];
+    const r1 = rotate90CW(original);
+    const r2 = rotate90CW(r1);
+    const r3 = rotate90CW(r2);
+    const r4 = rotate90CW(r3);
+    expect(r4[0].origin).toEqual([5, 20]);
+  });
+
+  it("rotated placements stay within buildable region (BUILDABLE_MIN=3, BUILDABLE_MAX=47)", () => {
+    // Place a cannon at a corner of the buildable region
+    const placements = [{ building_type: "cannon", origin: [3, 3], level: 1 }];
+    const result = rotate90CW(placements);
+    const [r, c] = result[0].origin;
+    expect(r).toBeGreaterThanOrEqual(3);
+    expect(c).toBeGreaterThanOrEqual(3);
+    expect(r + 3).toBeLessThanOrEqual(47);
+    expect(c + 3).toBeLessThanOrEqual(47);
   });
 });

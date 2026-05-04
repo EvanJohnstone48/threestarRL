@@ -1,6 +1,6 @@
 import type { BuildingPlacement } from "@/generated_types";
 import { footprintFor } from "@/render/footprints";
-import { BUILDABLE_MIN, BUILDABLE_MAX_EXCLUSIVE } from "@/render/projection";
+import { BUILDABLE_MIN, BUILDABLE_MAX_EXCLUSIVE, GRID_SIZE } from "@/render/projection";
 import { TH6_CAPS } from "./th6Caps";
 
 export type PlaceResult = "placed" | "illegal" | "cap_exceeded";
@@ -170,6 +170,38 @@ export function removeBuilding(state: EditorState, index: number): EditorState {
 export function getGhostLegality(state: EditorState, origin: [number, number]): GhostLegality {
   if (state.mode !== "placing" || state.selectedType === null) return "legal";
   return _checkLegality(state.selectedType, origin, state.placements);
+}
+
+// ---------------------------------------------------------------------------
+// Mass actions
+// ---------------------------------------------------------------------------
+
+export function clearAll(state: EditorState): EditorState {
+  return { ...state, placements: [] };
+}
+
+export function mirrorHorizontal(placements: BuildingPlacement[]): BuildingPlacement[] {
+  return placements.map((p) => {
+    const [, cols] = footprintFor(p.building_type);
+    return { ...p, origin: [p.origin[0], GRID_SIZE - p.origin[1] - cols] as [number, number] };
+  });
+}
+
+export function mirrorVertical(placements: BuildingPlacement[]): BuildingPlacement[] {
+  return placements.map((p) => {
+    const [rows] = footprintFor(p.building_type);
+    return { ...p, origin: [GRID_SIZE - p.origin[0] - rows, p.origin[1]] as [number, number] };
+  });
+}
+
+// Rotates 90° clockwise around grid center (GRID_SIZE/2 - 0.5, GRID_SIZE/2 - 0.5).
+// All TH6 footprints are square so the footprint dimensions are unchanged.
+export function rotate90CW(placements: BuildingPlacement[]): BuildingPlacement[] {
+  return placements.map((p) => {
+    const [rows] = footprintFor(p.building_type); // square footprint: rows === cols
+    const [r, c] = p.origin;
+    return { ...p, origin: [c, GRID_SIZE - r - rows] as [number, number] };
+  });
 }
 
 function _checkLegality(
