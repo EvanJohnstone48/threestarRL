@@ -11,7 +11,8 @@
 Adds isometric rendering as the second view mode.
 
 - 2:1 dimetric projection per §8.2: 64×32 px tile diamonds, grid origin at top of screen, pixel formula `screen_x = (col − row) × 32 + canvas_center_x`, `screen_y = (col + row) × 16`.
-- Sprite anchor: bottom-center pixel of canvas pinned to bottom corner of footprint diamond on screen.
+- Building sprite render bounds use the building **hitbox**, not the full footprint. The footprint remains the placement/occupancy geometry; sprites must be fit/clipped so visible art stays inside the projected hitbox region and does not fill the walkable footprint moat around non-wall buildings.
+- Sprite anchor: bottom-center pixel of canvas pinned to the south corner of the projected hitbox region on screen.
 - Sprite loader scans `app/sandbox_web/public/sprites/` per §8.3 directory layout. On app start, attempts to load every expected sprite path. Successful loads use the user-supplied PNG; missing sprites fall back to a magenta placeholder + entity name overlay.
 - Z-ordering by `(row + col)` so south-side entities render in front.
 - View toggle: `V` key cycles `top-down → iso → top-down`. Default = top-down. Iso enabled only if at least one sprite loaded successfully.
@@ -23,7 +24,7 @@ Adds isometric rendering as the second view mode.
 ## Acceptance criteria
 
 - [ ] Iso view renders the 50×50 grid as 64×32 px diamonds; pixel positions match the §8.2 formula exactly.
-- [ ] Sprites load from `public/sprites/*` and pin at the bottom-center anchor of the canvas; placement matches the south corner of the building's footprint diamond.
+- [ ] Sprites load from `public/sprites/*` and pin at the bottom-center anchor of the canvas; building sprite placement/scale/clipping is based on the building's hitbox projection, not the full footprint diamond.
 - [ ] Missing sprite shows magenta placeholder + entity name overlay.
 - [ ] `V` key cycles views correctly; choice persists across browser sessions via localStorage.
 - [ ] Top-down view continues to work identically when no sprites are present.
