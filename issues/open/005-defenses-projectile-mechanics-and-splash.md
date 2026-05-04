@@ -32,6 +32,7 @@ Full defense behavior for all five TH6 defenses: Cannon, Archer Tower, Mortar, A
 - [ ] `splash.py` unit tests: empty radius, single target, multiple targets, wall filter on/off, friendly-fire exclusion (placeholder no-op for v1 since no friendly attacker splash from defenses), distance-to-hitbox-edge for varied footprints.
 - [ ] Golden replay `mortar_splash.json` committed and passes — Mortar splash kills 3+ clustered Barbarians in single impact.
 - [ ] AC-S1.4 covered for the defense side: target filters respected at attack time.
+- [ ] Register the `mortar_splash` scenario in the `SCENARIOS` list at `tests/integration/test_replay_determinism.py` (single-line append; framework already in place from issue 011).
 
 ## Blocked by
 

@@ -24,6 +24,7 @@ The capstone integrative golden replay exercising every Phase 1 mechanic in conc
 - [ ] Final score in the recorded replay shows `destruction_pct ≥ 50` and at least 1 star.
 - [ ] Determinism subassertion in the test: rerunning produces byte-identical replay (`config_hash` matches).
 - [ ] All four termination conditions exercised at least once across the golden corpus (timer, 100%, end_attack, nothing-left) — document which scenario covers which condition.
+- [ ] Register the `full_th6_attack` scenario in the `SCENARIOS` list at `tests/integration/test_replay_determinism.py` (single-line append; framework already in place from issue 011).
 
 ## Blocked by
 
