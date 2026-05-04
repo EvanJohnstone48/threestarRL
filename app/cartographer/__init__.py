@@ -1,10 +1,16 @@
-"""Cartographer — Roboflow-based CV pipeline for ingesting real Clash base screenshots.
+"""Cartographer — Roboflow-based CV pipeline for ingesting Clash base screenshots.
 
-DEFERRED TO v2. In v1 this package is a stub reserving the namespace.
-The architectural contract is committed (see app/docs/technical.md §7), but
-implementation does not begin until the MVP-Real RL milestone is complete.
-
-Output contract: BaseLayout JSON conforming to the v1 schema.
+v2 architectural tracer bullet: all 9 modules scaffolded with typed signatures and
+stub bodies that produce syntactically valid BaseLayout v2 JSON + diagnostic PNG.
 """
 
-__version__ = "0.0.0"
+from __future__ import annotations
+
+__version__ = "0.1.0"
+
+
+def run(screenshot_path, out_path=None):
+    """Entry point: delegates to pipeline.run()."""
+    from cartographer import pipeline
+
+    return pipeline.run(screenshot_path, out_path)

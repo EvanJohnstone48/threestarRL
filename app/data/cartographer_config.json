@@ -1,0 +1,5 @@
+{
+  "project_name": "clash-base-detector",
+  "dataset_version": "1",
+  "confidence_threshold": 0.5
+}
