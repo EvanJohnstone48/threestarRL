@@ -275,7 +275,7 @@
       "levels": [
         {
           "attack_cooldown_ticks": 1,
-          "base_damage": 12,
+          "base_damage": 180,
           "hp": 20,
           "level": 1,
           "range_tiles": 0.4,
@@ -283,7 +283,7 @@
         },
         {
           "attack_cooldown_ticks": 1,
-          "base_damage": 16,
+          "base_damage": 240,
           "hp": 24,
           "level": 2,
           "range_tiles": 0.4,
@@ -291,7 +291,7 @@
         },
         {
           "attack_cooldown_ticks": 1,
-          "base_damage": 25,
+          "base_damage": 320,
           "hp": 29,
           "level": 3,
           "range_tiles": 0.4,
@@ -299,7 +299,7 @@
         },
         {
           "attack_cooldown_ticks": 1,
-          "base_damage": 38,
+          "base_damage": 400,
           "hp": 35,
           "level": 4,
           "range_tiles": 0.4,

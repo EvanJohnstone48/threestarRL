@@ -39,6 +39,7 @@ from sandbox_core.grid import (
 from sandbox_core.schemas import (
     AttackKind,
     BaseLayout,
+    BuildingCategory,
     BuildingState,
     BuildingType,
     DeploymentAction,
@@ -52,6 +53,7 @@ from sandbox_core.schemas import (
     Score,
     SimTerminatedError,
     TickFrame,
+    TroopLevelStats,
     TroopState,
     TroopType,
     WorldState,
@@ -568,11 +570,41 @@ class Sim:
 
     def _step_troop_attacks(self, tick: int, events: list[Event]) -> None:
         # Placeholder per PRD §13.3: each troop walks straight at the nearest
-        # non-wall building. Melee attack on hitbox-adjacency.
+        # non-wall building. Wall Breakers instead walk straight at the nearest wall
+        # and suicide on adjacency. Wall-destruction-driven re-pathing is placeholder;
+        # full mechanic in deferred grilling.
         for troop in sorted(self._world.troops, key=lambda t: t.id):
             if troop.destroyed:
                 continue
             tt = self._catalogue_troops[troop.troop_type]
+
+            if tt.damages_walls_on_suicide:
+                # WB targeting: nearest living wall; fallback to non-wall when no walls remain.
+                target = self._nearest_living_wall(troop.position)
+                if target is None:
+                    target = self._nearest_living_building(troop.position, prefer_non_wall=True)
+                if target is None:
+                    continue
+                bt = self._catalogue_buildings[target.building_type]
+                inset = bt.hitbox_inset if bt.hitbox_inset is not None else default_hitbox_inset(bt.footprint)
+                dist = distance_point_to_square_hitbox(troop.position, target.origin, bt.footprint, inset)
+                stats = tt.stats_at(troop.level)
+                in_range = dist <= max(stats.range_tiles, 0.0) + 1e-9
+                if in_range and bt.is_wall:
+                    cd = self._ctx.troop_cd[troop.id]
+                    if not cd.has_fired or tick >= cd.next_ready_tick:
+                        self._fire_wb_suicide(troop, tt, target, bt, tick, events, stats)
+                elif not in_range:
+                    self._move_troop_toward(troop, tt, target, bt, inset)
+                # If in range but target is non-wall (fallback), use normal attack path.
+                elif in_range and not bt.is_wall:
+                    cd = self._ctx.troop_cd[troop.id]
+                    if not cd.has_fired or tick >= cd.next_ready_tick:
+                        self._fire_troop_attack(troop, tt, target, bt, tick, events, stats)
+                        cd.has_fired = True
+                        cd.next_ready_tick = tick + max(stats.attack_cooldown_ticks, 1)
+                continue
+
             target = self._nearest_living_building(troop.position, prefer_non_wall=True)
             if target is None:
                 continue
@@ -661,6 +693,84 @@ class Sim:
                     },
                 )
             )
+
+    def _fire_wb_suicide(
+        self,
+        troop: TroopState,
+        tt: TroopType,
+        target_wall: BuildingState,
+        bt: BuildingType,
+        tick: int,
+        events: list[Event],
+        stats: TroopLevelStats,
+    ) -> None:
+        """Wall Breaker suicide: direct damage to target wall + per-category splash."""
+        _ = stats
+        # Direct damage to the target wall (wall multiplier = 1.0).
+        wall_damage = troop_damage_against(tt, troop.level, BuildingCategory.WALL)
+        self._enqueue_damage(
+            tick,
+            [DamageEvent(target_id=target_wall.id, damage=wall_damage, attacker_id=troop.id)],
+        )
+        events.append(
+            Event(
+                type=EventType.DAMAGE,
+                tick=tick,
+                payload={
+                    "target_id": target_wall.id,
+                    "damage": wall_damage,
+                    "attacker_id": troop.id,
+                    "kind": AttackKind.SUICIDE.value,
+                },
+            )
+        )
+
+        # Splash: per-category damage to buildings in radius, excluding the direct target.
+        if tt.splash_radius_tiles > 0:
+            wall_center = footprint_center(target_wall.origin, bt.footprint)
+            for b in sorted(self._world.buildings, key=lambda x: x.id):
+                if b.id == target_wall.id:
+                    continue
+                if b.destroyed:
+                    continue
+                b_bt = self._catalogue_buildings[b.building_type]
+                if b_bt.is_wall and not tt.splash_damages_walls:
+                    continue
+                b_inset = (
+                    b_bt.hitbox_inset
+                    if b_bt.hitbox_inset is not None
+                    else default_hitbox_inset(b_bt.footprint)
+                )
+                d = distance_point_to_square_hitbox(wall_center, b.origin, b_bt.footprint, b_inset)
+                if d <= tt.splash_radius_tiles:
+                    splash_dmg = troop_damage_against(tt, troop.level, b_bt.category)
+                    self._enqueue_damage(
+                        tick,
+                        [DamageEvent(target_id=b.id, damage=splash_dmg, attacker_id=troop.id)],
+                    )
+                    events.append(
+                        Event(
+                            type=EventType.DAMAGE,
+                            tick=tick,
+                            payload={
+                                "target_id": b.id,
+                                "damage": splash_dmg,
+                                "attacker_id": troop.id,
+                                "kind": AttackKind.SUICIDE.value,
+                            },
+                        )
+                    )
+
+        # Despawn WB — no pending damage targeting itself; emit DESTROYED directly.
+        troop.hp = 0.0
+        troop.destroyed = True
+        events.append(
+            Event(
+                type=EventType.DESTROYED,
+                tick=tick,
+                payload={"kind": "troop", "troop_id": troop.id, "troop_type": troop.troop_type},
+            )
+        )
 
     def _move_troop_toward(
         self,
@@ -860,6 +970,22 @@ class Sim:
             if t.id == tid:
                 return not t.destroyed
         return False
+
+    def _nearest_living_wall(self, position: tuple[float, float]) -> BuildingState | None:
+        best: BuildingState | None = None
+        best_dist = math.inf
+        for b in sorted(self._world.buildings, key=lambda x: x.id):
+            if b.destroyed:
+                continue
+            bt = self._catalogue_buildings[b.building_type]
+            if not bt.is_wall:
+                continue
+            inset = bt.hitbox_inset if bt.hitbox_inset is not None else default_hitbox_inset(bt.footprint)
+            d = distance_point_to_square_hitbox(position, b.origin, bt.footprint, inset)
+            if d < best_dist:
+                best_dist = d
+                best = b
+        return best
 
     def _nearest_living_building(
         self,

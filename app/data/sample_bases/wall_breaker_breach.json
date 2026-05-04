@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "name": "wall_breaker_breach",
+    "th_level": 6,
+    "tags": ["phase-1", "wall-breaker", "walls", "breach"],
+    "notes": "Issue 007 — WB suicides on a wall segment fencing the TH; Goblin follows through the breach. Walls at row 26 (cols 22-25) form a fence north of the deploy ring. TH sits north of the wall line. WB level 3 one-shots the target wall (320 dmg vs 300 HP) and splash-destroys adjacent walls in radius 1.5. Follow-up Goblin walks north through the former wall positions toward the TH.",
+    "author": "issue-007",
+    "created_at": "2026-05-03T00:00:00Z"
+  },
+  "th_level": 6,
+  "placements": [
+    { "building_type": "town_hall", "origin": [10, 23], "level": 1 },
+    { "building_type": "wall", "origin": [26, 22], "level": 1 },
+    { "building_type": "wall", "origin": [26, 23], "level": 1 },
+    { "building_type": "wall", "origin": [26, 24], "level": 1 },
+    { "building_type": "wall", "origin": [26, 25], "level": 1 }
+  ],
+  "cc_contents": []
+}

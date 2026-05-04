@@ -49,6 +49,11 @@ SCENARIOS: list[Scenario] = [
         base_path=SAMPLE_BASES / "mortar_splash.json",
         plan_path=SAMPLE_PLANS / "mortar_splash.json",
     ),
+    Scenario(
+        name="wall_breaker_breach",
+        base_path=SAMPLE_BASES / "wall_breaker_breach.json",
+        plan_path=SAMPLE_PLANS / "wall_breaker_breach.json",
+    ),
     # Append when issue 010 lands its sample:
     # Scenario("full_th6_attack", SAMPLE_BASES / "full_th6_attack.json",
     #          SAMPLE_PLANS / "full_th6_attack.json"),

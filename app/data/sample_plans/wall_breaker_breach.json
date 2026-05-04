@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "name": "wall_breaker_breach",
+    "notes": "Issue 007 — WB (level 3) deployed at tick 0 walks north, targets the nearest wall (26,24), suicides at ~tick 90 destroying 3 walls. Goblin (level 4) deployed at tick 95 walks north through the breach toward the TH.",
+    "author": "issue-007",
+    "created_at": "2026-05-03T00:00:00Z"
+  },
+  "actions": [
+    { "tick": 0,  "kind": "deploy_troop", "entity_type": "wall_breaker", "position": [48.5, 24.5], "level": 3 },
+    { "tick": 95, "kind": "deploy_troop", "entity_type": "goblin",       "position": [48.5, 24.5], "level": 4 }
+  ]
+}
