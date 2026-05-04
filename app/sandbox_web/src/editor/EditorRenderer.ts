@@ -49,17 +49,29 @@ export class EditorRenderer {
   onTileClick: ((row: number, col: number) => void) | null = null;
   onTileHover: ((row: number, col: number) => void) | null = null;
   onBuildingClick: ((index: number) => void) | null = null;
+  onBuildingRightClick: ((index: number) => void) | null = null;
+  onTileRightClick: ((row: number, col: number) => void) | null = null;
+  onPaintStart: ((row: number, col: number) => void) | null = null;
+  onPaintMove: ((row: number, col: number) => void) | null = null;
+  onPaintEnd: ((row: number, col: number) => void) | null = null;
 
   private buildingHitAreas: { index: number; x: number; y: number; w: number; h: number }[] = [];
+  private paintLayer: Container;
+  private highlightLayer: Container;
+  private _isPainting = false;
 
   constructor(app: Application) {
     this.app = app;
     this.camera = new Container();
     this.gridLayer = new Container();
     this.buildingLayer = new Container();
+    this.paintLayer = new Container();
+    this.highlightLayer = new Container();
     this.ghostLayer = new Container();
     this.camera.addChild(this.gridLayer);
     this.camera.addChild(this.buildingLayer);
+    this.camera.addChild(this.paintLayer);
+    this.camera.addChild(this.highlightLayer);
     this.camera.addChild(this.ghostLayer);
     this.app.stage.addChild(this.camera);
 
@@ -152,6 +164,30 @@ export class EditorRenderer {
     this.ghostLayer.removeChildren();
   }
 
+  renderWallPreview(tiles: [number, number][]): void {
+    this.paintLayer.removeChildren();
+    for (const [row, col] of tiles) {
+      const { x, y } = gridToScreen(row, col);
+      const g = new Graphics();
+      g.rect(x, y, TILE_SIZE, TILE_SIZE).fill({ color: 0x44aaff, alpha: 0.5 });
+      g.rect(x, y, TILE_SIZE, TILE_SIZE).stroke({ color: 0x88ccff, width: 1, alpha: 0.8 });
+      this.paintLayer.addChild(g);
+    }
+  }
+
+  clearWallPreview(): void {
+    this.paintLayer.removeChildren();
+  }
+
+  renderHoverHighlight(tile: [number, number] | null): void {
+    this.highlightLayer.removeChildren();
+    if (!tile) return;
+    const { x, y } = gridToScreen(tile[0], tile[1]);
+    const g = new Graphics();
+    g.rect(x, y, TILE_SIZE, TILE_SIZE).fill({ color: 0xff4444, alpha: 0.4 });
+    this.highlightLayer.addChild(g);
+  }
+
   fitToGrid(): void {
     const screen = this.app.screen;
     const gridPx = GRID_SIZE * TILE_SIZE;
@@ -190,6 +226,11 @@ export class EditorRenderer {
       this.dragging = false;
       this.lastPointer = { x: e.global.x, y: e.global.y };
       this.pointerDownPos = { x: e.global.x, y: e.global.y };
+      if (e.button === 0 && this.onPaintStart) {
+        const tile = this.screenToTile(e.global.x, e.global.y);
+        this._isPainting = true;
+        this.onPaintStart(tile.row, tile.col);
+      }
     });
 
     stage.on("pointermove", (e: FederatedPointerEvent) => {
@@ -199,7 +240,7 @@ export class EditorRenderer {
         if (dx * dx + dy * dy > CLICK_THRESHOLD_SQ) {
           this.dragging = true;
         }
-        if (this.dragging) {
+        if (this.dragging && !this._isPainting) {
           this.camera.x += dx;
           this.camera.y += dy;
         }
@@ -207,43 +248,68 @@ export class EditorRenderer {
       }
       const tile = this.screenToTile(e.global.x, e.global.y);
       this.onTileHover?.(tile.row, tile.col);
+      if (this._isPainting) {
+        this.onPaintMove?.(tile.row, tile.col);
+      }
     });
 
     stage.on("pointerup", (e: FederatedPointerEvent) => {
-      if (!this.dragging && this.pointerDownPos) {
+      const tile = this.screenToTile(e.global.x, e.global.y);
+      const worldX = (e.global.x - this.camera.x) / this.camera.scale.x;
+      const worldY = (e.global.y - this.camera.y) / this.camera.scale.y;
+
+      if (this._isPainting) {
+        this._isPainting = false;
+        this.onPaintEnd?.(tile.row, tile.col);
+      } else if (!this.dragging && this.pointerDownPos) {
         const dx = e.global.x - this.pointerDownPos.x;
         const dy = e.global.y - this.pointerDownPos.y;
         if (dx * dx + dy * dy < CLICK_THRESHOLD_SQ) {
-          const tile = this.screenToTile(e.global.x, e.global.y);
-          const worldX = (e.global.x - this.camera.x) / this.camera.scale.x;
-          const worldY = (e.global.y - this.camera.y) / this.camera.scale.y;
-          // Check building click first (right-to-left = last placed on top)
+          const isRight = e.button === 2;
+          // Check building hit areas first
           let hitBuilding = false;
           for (let i = this.buildingHitAreas.length - 1; i >= 0; i--) {
             const h = this.buildingHitAreas[i];
             if (worldX >= h.x && worldX < h.x + h.w && worldY >= h.y && worldY < h.y + h.h) {
-              this.onBuildingClick?.(h.index);
+              if (isRight) {
+                this.onBuildingRightClick?.(h.index);
+              } else {
+                this.onBuildingClick?.(h.index);
+              }
               hitBuilding = true;
               break;
             }
           }
           if (!hitBuilding) {
-            this.onTileClick?.(tile.row, tile.col);
+            if (isRight) {
+              this.onTileRightClick?.(tile.row, tile.col);
+            } else {
+              this.onTileClick?.(tile.row, tile.col);
+            }
           }
         }
       }
       this.dragging = false;
+      this._isPainting = false;
       this.lastPointer = null;
       this.pointerDownPos = null;
     });
 
     stage.on("pointerupoutside", () => {
+      if (this._isPainting) {
+        this._isPainting = false;
+        // fire paintEnd at last known tile — no-op is fine
+      }
       this.dragging = false;
+      this._isPainting = false;
       this.lastPointer = null;
       this.pointerDownPos = null;
     });
 
     const canvas = this.app.canvas;
+    canvas.addEventListener("contextmenu", (ev: MouseEvent) => {
+      ev.preventDefault();
+    });
     canvas.addEventListener("wheel", (ev: WheelEvent) => {
       ev.preventDefault();
       const rect = canvas.getBoundingClientRect();

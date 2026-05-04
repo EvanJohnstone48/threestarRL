@@ -1,5 +1,19 @@
 import { describe, it, expect } from "vitest";
-import { createEditorState, enterPlaceMode, exitPlaceMode, placeBuildingAt, removeBuilding, getGhostLegality } from "./editorState";
+import {
+  createEditorState,
+  enterPlaceMode,
+  exitPlaceMode,
+  placeBuildingAt,
+  removeBuilding,
+  getGhostLegality,
+  resolveOrthoLine,
+  enterPaintMode,
+  enterEraseMode,
+  exitCurrentMode,
+  startPaintDrag,
+  commitWallPaint,
+  eraseAtTile,
+} from "./editorState";
 
 describe("editorState — initial state", () => {
   it("starts in idle mode with no placements", () => {
@@ -109,5 +123,198 @@ describe("editorState — getGhostLegality", () => {
     [state] = placeBuildingAt(state, [10, 10]);
     state = enterPlaceMode(state, "mortar");
     expect(getGhostLegality(state, [20, 20])).toBe("cap_exceeded");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// resolveOrthoLine
+// ---------------------------------------------------------------------------
+
+describe("resolveOrthoLine — axial lines", () => {
+  it("returns a single tile when from === to", () => {
+    expect(resolveOrthoLine([5, 5], [5, 5])).toEqual([[5, 5]]);
+  });
+
+  it("returns horizontal line left-to-right", () => {
+    expect(resolveOrthoLine([5, 3], [5, 6])).toEqual([
+      [5, 3],
+      [5, 4],
+      [5, 5],
+      [5, 6],
+    ]);
+  });
+
+  it("returns horizontal line right-to-left", () => {
+    const tiles = resolveOrthoLine([5, 6], [5, 3]);
+    expect(tiles).toHaveLength(4);
+    expect(tiles[0]).toEqual([5, 6]);
+    expect(tiles[tiles.length - 1]).toEqual([5, 3]);
+  });
+
+  it("returns vertical line top-to-bottom", () => {
+    expect(resolveOrthoLine([3, 5], [6, 5])).toEqual([
+      [3, 5],
+      [4, 5],
+      [5, 5],
+      [6, 5],
+    ]);
+  });
+
+  it("returns vertical line bottom-to-top", () => {
+    const tiles = resolveOrthoLine([6, 5], [3, 5]);
+    expect(tiles).toHaveLength(4);
+    expect(tiles[0]).toEqual([6, 5]);
+    expect(tiles[tiles.length - 1]).toEqual([3, 5]);
+  });
+});
+
+describe("resolveOrthoLine — L-shape resolution", () => {
+  it("goes horizontal-first when |dc| >= |dr|", () => {
+    // from (5,5) to (8,10): dc=5, dr=3 → horizontal first
+    const tiles = resolveOrthoLine([5, 5], [8, 10]);
+    expect(tiles[0]).toEqual([5, 5]);
+    expect(tiles[tiles.length - 1]).toEqual([8, 10]);
+    // Corner should be (5,10)
+    const cornerIdx = tiles.findIndex(([r, c]) => r === 5 && c === 10);
+    expect(cornerIdx).toBeGreaterThan(0);
+    // No duplicates at corner
+    const cornerCount = tiles.filter(([r, c]) => r === 5 && c === 10).length;
+    expect(cornerCount).toBe(1);
+    // Total: 6 (horiz) + 3 (vert after corner) = 9
+    expect(tiles).toHaveLength(9);
+  });
+
+  it("goes vertical-first when |dr| > |dc|", () => {
+    // from (5,5) to (10,8): dr=5, dc=3 → vertical first
+    const tiles = resolveOrthoLine([5, 5], [10, 8]);
+    expect(tiles[0]).toEqual([5, 5]);
+    expect(tiles[tiles.length - 1]).toEqual([10, 8]);
+    // Corner should be (10,5)
+    const cornerIdx = tiles.findIndex(([r, c]) => r === 10 && c === 5);
+    expect(cornerIdx).toBeGreaterThan(0);
+    expect(tiles).toHaveLength(9);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Paint mode state machine
+// ---------------------------------------------------------------------------
+
+describe("editorState — enterPaintMode / enterEraseMode / exitCurrentMode", () => {
+  it("enterPaintMode sets mode to painting", () => {
+    const s = enterPaintMode(createEditorState());
+    expect(s.mode).toBe("painting");
+    expect(s.selectedType).toBeNull();
+  });
+
+  it("enterEraseMode sets mode to erasing", () => {
+    const s = enterEraseMode(createEditorState());
+    expect(s.mode).toBe("erasing");
+  });
+
+  it("entering paint mode exits place mode", () => {
+    const s1 = enterPlaceMode(createEditorState(), "cannon");
+    const s2 = enterPaintMode(s1);
+    expect(s2.mode).toBe("painting");
+    expect(s2.selectedType).toBeNull();
+  });
+
+  it("exitCurrentMode returns to idle from any mode", () => {
+    expect(exitCurrentMode(enterPaintMode(createEditorState())).mode).toBe("idle");
+    expect(exitCurrentMode(enterEraseMode(createEditorState())).mode).toBe("idle");
+    expect(exitCurrentMode(enterPlaceMode(createEditorState(), "cannon")).mode).toBe("idle");
+  });
+});
+
+describe("editorState — startPaintDrag / commitWallPaint", () => {
+  it("startPaintDrag records the paint start tile", () => {
+    const s = startPaintDrag(enterPaintMode(createEditorState()), [10, 10]);
+    expect(s.paintStart).toEqual([10, 10]);
+  });
+
+  it("commitWallPaint paints walls along a horizontal line", () => {
+    let state = enterPaintMode(createEditorState());
+    state = startPaintDrag(state, [10, 10]);
+    const [next, result] = commitWallPaint(state, [10, 13]);
+    expect(result).toBe("painted");
+    const walls = next.placements.filter((p) => p.building_type === "wall");
+    expect(walls).toHaveLength(4);
+    expect(walls.map((w) => w.origin)).toContainEqual([10, 10]);
+    expect(walls.map((w) => w.origin)).toContainEqual([10, 13]);
+  });
+
+  it("commitWallPaint paints walls along a vertical line", () => {
+    let state = enterPaintMode(createEditorState());
+    state = startPaintDrag(state, [10, 10]);
+    const [next, result] = commitWallPaint(state, [13, 10]);
+    expect(result).toBe("painted");
+    const walls = next.placements.filter((p) => p.building_type === "wall");
+    expect(walls).toHaveLength(4);
+  });
+
+  it("painting over an existing wall is idempotent", () => {
+    let state = enterPaintMode(createEditorState());
+    state = startPaintDrag(state, [10, 10]);
+    [state] = commitWallPaint(state, [10, 13]);
+    // Paint the same line again
+    state = startPaintDrag(state, [10, 10]);
+    const [next, result] = commitWallPaint(state, [10, 13]);
+    expect(result).toBe("noop");
+    const walls = next.placements.filter((p) => p.building_type === "wall");
+    expect(walls).toHaveLength(4); // no duplicates
+  });
+
+  it("stops at 75-wall cap and returns capped", () => {
+    // Place 74 walls first
+    let state = enterPaintMode(createEditorState());
+    for (let row = 3; row < 3 + 74; row++) {
+      state = startPaintDrag(state, [row, 3]);
+      [state] = commitWallPaint(state, [row, 3]);
+    }
+    expect(state.placements.filter((p) => p.building_type === "wall")).toHaveLength(74);
+    // Try to paint 5 more — only 1 should go in
+    state = startPaintDrag(state, [3, 10]);
+    const [next, result] = commitWallPaint(state, [3, 14]); // 5 tiles
+    expect(result).toBe("capped");
+    const wallCount = next.placements.filter((p) => p.building_type === "wall").length;
+    expect(wallCount).toBe(75);
+  });
+
+  it("commitWallPaint is noop when not in paint mode", () => {
+    const state = createEditorState();
+    const [next, result] = commitWallPaint(state, [10, 10]);
+    expect(result).toBe("noop");
+    expect(next).toBe(state);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// eraseAtTile
+// ---------------------------------------------------------------------------
+
+describe("editorState — eraseAtTile", () => {
+  it("erases a 1×1 wall at the given tile", () => {
+    let state = enterPaintMode(createEditorState());
+    state = startPaintDrag(state, [10, 10]);
+    [state] = commitWallPaint(state, [10, 10]);
+    expect(state.placements).toHaveLength(1);
+    const next = eraseAtTile(state, [10, 10]);
+    expect(next.placements).toHaveLength(0);
+  });
+
+  it("erases a multi-tile building when any tile in its footprint is clicked", () => {
+    // cannon is 3×3 — click an interior tile
+    let state = enterPlaceMode(createEditorState(), "cannon");
+    [state] = placeBuildingAt(state, [10, 10]);
+    // Click on tile [11, 11] which is inside the 3×3 footprint
+    const next = eraseAtTile(state, [11, 11]);
+    expect(next.placements).toHaveLength(0);
+  });
+
+  it("is a no-op when no placement exists at the tile", () => {
+    let state = enterPlaceMode(createEditorState(), "cannon");
+    [state] = placeBuildingAt(state, [10, 10]);
+    const next = eraseAtTile(state, [20, 20]);
+    expect(next.placements).toHaveLength(1);
   });
 });

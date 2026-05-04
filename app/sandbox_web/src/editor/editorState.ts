@@ -5,23 +5,143 @@ import { TH6_CAPS } from "./th6Caps";
 
 export type PlaceResult = "placed" | "illegal" | "cap_exceeded";
 export type GhostLegality = "legal" | "overlap" | "out_of_bounds" | "cap_exceeded";
+export type PaintResult = "painted" | "capped" | "noop";
+export type EditorMode = "idle" | "placing" | "painting" | "erasing";
 
 export interface EditorState {
-  mode: "idle" | "placing";
+  mode: EditorMode;
   selectedType: string | null;
   placements: BuildingPlacement[];
+  paintStart: [number, number] | null;
 }
 
 export function createEditorState(): EditorState {
-  return { mode: "idle", selectedType: null, placements: [] };
+  return { mode: "idle", selectedType: null, placements: [], paintStart: null };
 }
 
 export function enterPlaceMode(state: EditorState, type: string): EditorState {
-  return { ...state, mode: "placing", selectedType: type };
+  return { ...state, mode: "placing", selectedType: type, paintStart: null };
 }
 
 export function exitPlaceMode(state: EditorState): EditorState {
-  return { ...state, mode: "idle", selectedType: null };
+  return exitCurrentMode(state);
+}
+
+export function exitCurrentMode(state: EditorState): EditorState {
+  return { ...state, mode: "idle", selectedType: null, paintStart: null };
+}
+
+export function enterPaintMode(state: EditorState): EditorState {
+  return { ...state, mode: "painting", selectedType: null, paintStart: null };
+}
+
+export function enterEraseMode(state: EditorState): EditorState {
+  return { ...state, mode: "erasing", selectedType: null, paintStart: null };
+}
+
+export function startPaintDrag(state: EditorState, tile: [number, number]): EditorState {
+  if (state.mode !== "painting") return state;
+  return { ...state, paintStart: tile };
+}
+
+export function commitWallPaint(
+  state: EditorState,
+  endTile: [number, number],
+): [EditorState, PaintResult] {
+  if (state.mode !== "painting" || state.paintStart === null) {
+    return [state, "noop"];
+  }
+
+  const tiles = resolveOrthoLine(state.paintStart, endTile);
+
+  const existingWallKeys = new Set<string>(
+    state.placements
+      .filter((p) => p.building_type === "wall")
+      .map((p) => `${p.origin[0]},${p.origin[1]}`),
+  );
+
+  const newTiles = tiles.filter(([r, c]) => !existingWallKeys.has(`${r},${c}`));
+
+  const currentWallCount = existingWallKeys.size;
+  const remaining = 75 - currentWallCount;
+
+  const cleared = { ...state, paintStart: null };
+
+  if (newTiles.length === 0) return [cleared, "noop"];
+  if (remaining <= 0) return [cleared, "capped"];
+
+  const tilesToAdd = newTiles.slice(0, remaining);
+  const capped = tilesToAdd.length < newTiles.length;
+
+  const newPlacements = [
+    ...state.placements,
+    ...tilesToAdd.map(([r, c]) => ({
+      building_type: "wall",
+      origin: [r, c] as [number, number],
+      level: 1,
+    })),
+  ];
+
+  return [{ ...cleared, placements: newPlacements }, capped ? "capped" : "painted"];
+}
+
+export function eraseAtTile(state: EditorState, tile: [number, number]): EditorState {
+  const [tr, tc] = tile;
+  for (let i = 0; i < state.placements.length; i++) {
+    const p = state.placements[i];
+    const [rows, cols] = footprintFor(p.building_type);
+    if (tr >= p.origin[0] && tr < p.origin[0] + rows && tc >= p.origin[1] && tc < p.origin[1] + cols) {
+      return removeBuilding(state, i);
+    }
+  }
+  return state;
+}
+
+// Resolves the orthogonal path between two tiles.
+// Axial: straight horizontal or vertical line.
+// Non-axial: L-shape, horizontal-first when |dc| >= |dr|, vertical-first otherwise.
+export function resolveOrthoLine(
+  from: [number, number],
+  to: [number, number],
+): [number, number][] {
+  const [r1, c1] = from;
+  const [r2, c2] = to;
+  const dr = Math.abs(r2 - r1);
+  const dc = Math.abs(c2 - c1);
+
+  if (dr === 0 && dc === 0) return [[r1, c1]];
+  if (dr === 0) return _lineH(r1, c1, c2);
+  if (dc === 0) return _lineV(r1, r2, c1);
+
+  if (dc >= dr) {
+    // horizontal leg then vertical leg
+    const leg1 = _lineH(r1, c1, c2);
+    const leg2 = _lineV(r1, r2, c2);
+    return [...leg1, ...leg2.slice(1)];
+  } else {
+    // vertical leg then horizontal leg
+    const leg1 = _lineV(r1, r2, c1);
+    const leg2 = _lineH(r2, c1, c2);
+    return [...leg1, ...leg2.slice(1)];
+  }
+}
+
+function _lineH(row: number, c1: number, c2: number): [number, number][] {
+  const tiles: [number, number][] = [];
+  const step = c2 >= c1 ? 1 : -1;
+  for (let c = c1; step > 0 ? c <= c2 : c >= c2; c += step) {
+    tiles.push([row, c]);
+  }
+  return tiles;
+}
+
+function _lineV(r1: number, r2: number, col: number): [number, number][] {
+  const tiles: [number, number][] = [];
+  const step = r2 >= r1 ? 1 : -1;
+  for (let r = r1; step > 0 ? r <= r2 : r >= r2; r += step) {
+    tiles.push([r, col]);
+  }
+  return tiles;
 }
 
 export function placeBuildingAt(

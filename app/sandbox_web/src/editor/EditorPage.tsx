@@ -5,16 +5,21 @@ import { TH6_CAPS } from "./th6Caps";
 import {
   createEditorState,
   enterPlaceMode,
-  exitPlaceMode,
+  exitCurrentMode,
+  enterPaintMode,
+  enterEraseMode,
   placeBuildingAt,
   removeBuilding,
+  eraseAtTile,
   getGhostLegality,
+  startPaintDrag,
+  commitWallPaint,
+  resolveOrthoLine,
   type EditorState,
-  type GhostLegality,
 } from "./editorState";
 import { validateLayout, type ConstraintResult } from "./validator";
 import { EditorRenderer } from "./EditorRenderer";
-import { buildingLabel, categoryForBuilding } from "@/render/colors";
+import { categoryForBuilding } from "@/render/colors";
 
 // --- Palette configuration ---
 
@@ -108,7 +113,7 @@ function buildingDisplayColor(type: string): string {
 interface PaletteProps {
   placements: BuildingPlacement[];
   selectedType: string | null;
-  mode: "idle" | "placing";
+  mode: import("./editorState").EditorMode;
   onSelect: (type: string) => void;
 }
 
@@ -280,6 +285,13 @@ function MetaField({
 
 // --- Main editor page ---
 
+interface ContextMenu {
+  x: number;
+  y: number;
+  buildingIndex: number | null;
+  tile: [number, number] | null;
+}
+
 export function EditorPage() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Application | null>(null);
@@ -287,10 +299,14 @@ export function EditorPage() {
 
   const [editorState, setEditorState] = useState<EditorState>(createEditorState);
   const [ghostOrigin, setGhostOrigin] = useState<[number, number] | null>(null);
+  const [hoverTile, setHoverTile] = useState<[number, number] | null>(null);
+  const [paintCurrentTile, setPaintCurrentTile] = useState<[number, number] | null>(null);
+  const [wallCapTooltip, setWallCapTooltip] = useState(false);
+  const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null);
   const [constraints, setConstraints] = useState<ConstraintResult[]>(() =>
     validateLayout([]),
   );
-  const [highlightedIndices, setHighlightedIndices] = useState<number[]>([]);
+  const [_highlightedIndices, setHighlightedIndices] = useState<number[]>([]);
   const [metadata, setMetadata] = useState<BaseLayoutMetadata>({
     name: "",
     th_level: 6,
@@ -324,32 +340,81 @@ export function EditorPage() {
 
         renderer.onTileHover = (row, col) => {
           const s = editorStateRef.current;
-          if (s.mode !== "placing") {
+          setHoverTile([row, col]);
+          if (s.mode === "placing") {
+            setGhostOrigin([row, col]);
+          } else {
             setGhostOrigin(null);
-            return;
           }
-          setGhostOrigin([row, col]);
+          if (s.mode === "painting") {
+            setPaintCurrentTile([row, col]);
+          }
         };
 
         renderer.onTileClick = (row, col) => {
           const s = editorStateRef.current;
-          if (s.mode !== "placing") return;
-          setEditorState((prev) => {
-            const [next, result] = placeBuildingAt(prev, [row, col]);
-            if (result === "placed") {
+          if (s.mode === "placing") {
+            setEditorState((prev) => {
+              const [next, result] = placeBuildingAt(prev, [row, col]);
+              if (result === "placed") {
+                setConstraints(validateLayout(next.placements));
+              }
+              return next;
+            });
+          } else if (s.mode === "erasing") {
+            setEditorState((prev) => {
+              const next = eraseAtTile(prev, [row, col]);
               setConstraints(validateLayout(next.placements));
-            }
-            return next;
-          });
+              return next;
+            });
+          }
         };
 
         renderer.onBuildingClick = (index) => {
-          // In idle mode, clicking a building removes it (erase will be a dedicated mode in #016)
+          const s = editorStateRef.current;
+          if (s.mode === "erasing" || s.mode === "idle") {
+            setEditorState((prev) => {
+              const next = removeBuilding(prev, index);
+              setConstraints(validateLayout(next.placements));
+              return next;
+            });
+          }
+        };
+
+        renderer.onBuildingRightClick = (index) => {
+          setContextMenu({ x: 0, y: 0, buildingIndex: index, tile: null });
+        };
+
+        renderer.onTileRightClick = (row, col) => {
+          setContextMenu({ x: 0, y: 0, buildingIndex: null, tile: [row, col] });
+        };
+
+        renderer.onPaintStart = (row, col) => {
+          const s = editorStateRef.current;
+          if (s.mode !== "painting") return;
+          setEditorState((prev) => startPaintDrag(prev, [row, col]));
+          setPaintCurrentTile([row, col]);
+        };
+
+        renderer.onPaintMove = (row, col) => {
+          const s = editorStateRef.current;
+          if (s.mode !== "painting") return;
+          setPaintCurrentTile([row, col]);
+        };
+
+        renderer.onPaintEnd = (row, col) => {
+          const s = editorStateRef.current;
+          if (s.mode !== "painting" || s.paintStart === null) return;
           setEditorState((prev) => {
-            const next = removeBuilding(prev, index);
+            const [next, result] = commitWallPaint(prev, [row, col]);
             setConstraints(validateLayout(next.placements));
+            if (result === "capped") {
+              setWallCapTooltip(true);
+              setTimeout(() => setWallCapTooltip(false), 2500);
+            }
             return next;
           });
+          setPaintCurrentTile(null);
         };
 
         renderer.renderBuildings([]);
@@ -382,11 +447,42 @@ export function EditorPage() {
     }
   }, [ghostOrigin, editorState]);
 
-  // Esc to cancel place mode
+  // Sync wall-paint preview
+  useEffect(() => {
+    const renderer = rendererRef.current;
+    if (!renderer) return;
+    if (editorState.mode === "painting" && editorState.paintStart && paintCurrentTile) {
+      const tiles = resolveOrthoLine(editorState.paintStart, paintCurrentTile);
+      renderer.renderWallPreview(tiles);
+    } else {
+      renderer.clearWallPreview();
+    }
+  }, [editorState, paintCurrentTile]);
+
+  // Sync erase hover highlight
+  useEffect(() => {
+    const renderer = rendererRef.current;
+    if (!renderer) return;
+    if (editorState.mode === "erasing" && hoverTile) {
+      renderer.renderHoverHighlight(hoverTile);
+    } else {
+      renderer.renderHoverHighlight(null);
+    }
+  }, [editorState.mode, hoverTile]);
+
+  // Keyboard shortcuts
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setEditorState((prev) => exitPlaceMode(prev));
+        setEditorState((prev) => exitCurrentMode(prev));
+        setGhostOrigin(null);
+        setPaintCurrentTile(null);
+        setContextMenu(null);
+      } else if (e.key === "w" || e.key === "W") {
+        setEditorState((prev) => enterPaintMode(prev));
+        setGhostOrigin(null);
+      } else if (e.key === "e" || e.key === "E") {
+        setEditorState((prev) => enterEraseMode(prev));
         setGhostOrigin(null);
       }
     };
@@ -397,7 +493,33 @@ export function EditorPage() {
   const handleSelect = useCallback((type: string) => {
     setEditorState((prev) => enterPlaceMode(prev, type));
     setGhostOrigin(null);
+    setPaintCurrentTile(null);
   }, []);
+
+  const handleContextAction = useCallback(
+    (action: "erase" | "copy") => {
+      if (!contextMenu) return;
+      setContextMenu(null);
+      if (action === "erase") {
+        if (contextMenu.buildingIndex !== null) {
+          setEditorState((prev) => {
+            const next = removeBuilding(prev, contextMenu.buildingIndex!);
+            setConstraints(validateLayout(next.placements));
+            return next;
+          });
+        }
+      } else if (action === "copy") {
+        if (contextMenu.buildingIndex !== null) {
+          setEditorState((prev) => {
+            const type = prev.placements[contextMenu.buildingIndex!]?.building_type;
+            if (!type) return prev;
+            return enterPlaceMode(prev, type);
+          });
+        }
+      }
+    },
+    [contextMenu],
+  );
 
   const handleExport = useCallback(() => {
     const layout: BaseLayout = {
@@ -419,13 +541,21 @@ export function EditorPage() {
     URL.revokeObjectURL(url);
   }, [metadata, editorState.placements]);
 
-  const modeLabel =
-    editorState.mode === "placing" && editorState.selectedType
-      ? `Placing: ${editorState.selectedType} (Esc to cancel)`
-      : "Click a palette item to place";
+  const modeLabel = (() => {
+    switch (editorState.mode) {
+      case "placing":
+        return `Placing: ${editorState.selectedType} (Esc to cancel)`;
+      case "painting":
+        return "Paint walls: click+drag (W=toggle, Esc=exit)";
+      case "erasing":
+        return "Erase mode: click to remove (E=toggle, Esc=exit)";
+      default:
+        return "Click a palette item to place | W=paint walls | E=erase";
+    }
+  })();
 
   return (
-    <div style={styles.root}>
+    <div style={styles.root} onClick={() => setContextMenu(null)}>
       <Palette
         placements={editorState.placements}
         selectedType={editorState.selectedType}
@@ -446,6 +576,35 @@ export function EditorPage() {
         onMetadataChange={setMetadata}
         onExport={handleExport}
       />
+
+      {wallCapTooltip && (
+        <div style={styles.wallCapTooltip}>TH6 wall cap: 75 of 75 placed.</div>
+      )}
+
+      {contextMenu && (
+        <div
+          style={{
+            ...styles.contextMenu,
+            // For now anchor to bottom-right of canvas area
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button style={styles.ctxBtn} onClick={() => handleContextAction("erase")}>
+            Erase
+          </button>
+          {contextMenu.buildingIndex !== null && (
+            <button style={styles.ctxBtn} onClick={() => handleContextAction("copy")}>
+              Copy (place)
+            </button>
+          )}
+          <button style={styles.ctxBtn} onClick={() => setContextMenu(null)}>
+            Cancel
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -555,5 +714,41 @@ const styles = {
     fontSize: 12,
     fontFamily: "monospace",
     marginTop: 4,
+  } as React.CSSProperties,
+  wallCapTooltip: {
+    position: "fixed" as const,
+    bottom: 24,
+    left: "50%",
+    transform: "translateX(-50%)",
+    background: "#f44336",
+    color: "#fff",
+    padding: "6px 14px",
+    borderRadius: 4,
+    fontSize: 12,
+    fontFamily: "monospace",
+    zIndex: 1000,
+    pointerEvents: "none" as const,
+  } as React.CSSProperties,
+  contextMenu: {
+    background: "#1e2a3a",
+    border: "1px solid #2a3a4a",
+    borderRadius: 4,
+    padding: 4,
+    zIndex: 1000,
+    display: "flex",
+    flexDirection: "column" as const,
+    minWidth: 120,
+  } as React.CSSProperties,
+  ctxBtn: {
+    display: "block",
+    width: "100%",
+    padding: "5px 10px",
+    background: "transparent",
+    border: "none",
+    color: "#cdd9e5",
+    fontSize: 12,
+    fontFamily: "monospace",
+    textAlign: "left" as const,
+    cursor: "pointer",
   } as React.CSSProperties,
 } as const;

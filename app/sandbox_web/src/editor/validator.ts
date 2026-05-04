@@ -41,21 +41,6 @@ function checkWalls(placements: BuildingPlacement[]): ConstraintResult {
   };
 }
 
-function tileSet(placements: BuildingPlacement[]): Map<string, number> {
-  const map = new Map<string, number>();
-  for (let i = 0; i < placements.length; i++) {
-    const { building_type, origin } = placements[i];
-    const [rows, cols] = footprintFor(building_type);
-    for (let r = origin[0]; r < origin[0] + rows; r++) {
-      for (let c = origin[1]; c < origin[1] + cols; c++) {
-        const key = `${r},${c}`;
-        if (!map.has(key)) map.set(key, i);
-      }
-    }
-  }
-  return map;
-}
-
 function checkOverlap(placements: BuildingPlacement[]): ConstraintResult {
   const seen = new Map<string, number>();
   const conflicting = new Set<number>();
