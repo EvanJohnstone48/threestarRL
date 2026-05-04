@@ -8,6 +8,7 @@ import {
   play,
   seek,
   setSpeed,
+  stepTick,
   togglePlay,
   TICKS_PER_SECOND,
 } from "./playback";
@@ -126,5 +127,86 @@ describe("setSpeed", () => {
     expect(t.speed).toBe(8);
     expect(t.playing).toBe(true);
     expect(t.currentTime).toBe(0);
+  });
+});
+
+describe("stepTick", () => {
+  it("advances by one tick when paused", () => {
+    const s = seek(createPlayback(100), 10);
+    expect(stepTick(s, 1).currentTime).toBe(11);
+  });
+
+  it("retreats by one tick when paused", () => {
+    const s = seek(createPlayback(100), 10);
+    expect(stepTick(s, -1).currentTime).toBe(9);
+  });
+
+  it("is a no-op while playing", () => {
+    const s = play(seek(createPlayback(100), 10));
+    expect(stepTick(s, 1)).toEqual(s);
+  });
+
+  it("clamps at 0 when stepping back from tick 0", () => {
+    const s = createPlayback(100); // currentTime = 0
+    expect(stepTick(s, -1).currentTime).toBe(0);
+  });
+
+  it("clamps at totalTicks-1 when stepping past end", () => {
+    const s = seek(createPlayback(100), 99);
+    expect(stepTick(s, 1).currentTime).toBe(99);
+  });
+
+  it("snaps fractional currentTime to floor before stepping forward", () => {
+    const s = { ...createPlayback(100), currentTime: 5.7 };
+    // floor(5.7) + 1 = 6
+    expect(stepTick(s, 1).currentTime).toBe(6);
+  });
+
+  it("snaps fractional currentTime to floor before stepping back", () => {
+    const s = { ...createPlayback(100), currentTime: 5.7 };
+    // floor(5.7) - 1 = 4
+    expect(stepTick(s, -1).currentTime).toBe(4);
+  });
+
+  it("does not mutate input state", () => {
+    const s = seek(createPlayback(100), 10);
+    const snapshot = { ...s };
+    stepTick(s, 1);
+    expect(s).toEqual(snapshot);
+  });
+});
+
+const SPEEDS = [0.25, 0.5, 1, 2, 4, 8];
+
+describe("speed cycling ([ / ] keyboard shortcut behaviour)", () => {
+  it("cycles forward through all speeds", () => {
+    let s = createPlayback(100);
+    for (let i = 0; i < SPEEDS.length - 1; i++) {
+      s = setSpeed(s, SPEEDS[i]);
+      const idx = SPEEDS.indexOf(s.speed);
+      s = setSpeed(s, SPEEDS[idx + 1]);
+    }
+    expect(s.speed).toBe(8);
+  });
+
+  it("does not exceed max speed (8×)", () => {
+    const s = setSpeed(createPlayback(100), 8);
+    const idx = SPEEDS.indexOf(s.speed);
+    // at max index, no further step possible
+    expect(idx).toBe(SPEEDS.length - 1);
+  });
+
+  it("does not go below min speed (0.25×)", () => {
+    const s = setSpeed(createPlayback(100), 0.25);
+    const idx = SPEEDS.indexOf(s.speed);
+    expect(idx).toBe(0);
+  });
+
+  it("each speed in the list is honored by advance", () => {
+    for (const spd of SPEEDS) {
+      const s = play(setSpeed(createPlayback(100), spd));
+      const after = advance(s, 1000); // 1 second
+      expect(after.currentTime).toBeCloseTo(TICKS_PER_SECOND * spd, 4);
+    }
   });
 });

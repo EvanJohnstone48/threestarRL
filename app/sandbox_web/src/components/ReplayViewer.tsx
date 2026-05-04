@@ -15,12 +15,16 @@ import {
   createPlayback,
   frameAlpha,
   frameIndex,
+  seek,
+  setSpeed,
+  stepTick,
   togglePlay,
   type PlaybackState,
 } from "@/replay/playback";
 import { TopDownRenderer } from "@/render/topdown";
 
 const RUNTIME_SIM_VERSION = "0.1.0";
+const SPEEDS = [0.25, 0.5, 1, 2, 4, 8];
 
 interface RendererHandle {
   app: Application;
@@ -34,10 +38,10 @@ export function ReplayViewer() {
   const replayRef = useRef<Replay | null>(null);
   const lastFrameTsRef = useRef<number | null>(null);
 
-  // Mirror of playbackRef into React state so the toolbar re-renders.
-  const [, setPlaybackTick] = useState(0);
+  const [playbackTick, setPlaybackTick] = useState(0);
   const [replay, setReplay] = useState<Replay | null>(null);
   const [playing, setPlaying] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -124,6 +128,7 @@ export function ReplayViewer() {
     lastFrameTsRef.current = null;
     setPlaying(false);
     setPlaybackTick(0);
+    setPlaybackSpeed(1);
   }, []);
 
   const onFilePicked = useCallback(
@@ -162,22 +167,59 @@ export function ReplayViewer() {
     lastFrameTsRef.current = null;
   }, []);
 
+  const onSeek = useCallback((tick: number) => {
+    if (!playbackRef.current) return;
+    const next = seek(playbackRef.current, tick);
+    playbackRef.current = next;
+    setPlaybackTick(Math.floor(next.currentTime));
+  }, []);
+
+  const onStep = useCallback((delta: 1 | -1) => {
+    if (!playbackRef.current) return;
+    const next = stepTick(playbackRef.current, delta);
+    playbackRef.current = next;
+    setPlaybackTick(Math.floor(next.currentTime));
+  }, []);
+
+  const onSetSpeed = useCallback((speed: number) => {
+    if (!playbackRef.current) return;
+    const next = setSpeed(playbackRef.current, speed);
+    playbackRef.current = next;
+    setPlaybackSpeed(speed);
+  }, []);
+
   const onFitToGrid = useCallback(() => {
     handleRef.current?.renderer.fitToGrid();
   }, []);
 
-  // Keyboard: spacebar = play/pause
+  // Keyboard shortcuts
   useEffect(() => {
     const handler = (ev: KeyboardEvent) => {
       if (ev.target instanceof HTMLInputElement || ev.target instanceof HTMLTextAreaElement) return;
       if (ev.code === "Space") {
         ev.preventDefault();
         onTogglePlay();
+      } else if (ev.code === "ArrowLeft") {
+        ev.preventDefault();
+        onStep(-1);
+      } else if (ev.code === "ArrowRight") {
+        ev.preventDefault();
+        onStep(1);
+      } else if (ev.key === "[") {
+        ev.preventDefault();
+        if (!playbackRef.current) return;
+        const idx = SPEEDS.indexOf(playbackRef.current.speed);
+        if (idx > 0) onSetSpeed(SPEEDS[idx - 1]);
+      } else if (ev.key === "]") {
+        ev.preventDefault();
+        if (!playbackRef.current) return;
+        const idx = SPEEDS.indexOf(playbackRef.current.speed);
+        if (idx < SPEEDS.length - 1) onSetSpeed(SPEEDS[idx + 1]);
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [onTogglePlay]);
+  }, [onTogglePlay, onStep, onSetSpeed]);
 
   const banner =
     replay && crossVersionBanner(replay, RUNTIME_SCHEMA_VERSION)
@@ -186,14 +228,13 @@ export function ReplayViewer() {
         ? `Replay sim_version ${replay.metadata.sim_version} loaded under runtime ${RUNTIME_SIM_VERSION} — playback only.`
         : null;
 
+  const totalTicks = replay ? replay.frames.length - 1 : 0;
+
   return (
     <div className="viewer-root">
       <header className="viewer-header">
         <h1>threestarRL — Sandbox Replay Viewer</h1>
         <div className="viewer-toolbar">
-          <button type="button" onClick={onTogglePlay} disabled={!replay}>
-            {playing ? "Pause" : "Play"}
-          </button>
           <button type="button" onClick={onFitToGrid}>
             Fit to grid
           </button>
@@ -209,11 +250,6 @@ export function ReplayViewer() {
               }}
             />
           </label>
-          {replay && (
-            <span className="tick-counter" data-testid="tick-counter">
-              {Math.floor(playbackRef.current?.currentTime ?? 0)} / {replay.frames.length - 1}
-            </span>
-          )}
         </div>
       </header>
       {banner && (
@@ -240,6 +276,68 @@ export function ReplayViewer() {
         {!replay && !loading && (
           <div className="drop-hint">Drag a replay JSON here, or click "Load replay…"</div>
         )}
+      </div>
+      <div className="viewer-bottom" aria-label="Playback controls">
+        <input
+          type="range"
+          className="scrub-bar"
+          data-testid="scrub-bar"
+          min={0}
+          max={totalTicks}
+          step={1}
+          value={playbackTick}
+          disabled={!replay}
+          onChange={(e) => onSeek(Number(e.target.value))}
+          aria-label="Scrub timeline"
+        />
+        <div className="bottom-controls">
+          <button
+            type="button"
+            onClick={() => onStep(-1)}
+            disabled={!replay || playing}
+            aria-label="Step back one tick"
+            title="Step back (←)"
+          >
+            −1
+          </button>
+          <button
+            type="button"
+            onClick={onTogglePlay}
+            disabled={!replay}
+            aria-label={playing ? "Pause" : "Play"}
+            title="Play/Pause (Space)"
+          >
+            {playing ? "⏸" : "▶"}
+          </button>
+          <button
+            type="button"
+            onClick={() => onStep(1)}
+            disabled={!replay || playing}
+            aria-label="Step forward one tick"
+            title="Step forward (→)"
+          >
+            +1
+          </button>
+          <select
+            className="speed-select"
+            data-testid="speed-select"
+            value={playbackSpeed}
+            disabled={!replay}
+            onChange={(e) => onSetSpeed(Number(e.target.value))}
+            aria-label="Playback speed"
+          >
+            {SPEEDS.map((s) => (
+              <option key={s} value={s}>
+                {s}×
+              </option>
+            ))}
+          </select>
+          {replay && (
+            <span className="tick-counter" data-testid="tick-counter">
+              {playbackTick} / {totalTicks}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

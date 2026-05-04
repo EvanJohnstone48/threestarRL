@@ -79,3 +79,9 @@ export function frameAlpha(state: PlaybackState): number {
   if (idx >= state.totalTicks - 1) return 0;
   return state.currentTime - idx;
 }
+
+// Advance or retreat by exactly one tick. No-op while playing.
+export function stepTick(state: PlaybackState, delta: 1 | -1): PlaybackState {
+  if (state.playing) return state;
+  return seek(state, Math.floor(state.currentTime) + delta);
+}

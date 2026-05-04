@@ -135,3 +135,51 @@ button:disabled {
   font-size: 1rem;
   pointer-events: none;
 }
+
+.viewer-bottom {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem 0.6rem;
+  border-top: 1px solid #1c2128;
+  background: #0e1116;
+}
+
+.scrub-bar {
+  width: 100%;
+  accent-color: #5a8aff;
+  cursor: pointer;
+  height: 6px;
+}
+
+.scrub-bar:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.bottom-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.speed-select {
+  background: #1c2128;
+  color: #e6edf3;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.speed-select:hover:not(:disabled) {
+  background: #2a313a;
+}
+
+.speed-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
