@@ -13,6 +13,7 @@ from sandbox_core.schemas import (
     DeploymentAction,
     DeploymentPlan,
     DeploymentPlanMetadata,
+    EventType,
     InvalidDeploymentError,
     SimTerminatedError,
 )
@@ -107,6 +108,64 @@ def test_tracer_destroys_town_hall_and_terminates() -> None:
     assert score.town_hall_destroyed
     assert score.destruction_pct >= 50.0
     assert score.stars >= 2
+
+
+def test_goblin_on_gold_storage_deals_2x_base_damage_per_attack_tick() -> None:
+    """AC issue #6: Goblin's resource_storage multiplier is honored end-to-end."""
+    cat = load_catalogue()
+    base = BaseLayout(
+        metadata=BaseLayoutMetadata(name="t", th_level=6),
+        th_level=6,
+        placements=[
+            # TH placed far from the deploy point so the goblin prefers gold_storage.
+            BuildingPlacement(building_type="town_hall", origin=(40, 40), level=1),
+            BuildingPlacement(building_type="gold_storage", origin=(3, 3), level=1),
+        ],
+    )
+    plan = DeploymentPlan(
+        metadata=DeploymentPlanMetadata(name="p"),
+        actions=[
+            DeploymentAction(
+                tick=0, kind="deploy_troop", entity_type="goblin", position=(2.5, 4.5), level=4
+            )
+        ],
+    )
+    sim = Sim(
+        base,
+        plan,
+        catalogue_buildings=cat.buildings,
+        catalogue_troops=cat.troops,
+        catalogue_spells=dict(cat.spells),
+    )
+
+    expected = cat.troops["goblin"].stats_at(4).base_damage * 2.0
+    base_damage = cat.troops["goblin"].stats_at(4).base_damage
+
+    damage_values: list[float] = []
+    # Run enough ticks for the goblin to walk to the storage and attack a few times.
+    for _ in range(60):
+        if sim.is_terminal():
+            break
+        _, events = sim.step_tick()
+        for ev in events:
+            if (
+                ev.type is EventType.DAMAGE
+                and ev.payload.get("attacker_id") is not None
+                and "kind" in ev.payload
+            ):
+                # Only count goblin attacks (attacker_id is the goblin's id).
+                # The deployed goblin is the only troop on the field, so its id is the
+                # only non-building attacker id we'll see.
+                # Filter to attacks against the gold_storage by checking damage value
+                # is non-zero and target was a building (defenses don't shoot here).
+                damage_values.append(float(ev.payload["damage"]))
+
+    assert damage_values, "expected at least one goblin attack to land"
+    # Every recorded goblin → gold_storage damage should be exactly 2x base.
+    for d in damage_values:
+        assert d == pytest.approx(expected), (
+            f"goblin damage {d} != expected 2x base {expected} (base={base_damage})"
+        )
 
 
 def test_replay_artifact_round_trip(tmp_path: Path) -> None:
