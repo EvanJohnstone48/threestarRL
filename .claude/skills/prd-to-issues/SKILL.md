@@ -62,7 +62,7 @@ Do NOT use `gh issue create` or any GitHub CLI commands. Do NOT reference GitHub
 <issue-template>
 ## Parent PRD
 
-`issues/prd.md` (or whichever PRD file was used)
+`app/docs/sandbox/prd.md` (or whichever PRD file was used)
 
 ## What to build
 

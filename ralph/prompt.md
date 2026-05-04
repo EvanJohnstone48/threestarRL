@@ -4,6 +4,9 @@ Local issue files from the root `issues/open/` directory are provided at start o
 
 You will work on the AFK issues only, not the HITL ones.
 
+**AFK** — tasks completable by writing code (features, tests, tooling, infra). Building an editor UI is AFK even if that editor will later be used for manual authoring.
+**HITL** — tasks that require a human to manually operate a running tool or UI (e.g. "author these 10 bases in the editor"). These cannot be done by writing code alone.
+
 You've also been passed a file containing the last few commits. Review these to understand what work has been done.
 
 If all AFK tasks are complete, output <promise>NO MORE TASKS</promise>.
