@@ -29,6 +29,7 @@ from dataclasses import dataclass, field
 
 from sandbox_core.combat import DamageEvent, defense_damage, troop_damage_against
 from sandbox_core.grid import (
+    default_hitbox_inset,
     distance_point_to_square_hitbox,
     euclidean,
     footprint_center,
@@ -56,6 +57,7 @@ from sandbox_core.schemas import (
     WorldState,
 )
 from sandbox_core.scoring import compute_score, is_terminal
+from sandbox_core.splash import SplashTargetBuilding, SplashTargetTroop, resolve_splash
 
 TICKS_PER_SECOND: int = 10
 
@@ -345,32 +347,184 @@ class Sim:
                 continue
 
             # Impact tick.
-            if proj.attack_kind == AttackKind.RANGED and proj.target_id is not None:
-                target_alive = self._building_alive(proj.target_id) or self._troop_alive(
-                    proj.target_id
-                )
-                if not target_alive:
-                    # Homing case — silently despawn (per PRD §5.6).
-                    continue
-                damage_events.append(
-                    DamageEvent(
-                        target_id=proj.target_id, damage=proj.damage, attacker_id=proj.attacker_id
-                    )
-                )
-                events.append(
-                    Event(
-                        type=EventType.DAMAGE,
-                        tick=tick,
-                        payload={
-                            "target_id": proj.target_id,
-                            "damage": proj.damage,
-                            "attacker_id": proj.attacker_id,
-                            "kind": proj.attack_kind.value,
-                        },
-                    )
-                )
+            if proj.attack_kind != AttackKind.RANGED:
+                continue
+            self._resolve_projectile_impact(proj, tick, events, damage_events)
         self._world.projectiles = survivors
         self._enqueue_damage(tick, damage_events)
+
+    def _resolve_projectile_impact(
+        self,
+        proj: Projectile,
+        tick: int,
+        events: list[Event],
+        damage_events: list[DamageEvent],
+    ) -> None:
+        homing = self._projectile_is_homing(proj)
+        attacker_is_defense = self._projectile_attacker_is_defense(proj)
+
+        if homing:
+            target_alive = proj.target_id is not None and (
+                self._building_alive(proj.target_id) or self._troop_alive(proj.target_id)
+            )
+            if not target_alive:
+                # Per PRD §5.6: homing projectile despawns silently if target died.
+                return
+            assert proj.target_id is not None
+            damage_events.append(
+                DamageEvent(
+                    target_id=proj.target_id, damage=proj.damage, attacker_id=proj.attacker_id
+                )
+            )
+            events.append(
+                Event(
+                    type=EventType.DAMAGE,
+                    tick=tick,
+                    payload={
+                        "target_id": proj.target_id,
+                        "damage": proj.damage,
+                        "attacker_id": proj.attacker_id,
+                        "kind": proj.attack_kind.value,
+                    },
+                )
+            )
+            if proj.splash_radius_tiles > 0:
+                target_pos = self._target_position(proj.target_id)
+                if target_pos is not None:
+                    extra = self._resolve_projectile_splash(
+                        center=target_pos,
+                        projectile=proj,
+                        attacker_is_defense=attacker_is_defense,
+                        exclude_target_id=proj.target_id,
+                    )
+                    for de in extra:
+                        damage_events.append(de)
+                        events.append(
+                            Event(
+                                type=EventType.DAMAGE,
+                                tick=tick,
+                                payload={
+                                    "target_id": de.target_id,
+                                    "damage": de.damage,
+                                    "attacker_id": de.attacker_id,
+                                    "kind": proj.attack_kind.value,
+                                },
+                            )
+                        )
+            return
+
+        # Non-homing: pure splash at the committed impact_position regardless of
+        # target survival. (Mortar — PRD §5.6.)
+        if proj.splash_radius_tiles <= 0:
+            return
+        extra = self._resolve_projectile_splash(
+            center=proj.impact_position,
+            projectile=proj,
+            attacker_is_defense=attacker_is_defense,
+            exclude_target_id=None,
+        )
+        for de in extra:
+            damage_events.append(de)
+            events.append(
+                Event(
+                    type=EventType.DAMAGE,
+                    tick=tick,
+                    payload={
+                        "target_id": de.target_id,
+                        "damage": de.damage,
+                        "attacker_id": de.attacker_id,
+                        "kind": proj.attack_kind.value,
+                    },
+                )
+            )
+
+    def _resolve_projectile_splash(
+        self,
+        *,
+        center: tuple[float, float],
+        projectile: Projectile,
+        attacker_is_defense: bool,
+        exclude_target_id: int | None,
+    ) -> list[DamageEvent]:
+        """Resolve splash hits for a projectile impact.
+
+        Defenses splash troops only (never other defenses or walls). Troop
+        attackers splash buildings only in v1 (no troop-vs-troop splash —
+        Wall Breaker suicide is a separate path tracked under issue 007).
+        """
+        hits_buildings = not attacker_is_defense
+        hits_troops = attacker_is_defense
+
+        splash_buildings: list[SplashTargetBuilding] = []
+        if hits_buildings:
+            for b in self._world.buildings:
+                bt = self._catalogue_buildings[b.building_type]
+                inset = bt.hitbox_inset if bt.hitbox_inset is not None else default_hitbox_inset(
+                    bt.footprint
+                )
+                splash_buildings.append(
+                    SplashTargetBuilding(
+                        id=b.id,
+                        origin=b.origin,
+                        footprint=bt.footprint,
+                        hitbox_inset=inset,
+                        is_wall=bt.is_wall,
+                        destroyed=b.destroyed,
+                    )
+                )
+
+        splash_troops: list[SplashTargetTroop] = []
+        if hits_troops:
+            for t in self._world.troops:
+                splash_troops.append(
+                    SplashTargetTroop(
+                        id=t.id,
+                        position=t.position,
+                        destroyed=t.destroyed,
+                        is_friendly=False,
+                    )
+                )
+
+        evs = resolve_splash(
+            center=center,
+            radius=projectile.splash_radius_tiles,
+            damage=projectile.damage,
+            attacker_id=projectile.attacker_id,
+            buildings=splash_buildings,
+            troops=splash_troops,
+            splash_damages_walls=projectile.splash_damages_walls,
+            hits_buildings=hits_buildings,
+            hits_troops=hits_troops,
+            hits_friendly_troops=False,
+        )
+        if exclude_target_id is not None:
+            evs = [e for e in evs if e.target_id != exclude_target_id]
+        return evs
+
+    def _projectile_is_homing(self, projectile: Projectile) -> bool:
+        for b in self._world.buildings:
+            if b.id == projectile.attacker_id:
+                return self._catalogue_buildings[b.building_type].projectile_homing
+        for t in self._world.troops:
+            if t.id == projectile.attacker_id:
+                return self._catalogue_troops[t.troop_type].projectile_homing
+        return True
+
+    def _projectile_attacker_is_defense(self, projectile: Projectile) -> bool:
+        for b in self._world.buildings:
+            if b.id == projectile.attacker_id:
+                return self._catalogue_buildings[b.building_type].category.value == "defense"
+        return False
+
+    def _target_position(self, target_id: int) -> tuple[float, float] | None:
+        for t in self._world.troops:
+            if t.id == target_id:
+                return t.position
+        for b in self._world.buildings:
+            if b.id == target_id:
+                bt = self._catalogue_buildings[b.building_type]
+                return footprint_center(b.origin, bt.footprint)
+        return None
 
     def _step_apply_deployments(self, tick: int, events: list[Event]) -> None:
         actions = self._pending_deployments.pop(tick, [])
@@ -584,6 +738,12 @@ class Sim:
         else:
             distance = euclidean(b_center, target.position)
             ticks_to_impact = max(1, round(distance / speed * TICKS_PER_SECOND))
+            if bt.projectile_homing:
+                impact_position = target.position
+            else:
+                # Non-homing (Mortar): commit at fire time, snapped to nearest tile center.
+                pr, pc = target.position
+                impact_position = (math.floor(pr) + 0.5, math.floor(pc) + 0.5)
             pid = self._next_id()
             self._world.projectiles.append(
                 Projectile(
@@ -593,7 +753,7 @@ class Sim:
                     attack_kind=AttackKind.RANGED,
                     attacker_position=b_center,
                     current_position=b_center,
-                    impact_position=target.position,
+                    impact_position=impact_position,
                     damage=damage,
                     splash_radius_tiles=bt.splash_radius_tiles,
                     splash_damages_walls=bt.splash_damages_walls,
@@ -747,6 +907,8 @@ class Sim:
             if target_filter == "air" and cat != "air":
                 continue
             d = euclidean(b_center, t.position)
+            if d < bt.min_range_tiles - 1e-9:
+                continue
             if d <= range_tiles + 1e-9 and d < best_dist:
                 best_dist = d
                 best = t

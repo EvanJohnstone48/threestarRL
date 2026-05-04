@@ -1,0 +1,1222 @@
+{
+  "frames": [
+    {
+      "events": [
+        {
+          "payload": {
+            "level": 1,
+            "position": [
+              47.5,
+              24.5
+            ],
+            "troop_id": 2,
+            "troop_type": "barbarian"
+          },
+          "tick": 0,
+          "type": "deploy"
+        },
+        {
+          "payload": {
+            "level": 1,
+            "position": [
+              47.5,
+              25.5
+            ],
+            "troop_id": 3,
+            "troop_type": "barbarian"
+          },
+          "tick": 0,
+          "type": "deploy"
+        },
+        {
+          "payload": {
+            "level": 1,
+            "position": [
+              47.5,
+              26.5
+            ],
+            "troop_id": 4,
+            "troop_type": "barbarian"
+          },
+          "tick": 0,
+          "type": "deploy"
+        },
+        {
+          "payload": {
+            "level": 1,
+            "position": [
+              48.5,
+              25.5
+            ],
+            "troop_id": 5,
+            "troop_type": "barbarian"
+          },
+          "tick": 0,
+          "type": "deploy"
+        },
+        {
+          "payload": {
+            "level": 1,
+            "position": [
+              49.5,
+              25.5
+            ],
+            "troop_id": 6,
+            "troop_type": "barbarian"
+          },
+          "tick": 0,
+          "type": "deploy"
+        },
+        {
+          "payload": {
+            "attacker_id": 1,
+            "projectile_id": 7,
+            "target_id": 3,
+            "ticks_to_impact": 7
+          },
+          "tick": 0,
+          "type": "projectile_fired"
+        }
+      ],
+      "state": {
+        "buildings": [
+          {
+            "building_type": "town_hall",
+            "destroyed": false,
+            "hp": 1500.0,
+            "id": 0,
+            "level": 1,
+            "max_hp": 1500.0,
+            "origin": [
+              3,
+              3
+            ]
+          },
+          {
+            "building_type": "mortar",
+            "destroyed": false,
+            "hp": 550.0,
+            "id": 1,
+            "level": 4,
+            "max_hp": 550.0,
+            "origin": [
+              40,
+              24
+            ]
+          }
+        ],
+        "projectiles": [
+          {
+            "attack_kind": "ranged",
+            "attacker_id": 1,
+            "attacker_position": [
+              41.5,
+              25.5
+            ],
+            "current_position": [
+              41.5,
+              25.5
+            ],
+            "damage": 45.0,
+            "id": 7,
+            "impact_position": [
+              47.5,
+              25.5
+            ],
+            "splash_damages_walls": false,
+            "splash_radius_tiles": 1.5,
+            "target_id": 3,
+            "ticks_to_impact": 7
+          }
+        ],
+        "score": {
+          "destruction_pct": 0.0,
+          "stars": 0,
+          "ticks_elapsed": 0,
+          "town_hall_destroyed": false
+        },
+        "spells": [],
+        "tick": 0,
+        "troops": [
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 2,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              47.342,
+              24.526
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 3,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              47.34,
+              25.5
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 4,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              47.342,
+              26.474
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 5,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              48.34,
+              25.5
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 6,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              49.34,
+              25.5
+            ],
+            "troop_type": "barbarian"
+          }
+        ]
+      },
+      "tick": 0
+    },
+    {
+      "events": [],
+      "state": {
+        "buildings": [
+          {
+            "building_type": "town_hall",
+            "destroyed": false,
+            "hp": 1500.0,
+            "id": 0,
+            "level": 1,
+            "max_hp": 1500.0,
+            "origin": [
+              3,
+              3
+            ]
+          },
+          {
+            "building_type": "mortar",
+            "destroyed": false,
+            "hp": 550.0,
+            "id": 1,
+            "level": 4,
+            "max_hp": 550.0,
+            "origin": [
+              40,
+              24
+            ]
+          }
+        ],
+        "projectiles": [
+          {
+            "attack_kind": "ranged",
+            "attacker_id": 1,
+            "attacker_position": [
+              41.5,
+              25.5
+            ],
+            "current_position": [
+              42.357,
+              25.5
+            ],
+            "damage": 45.0,
+            "id": 7,
+            "impact_position": [
+              47.5,
+              25.5
+            ],
+            "splash_damages_walls": false,
+            "splash_radius_tiles": 1.5,
+            "target_id": 3,
+            "ticks_to_impact": 6
+          }
+        ],
+        "score": {
+          "destruction_pct": 0.0,
+          "stars": 0,
+          "ticks_elapsed": 1,
+          "town_hall_destroyed": false
+        },
+        "spells": [],
+        "tick": 1,
+        "troops": [
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 2,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              47.184,
+              24.553
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 3,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              47.18,
+              25.5
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 4,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              47.184,
+              26.447
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 5,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              48.18,
+              25.5
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 6,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              49.18,
+              25.5
+            ],
+            "troop_type": "barbarian"
+          }
+        ]
+      },
+      "tick": 1
+    },
+    {
+      "events": [],
+      "state": {
+        "buildings": [
+          {
+            "building_type": "town_hall",
+            "destroyed": false,
+            "hp": 1500.0,
+            "id": 0,
+            "level": 1,
+            "max_hp": 1500.0,
+            "origin": [
+              3,
+              3
+            ]
+          },
+          {
+            "building_type": "mortar",
+            "destroyed": false,
+            "hp": 550.0,
+            "id": 1,
+            "level": 4,
+            "max_hp": 550.0,
+            "origin": [
+              40,
+              24
+            ]
+          }
+        ],
+        "projectiles": [
+          {
+            "attack_kind": "ranged",
+            "attacker_id": 1,
+            "attacker_position": [
+              41.5,
+              25.5
+            ],
+            "current_position": [
+              43.214,
+              25.5
+            ],
+            "damage": 45.0,
+            "id": 7,
+            "impact_position": [
+              47.5,
+              25.5
+            ],
+            "splash_damages_walls": false,
+            "splash_radius_tiles": 1.5,
+            "target_id": 3,
+            "ticks_to_impact": 5
+          }
+        ],
+        "score": {
+          "destruction_pct": 0.0,
+          "stars": 0,
+          "ticks_elapsed": 2,
+          "town_hall_destroyed": false
+        },
+        "spells": [],
+        "tick": 2,
+        "troops": [
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 2,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              47.027,
+              24.579
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 3,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              47.02,
+              25.5
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 4,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              47.027,
+              26.421
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 5,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              48.02,
+              25.5
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 6,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              49.02,
+              25.5
+            ],
+            "troop_type": "barbarian"
+          }
+        ]
+      },
+      "tick": 2
+    },
+    {
+      "events": [],
+      "state": {
+        "buildings": [
+          {
+            "building_type": "town_hall",
+            "destroyed": false,
+            "hp": 1500.0,
+            "id": 0,
+            "level": 1,
+            "max_hp": 1500.0,
+            "origin": [
+              3,
+              3
+            ]
+          },
+          {
+            "building_type": "mortar",
+            "destroyed": false,
+            "hp": 550.0,
+            "id": 1,
+            "level": 4,
+            "max_hp": 550.0,
+            "origin": [
+              40,
+              24
+            ]
+          }
+        ],
+        "projectiles": [
+          {
+            "attack_kind": "ranged",
+            "attacker_id": 1,
+            "attacker_position": [
+              41.5,
+              25.5
+            ],
+            "current_position": [
+              44.071,
+              25.5
+            ],
+            "damage": 45.0,
+            "id": 7,
+            "impact_position": [
+              47.5,
+              25.5
+            ],
+            "splash_damages_walls": false,
+            "splash_radius_tiles": 1.5,
+            "target_id": 3,
+            "ticks_to_impact": 4
+          }
+        ],
+        "score": {
+          "destruction_pct": 0.0,
+          "stars": 0,
+          "ticks_elapsed": 3,
+          "town_hall_destroyed": false
+        },
+        "spells": [],
+        "tick": 3,
+        "troops": [
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 2,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              46.869,
+              24.605
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 3,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              46.86,
+              25.5
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 4,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              46.869,
+              26.395
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 5,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              47.86,
+              25.5
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 6,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              48.86,
+              25.5
+            ],
+            "troop_type": "barbarian"
+          }
+        ]
+      },
+      "tick": 3
+    },
+    {
+      "events": [],
+      "state": {
+        "buildings": [
+          {
+            "building_type": "town_hall",
+            "destroyed": false,
+            "hp": 1500.0,
+            "id": 0,
+            "level": 1,
+            "max_hp": 1500.0,
+            "origin": [
+              3,
+              3
+            ]
+          },
+          {
+            "building_type": "mortar",
+            "destroyed": false,
+            "hp": 550.0,
+            "id": 1,
+            "level": 4,
+            "max_hp": 550.0,
+            "origin": [
+              40,
+              24
+            ]
+          }
+        ],
+        "projectiles": [
+          {
+            "attack_kind": "ranged",
+            "attacker_id": 1,
+            "attacker_position": [
+              41.5,
+              25.5
+            ],
+            "current_position": [
+              44.929,
+              25.5
+            ],
+            "damage": 45.0,
+            "id": 7,
+            "impact_position": [
+              47.5,
+              25.5
+            ],
+            "splash_damages_walls": false,
+            "splash_radius_tiles": 1.5,
+            "target_id": 3,
+            "ticks_to_impact": 3
+          }
+        ],
+        "score": {
+          "destruction_pct": 0.0,
+          "stars": 0,
+          "ticks_elapsed": 4,
+          "town_hall_destroyed": false
+        },
+        "spells": [],
+        "tick": 4,
+        "troops": [
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 2,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              46.711,
+              24.632
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 3,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              46.7,
+              25.5
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 4,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              46.711,
+              26.368
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 5,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              47.7,
+              25.5
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 6,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              48.7,
+              25.5
+            ],
+            "troop_type": "barbarian"
+          }
+        ]
+      },
+      "tick": 4
+    },
+    {
+      "events": [],
+      "state": {
+        "buildings": [
+          {
+            "building_type": "town_hall",
+            "destroyed": false,
+            "hp": 1500.0,
+            "id": 0,
+            "level": 1,
+            "max_hp": 1500.0,
+            "origin": [
+              3,
+              3
+            ]
+          },
+          {
+            "building_type": "mortar",
+            "destroyed": false,
+            "hp": 550.0,
+            "id": 1,
+            "level": 4,
+            "max_hp": 550.0,
+            "origin": [
+              40,
+              24
+            ]
+          }
+        ],
+        "projectiles": [
+          {
+            "attack_kind": "ranged",
+            "attacker_id": 1,
+            "attacker_position": [
+              41.5,
+              25.5
+            ],
+            "current_position": [
+              45.786,
+              25.5
+            ],
+            "damage": 45.0,
+            "id": 7,
+            "impact_position": [
+              47.5,
+              25.5
+            ],
+            "splash_damages_walls": false,
+            "splash_radius_tiles": 1.5,
+            "target_id": 3,
+            "ticks_to_impact": 2
+          }
+        ],
+        "score": {
+          "destruction_pct": 0.0,
+          "stars": 0,
+          "ticks_elapsed": 5,
+          "town_hall_destroyed": false
+        },
+        "spells": [],
+        "tick": 5,
+        "troops": [
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 2,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              46.553,
+              24.658
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 3,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              46.54,
+              25.5
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 4,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              46.553,
+              26.342
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 5,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              47.54,
+              25.5
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 6,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              48.54,
+              25.5
+            ],
+            "troop_type": "barbarian"
+          }
+        ]
+      },
+      "tick": 5
+    },
+    {
+      "events": [],
+      "state": {
+        "buildings": [
+          {
+            "building_type": "town_hall",
+            "destroyed": false,
+            "hp": 1500.0,
+            "id": 0,
+            "level": 1,
+            "max_hp": 1500.0,
+            "origin": [
+              3,
+              3
+            ]
+          },
+          {
+            "building_type": "mortar",
+            "destroyed": false,
+            "hp": 550.0,
+            "id": 1,
+            "level": 4,
+            "max_hp": 550.0,
+            "origin": [
+              40,
+              24
+            ]
+          }
+        ],
+        "projectiles": [
+          {
+            "attack_kind": "ranged",
+            "attacker_id": 1,
+            "attacker_position": [
+              41.5,
+              25.5
+            ],
+            "current_position": [
+              46.643,
+              25.5
+            ],
+            "damage": 45.0,
+            "id": 7,
+            "impact_position": [
+              47.5,
+              25.5
+            ],
+            "splash_damages_walls": false,
+            "splash_radius_tiles": 1.5,
+            "target_id": 3,
+            "ticks_to_impact": 1
+          }
+        ],
+        "score": {
+          "destruction_pct": 0.0,
+          "stars": 0,
+          "ticks_elapsed": 6,
+          "town_hall_destroyed": false
+        },
+        "spells": [],
+        "tick": 6,
+        "troops": [
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 2,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              46.395,
+              24.684
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 3,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              46.38,
+              25.5
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 4,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              46.395,
+              26.316
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 5,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              47.38,
+              25.5
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": false,
+            "hp": 45.0,
+            "id": 6,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              48.38,
+              25.5
+            ],
+            "troop_type": "barbarian"
+          }
+        ]
+      },
+      "tick": 6
+    },
+    {
+      "events": [
+        {
+          "payload": {
+            "attacker_id": 1,
+            "damage": 45.0,
+            "kind": "ranged",
+            "target_id": 2
+          },
+          "tick": 7,
+          "type": "damage"
+        },
+        {
+          "payload": {
+            "attacker_id": 1,
+            "damage": 45.0,
+            "kind": "ranged",
+            "target_id": 3
+          },
+          "tick": 7,
+          "type": "damage"
+        },
+        {
+          "payload": {
+            "attacker_id": 1,
+            "damage": 45.0,
+            "kind": "ranged",
+            "target_id": 4
+          },
+          "tick": 7,
+          "type": "damage"
+        },
+        {
+          "payload": {
+            "attacker_id": 1,
+            "damage": 45.0,
+            "kind": "ranged",
+            "target_id": 5
+          },
+          "tick": 7,
+          "type": "damage"
+        },
+        {
+          "payload": {
+            "attacker_id": 1,
+            "damage": 45.0,
+            "kind": "ranged",
+            "target_id": 6
+          },
+          "tick": 7,
+          "type": "damage"
+        },
+        {
+          "payload": {
+            "kind": "troop",
+            "troop_id": 2,
+            "troop_type": "barbarian"
+          },
+          "tick": 7,
+          "type": "destroyed"
+        },
+        {
+          "payload": {
+            "kind": "troop",
+            "troop_id": 3,
+            "troop_type": "barbarian"
+          },
+          "tick": 7,
+          "type": "destroyed"
+        },
+        {
+          "payload": {
+            "kind": "troop",
+            "troop_id": 4,
+            "troop_type": "barbarian"
+          },
+          "tick": 7,
+          "type": "destroyed"
+        },
+        {
+          "payload": {
+            "kind": "troop",
+            "troop_id": 5,
+            "troop_type": "barbarian"
+          },
+          "tick": 7,
+          "type": "destroyed"
+        },
+        {
+          "payload": {
+            "kind": "troop",
+            "troop_id": 6,
+            "troop_type": "barbarian"
+          },
+          "tick": 7,
+          "type": "destroyed"
+        },
+        {
+          "payload": {},
+          "tick": 7,
+          "type": "sim_terminated"
+        }
+      ],
+      "state": {
+        "buildings": [
+          {
+            "building_type": "town_hall",
+            "destroyed": false,
+            "hp": 1500.0,
+            "id": 0,
+            "level": 1,
+            "max_hp": 1500.0,
+            "origin": [
+              3,
+              3
+            ]
+          },
+          {
+            "building_type": "mortar",
+            "destroyed": false,
+            "hp": 550.0,
+            "id": 1,
+            "level": 4,
+            "max_hp": 550.0,
+            "origin": [
+              40,
+              24
+            ]
+          }
+        ],
+        "projectiles": [],
+        "score": {
+          "destruction_pct": 0.0,
+          "stars": 0,
+          "ticks_elapsed": 7,
+          "town_hall_destroyed": false
+        },
+        "spells": [],
+        "tick": 7,
+        "troops": [
+          {
+            "destroyed": true,
+            "hp": 0.0,
+            "id": 2,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              46.237,
+              24.71
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": true,
+            "hp": 0.0,
+            "id": 3,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              46.22,
+              25.5
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": true,
+            "hp": 0.0,
+            "id": 4,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              46.237,
+              26.29
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": true,
+            "hp": 0.0,
+            "id": 5,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              47.22,
+              25.5
+            ],
+            "troop_type": "barbarian"
+          },
+          {
+            "destroyed": true,
+            "hp": 0.0,
+            "id": 6,
+            "level": 1,
+            "max_hp": 45.0,
+            "position": [
+              48.22,
+              25.5
+            ],
+            "troop_type": "barbarian"
+          }
+        ]
+      },
+      "tick": 7
+    }
+  ],
+  "initial_state": {
+    "buildings": [
+      {
+        "building_type": "town_hall",
+        "destroyed": false,
+        "hp": 1500.0,
+        "id": 0,
+        "level": 1,
+        "max_hp": 1500.0,
+        "origin": [
+          3,
+          3
+        ]
+      },
+      {
+        "building_type": "mortar",
+        "destroyed": false,
+        "hp": 550.0,
+        "id": 1,
+        "level": 4,
+        "max_hp": 550.0,
+        "origin": [
+          40,
+          24
+        ]
+      }
+    ],
+    "projectiles": [],
+    "score": {
+      "destruction_pct": 0.0,
+      "stars": 0,
+      "ticks_elapsed": 0,
+      "town_hall_destroyed": false
+    },
+    "spells": [],
+    "tick": 0,
+    "troops": []
+  },
+  "metadata": {
+    "base_name": "mortar_splash",
+    "config_hash": "41754915f9e620b73a2b5139108bf92e0881dfdb552a38c78e7a4298aa6a8d6e",
+    "episode_id": "",
+    "final_score": {
+      "destruction_pct": 0.0,
+      "stars": 0,
+      "ticks_elapsed": 7,
+      "town_hall_destroyed": false
+    },
+    "git_sha": "",
+    "plan_name": "mortar_splash",
+    "run_id": "",
+    "sim_version": "0.1.0",
+    "started_at": "",
+    "total_ticks": 8
+  },
+  "schema_version": 1
+}

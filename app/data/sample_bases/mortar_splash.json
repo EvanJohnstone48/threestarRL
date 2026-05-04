@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "name": "mortar_splash",
+    "th_level": 6,
+    "tags": ["phase-1", "defense-mechanics", "mortar"],
+    "notes": "Issue 005 — single Mortar at the south edge of the buildable region; barbs deployed at the bottom edge cluster within Mortar splash radius for the AC: Mortar splash kills 3+ Barbarians in single impact.",
+    "author": "issue-005",
+    "created_at": "2026-05-03T00:00:00Z"
+  },
+  "th_level": 6,
+  "placements": [
+    { "building_type": "town_hall", "origin": [3, 3], "level": 1 },
+    { "building_type": "mortar",    "origin": [40, 24], "level": 4 }
+  ],
+  "cc_contents": []
+}
