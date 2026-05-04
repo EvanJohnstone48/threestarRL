@@ -15,7 +15,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from sandbox_core.schemas import Replay, ReplayValidationError
+from sandbox_core.schemas import Replay, ReplayValidationError, load_validated
 
 FLOAT_PRECISION: int = 3
 
@@ -52,7 +52,7 @@ def serialize(payload: dict[str, Any], *, pretty: bool) -> str:
 def read_replay(path: Path | str) -> Replay:
     raw = json.loads(Path(path).read_text(encoding="utf-8"))
     try:
-        return Replay.model_validate(raw)
+        return load_validated(raw, Replay)
     except Exception as e:  # pragma: no cover - re-raised typed
         raise ReplayValidationError(f"failed to validate replay {path}: {e}") from e
 

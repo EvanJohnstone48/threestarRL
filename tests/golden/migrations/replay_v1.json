@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "sim_version": "0.0.1",
+    "base_name": "replay_migration_v1_fixture",
+    "plan_name": "replay_migration_v1_fixture",
+    "run_id": "",
+    "episode_id": "",
+    "total_ticks": 1,
+    "final_score": {
+      "stars": 0,
+      "destruction_pct": 0.0,
+      "ticks_elapsed": 1,
+      "town_hall_destroyed": false
+    },
+    "started_at": "2026-05-03T00:00:00Z",
+    "git_sha": "",
+    "config_hash": ""
+  },
+  "initial_state": {
+    "tick": 0,
+    "buildings": [
+      {
+        "id": 0,
+        "building_type": "town_hall",
+        "origin": [15, 15],
+        "level": 1,
+        "hp": 1500.0,
+        "max_hp": 1500.0,
+        "destroyed": false
+      }
+    ],
+    "troops": [],
+    "projectiles": [],
+    "spells": [],
+    "score": {
+      "stars": 0,
+      "destruction_pct": 0.0,
+      "ticks_elapsed": 0,
+      "town_hall_destroyed": false
+    }
+  },
+  "frames": [
+    {
+      "tick": 1,
+      "state": {
+        "tick": 1,
+        "buildings": [
+          {
+            "id": 0,
+            "building_type": "town_hall",
+            "origin": [15, 15],
+            "level": 1,
+            "hp": 1500.0,
+            "max_hp": 1500.0,
+            "destroyed": false
+          }
+        ],
+        "troops": [],
+        "projectiles": [],
+        "spells": [],
+        "score": {
+          "stars": 0,
+          "destruction_pct": 0.0,
+          "ticks_elapsed": 1,
+          "town_hall_destroyed": false
+        }
+      },
+      "events": []
+    }
+  ]
+}

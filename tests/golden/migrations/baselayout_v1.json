@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "name": "baselayout_migration_v1_fixture",
+    "th_level": 6,
+    "tags": ["fixture", "schema-migration"],
+    "notes": "Minimal valid BaseLayout used by tests/unit/sandbox_core/test_schema_migrations.py to exercise the v1 -> latest migration chain.",
+    "author": "schema-migration-fixture",
+    "created_at": "2026-05-03T00:00:00Z"
+  },
+  "th_level": 6,
+  "placements": [
+    { "building_type": "town_hall", "origin": [15, 15], "level": 1 },
+    { "building_type": "cannon", "origin": [40, 40], "level": 1 }
+  ],
+  "cc_contents": []
+}

@@ -16,7 +16,7 @@ from pathlib import Path
 import sandbox_core
 from sandbox_core.content import DEFAULT_DATA_DIR, load_catalogue
 from sandbox_core.replay import compute_config_hash, write_replay
-from sandbox_core.schemas import BaseLayout, DeploymentPlan
+from sandbox_core.schemas import BaseLayout, DeploymentPlan, load_validated
 from sandbox_core.sim import Sim
 
 
@@ -28,8 +28,8 @@ def _cmd_run(args: argparse.Namespace) -> int:
 
     base_raw = json.loads(base_path.read_text(encoding="utf-8"))
     plan_raw = json.loads(plan_path.read_text(encoding="utf-8"))
-    base = BaseLayout.model_validate(base_raw)
-    plan = DeploymentPlan.model_validate(plan_raw)
+    base = load_validated(base_raw, BaseLayout)
+    plan = load_validated(plan_raw, DeploymentPlan)
 
     catalogue = load_catalogue(data_dir)
 
@@ -68,14 +68,14 @@ def _cmd_run(args: argparse.Namespace) -> int:
 
 def _cmd_validate(args: argparse.Namespace) -> int:
     raw = json.loads(Path(args.path).read_text(encoding="utf-8"))
-    BaseLayout.model_validate(raw)
+    load_validated(raw, BaseLayout)
     print(f"OK {args.path}")
     return 0
 
 
 def _cmd_validate_plan(args: argparse.Namespace) -> int:
     raw = json.loads(Path(args.path).read_text(encoding="utf-8"))
-    DeploymentPlan.model_validate(raw)
+    load_validated(raw, DeploymentPlan)
     print(f"OK {args.path}")
     return 0
 

@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "name": "deploymentplan_migration_v1_fixture",
+    "notes": "Minimal valid DeploymentPlan used by tests/unit/sandbox_core/test_schema_migrations.py to exercise the v1 -> latest migration chain.",
+    "author": "schema-migration-fixture",
+    "created_at": "2026-05-03T00:00:00Z"
+  },
+  "actions": [
+    {
+      "tick": 0,
+      "kind": "deploy_troop",
+      "entity_type": "barbarian",
+      "position": [2.5, 17.5],
+      "level": 6
+    }
+  ]
+}

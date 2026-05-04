@@ -7,6 +7,7 @@ Every persisted JSON carries `schema_version: 1`. See:
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from enum import StrEnum
 from typing import Any, Literal
 
@@ -363,7 +364,95 @@ class ReplayValidationError(ValueError):
     """Raised when a replay JSON fails Pydantic validation on load."""
 
 
+class SchemaMigrationError(ValueError):
+    """Raised when a payload's schema_version cannot be migrated forward."""
+
+
+# ---------------------------------------------------------------------------
+# Schema migrations (PRD §6.8, §11.5)
+# ---------------------------------------------------------------------------
+#
+# `MIGRATIONS[schema_name][i]` is a step that takes a payload at schema_version
+# `i + 1` and returns the equivalent payload at schema_version `i + 2`. The list
+# is appended to as new versions ship; at v1 every chain is empty (no-op).
+#
+# To add a v2 of, say, `BuildingPlacement` that renames the `level` field to
+# `building_level`:
+#
+#     def _migrate_baseplacement_v1_to_v2(payload: dict[str, Any]) -> dict[str, Any]:
+#         updated = dict(payload)
+#         updated["schema_version"] = 2
+#         for placement in updated.get("placements", []):
+#             if "level" in placement:
+#                 placement["building_level"] = placement.pop("level")
+#         return updated
+#
+#     MIGRATIONS["BaseLayout"].append(_migrate_baseplacement_v1_to_v2)
+#
+# Then commit `tests/golden/migrations/baselayout_v2.json` so the migration
+# chain test covers the new step. The test asserts that loading every fixture
+# through `migrate_to_latest` produces a dict that validates against the
+# current schema.
+
+MigrationStep = Callable[[dict[str, Any]], dict[str, Any]]
+
+MIGRATIONS: dict[str, list[MigrationStep]] = {
+    "BaseLayout": [],
+    "DeploymentPlan": [],
+    "Replay": [],
+}
+
+def migrate_to_latest(
+    payload: dict[str, Any], target_schema: type[BaseModel]
+) -> dict[str, Any]:
+    """Apply registered migrations to bring `payload` to the latest schema version.
+
+    Looks up the migration chain via `target_schema.__name__`. The starting
+    version is `payload["schema_version"]` (defaults to 1 if absent). Returns
+    a new dict; does not mutate input. At v1 this is a no-op for every
+    registered schema.
+    """
+    schema_name = target_schema.__name__
+    if schema_name not in MIGRATIONS:
+        raise SchemaMigrationError(
+            f"no migration chain registered for schema {schema_name!r}"
+        )
+    chain = MIGRATIONS[schema_name]
+    raw_version = payload.get("schema_version", 1)
+    if not isinstance(raw_version, int) or raw_version < 1:
+        raise SchemaMigrationError(
+            f"{schema_name} payload has invalid schema_version={raw_version!r}; must be int >= 1"
+        )
+    if raw_version > SCHEMA_VERSION:
+        raise SchemaMigrationError(
+            f"{schema_name} payload has schema_version={raw_version} which is "
+            f"newer than the current SCHEMA_VERSION={SCHEMA_VERSION}; "
+            f"cannot migrate forward in time"
+        )
+    current = dict(payload)
+    for step_idx in range(raw_version - 1, SCHEMA_VERSION - 1):
+        if step_idx >= len(chain):
+            raise SchemaMigrationError(
+                f"{schema_name} migration chain missing step from "
+                f"v{step_idx + 1} to v{step_idx + 2}"
+            )
+        current = chain[step_idx](current)
+    return current
+
+
+def load_validated[TSchema: BaseModel](
+    payload: dict[str, Any], target_schema: type[TSchema]
+) -> TSchema:
+    """Migrate `payload` to the latest schema version, then validate against `target_schema`.
+
+    The single entry point loaders should use when reading persisted JSON from disk.
+    """
+    migrated = migrate_to_latest(payload, target_schema)
+    return target_schema.model_validate(migrated)
+
+
 __all__ = [
+    "MIGRATIONS",
     "SCHEMA_VERSION",
     "AttackKind",
     "BaseLayout",
@@ -379,10 +468,12 @@ __all__ = [
     "Event",
     "EventType",
     "InvalidDeploymentError",
+    "MigrationStep",
     "Projectile",
     "Replay",
     "ReplayMetadata",
     "ReplayValidationError",
+    "SchemaMigrationError",
     "Score",
     "SimTerminatedError",
     "SpellCast",
@@ -396,4 +487,6 @@ __all__ = [
     "TroopState",
     "TroopType",
     "WorldState",
+    "load_validated",
+    "migrate_to_latest",
 ]
