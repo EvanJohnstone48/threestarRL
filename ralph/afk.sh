@@ -22,6 +22,7 @@ for ((i=1; i<=$1; i++)); do
 
   printf '%s' "Previous commits: $commits Issues: $issues $prompt" \
   | claude \
+    --model claude-sonnet-4-6 \
     --verbose \
     --print \
     --output-format stream-json \
