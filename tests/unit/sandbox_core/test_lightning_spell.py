@@ -261,11 +261,7 @@ def test_bolt_damages_friendly_troop_in_radius() -> None:
             break
         _world, events = sim.step_tick()
         # Collect barbarian IDs once they're deployed.
-        barb_ids |= {
-            t.id
-            for t in _world.troops
-            if t.troop_type == "barbarian"
-        }
+        barb_ids |= {t.id for t in _world.troops if t.troop_type == "barbarian"}
         for ev in events:
             if ev.type is EventType.DAMAGE and ev.payload.get("target_id") in barb_ids:
                 troop_damage_events.append(ev.tick)

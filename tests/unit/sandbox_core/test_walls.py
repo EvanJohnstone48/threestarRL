@@ -44,9 +44,7 @@ def _base_with_walls(
 ) -> BaseLayout:
     placements = [BuildingPlacement(building_type="town_hall", origin=th_origin, level=1)]
     for origin in wall_origins:
-        placements.append(
-            BuildingPlacement(building_type="wall", origin=origin, level=wall_level)
-        )
+        placements.append(BuildingPlacement(building_type="wall", origin=origin, level=wall_level))
     return BaseLayout(
         metadata=BaseLayoutMetadata(name="walls_test", th_level=6),
         th_level=6,
@@ -54,7 +52,9 @@ def _base_with_walls(
     )
 
 
-def _deploy_wb(tick: int = 0, position: tuple[float, float] = (48.5, 24.5), level: int = 3) -> DeploymentAction:
+def _deploy_wb(
+    tick: int = 0, position: tuple[float, float] = (48.5, 24.5), level: int = 3
+) -> DeploymentAction:
     return DeploymentAction(
         tick=tick, kind="deploy_troop", entity_type="wall_breaker", position=position, level=level
     )
@@ -123,7 +123,10 @@ def test_wb_targets_nearest_wall_over_closer_non_wall() -> None:
             if ev.type is EventType.DAMAGE:
                 if ev.payload.get("target_id") == wall_id:
                     wall_damaged = True
-                if ev.payload.get("target_id") == th_id and ev.payload.get("attacker_id") is not None:
+                if (
+                    ev.payload.get("target_id") == th_id
+                    and ev.payload.get("attacker_id") is not None
+                ):
                     pass  # WB targeted TH instead of wall — noted but checked via wall_damaged below
 
     assert wall_damaged, "WB must target and damage the wall, not the TH"
@@ -145,7 +148,8 @@ def test_wb_suicide_emits_damage_event_on_target_wall() -> None:
     while not sim.is_terminal():
         _, events = sim.step_tick()
         damage_events.extend(
-            e for e in events
+            e
+            for e in events
             if e.type is EventType.DAMAGE and e.payload.get("target_id") == wall_id
         )
 
@@ -178,8 +182,10 @@ def test_wb_suicide_emits_destroyed_event_for_wb() -> None:
     while not sim.is_terminal():
         _, events = sim.step_tick()
         destroyed_troops.extend(
-            e for e in events
-            if e.type is EventType.DESTROYED and e.payload.get("kind") == "troop"
+            e
+            for e in events
+            if e.type is EventType.DESTROYED
+            and e.payload.get("kind") == "troop"
             and e.payload.get("troop_type") == "wall_breaker"
         )
 
@@ -197,7 +203,8 @@ def test_wb_splash_damages_adjacent_wall() -> None:
     sim = _make_sim(base, plan)
 
     splash_wall_id = next(
-        b.id for b in sim._world.buildings  # type: ignore[attr-defined]
+        b.id
+        for b in sim._world.buildings  # type: ignore[attr-defined]
         if b.building_type == "wall" and b.origin == (45, 23)
     )
 
@@ -205,7 +212,8 @@ def test_wb_splash_damages_adjacent_wall() -> None:
     while not sim.is_terminal():
         _, events = sim.step_tick()
         splash_damage_events.extend(
-            e for e in events
+            e
+            for e in events
             if e.type is EventType.DAMAGE and e.payload.get("target_id") == splash_wall_id
         )
 
@@ -214,26 +222,29 @@ def test_wb_splash_damages_adjacent_wall() -> None:
 
 def test_wb_wall_outside_splash_radius_not_damaged() -> None:
     """Wall beyond 1.5-tile splash radius takes no splash damage."""
-    # WB targets (45, 24); wall at (45, 22) is 2 tiles from center — outside radius 1.5.
-    base = _base_with_walls((45, 24), (45, 22), wall_level=1)
+    # WB targets (45, 24); wall at (45, 21) has full-tile hitbox [45..46, 21..22],
+    # so its closest edge is 2 tiles from splash center — outside radius 1.5.
+    base = _base_with_walls((45, 24), (45, 21), wall_level=1)
     plan = _plan(_deploy_wb(tick=0, position=(48.5, 24.5), level=3))
     sim = _make_sim(base, plan)
 
     far_wall_id = next(
-        b.id for b in sim._world.buildings  # type: ignore[attr-defined]
-        if b.building_type == "wall" and b.origin == (45, 22)
+        b.id
+        for b in sim._world.buildings  # type: ignore[attr-defined]
+        if b.building_type == "wall" and b.origin == (45, 21)
     )
 
     damage_events = []
     while not sim.is_terminal():
         _, events = sim.step_tick()
         damage_events.extend(
-            e for e in events
+            e
+            for e in events
             if e.type is EventType.DAMAGE and e.payload.get("target_id") == far_wall_id
         )
 
     assert not damage_events, (
-        f"Wall at (30,22) is 2 tiles from splash center — should not take damage; got {damage_events}"
+        f"Wall at (45,21) is 2 tiles from splash center — should not take damage; got {damage_events}"
     )
 
 
@@ -252,8 +263,11 @@ def test_splash_damages_walls_false_mortar_leaves_walls_unaffected() -> None:
     )
     plan = _plan(
         DeploymentAction(
-            tick=0, kind="deploy_troop", entity_type="barbarian",
-            position=(47.5, 24.5), level=1,
+            tick=0,
+            kind="deploy_troop",
+            entity_type="barbarian",
+            position=(47.5, 24.5),
+            level=1,
         ),
     )
     sim = _make_sim(base, plan)
@@ -264,7 +278,8 @@ def test_splash_damages_walls_false_mortar_leaves_walls_unaffected() -> None:
     while not sim.is_terminal():
         _, events = sim.step_tick()
         wall_damage_events.extend(
-            e for e in events
+            e
+            for e in events
             if e.type is EventType.DAMAGE and e.payload.get("target_id") == wall_id
         )
 
@@ -285,7 +300,8 @@ def test_wb_splash_damages_walls_true_produces_wall_damage() -> None:
     while not sim.is_terminal():
         _, events = sim.step_tick()
         wall_damage_events.extend(
-            e for e in events
+            e
+            for e in events
             if e.type is EventType.DAMAGE and e.payload.get("target_id") in all_wall_ids
         )
 
@@ -320,11 +336,13 @@ def test_destroyed_wall_skipped_wb_retargets_remaining_wall() -> None:
 
     # Both walls should be destroyed (first by WB1, second by WB2).
     wall_a = next(
-        b for b in sim._world.buildings  # type: ignore[attr-defined]
+        b
+        for b in sim._world.buildings  # type: ignore[attr-defined]
         if b.building_type == "wall" and b.origin == (45, 24)
     )
     wall_b = next(
-        b for b in sim._world.buildings  # type: ignore[attr-defined]
+        b
+        for b in sim._world.buildings  # type: ignore[attr-defined]
         if b.building_type == "wall" and b.origin == (45, 10)
     )
     assert wall_a.destroyed, "Wall A should be destroyed by first WB"

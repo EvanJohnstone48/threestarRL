@@ -196,9 +196,11 @@ def test_committed_data_dir_loads_with_overrides() -> None:
     assert "cannon" in cat.buildings
     assert "wall_breaker" in cat.troops
     assert "lightning_spell" in cat.spells
-    # The committed manual_overrides.json overrides Army Camp hitbox_inset.
+    # The committed manual_overrides.json overrides Army Camp + Wall hitbox_inset.
     army_camp = cat.buildings["army_camp"]
     assert army_camp.hitbox_inset == 1.0
+    wall = cat.buildings["wall"]
+    assert wall.hitbox_inset == 0.0
     # Wall Breaker's damage_multiplier_default applies via override.
     wb = cat.troops["wall_breaker"]
     assert abs(wb.damage_multiplier_default - 0.04) < 1e-9

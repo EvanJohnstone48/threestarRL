@@ -74,8 +74,7 @@ def test_replay_size_full_th6() -> None:
         threshold_pretty_bytes=THRESHOLD_PRETTY_BYTES,
         threshold_minified_bytes=THRESHOLD_MINIFIED_BYTES,
         passed=(
-            pretty_bytes <= THRESHOLD_PRETTY_BYTES
-            and minified_bytes <= THRESHOLD_MINIFIED_BYTES
+            pretty_bytes <= THRESHOLD_PRETTY_BYTES and minified_bytes <= THRESHOLD_MINIFIED_BYTES
         ),
     )
 

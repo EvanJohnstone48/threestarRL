@@ -59,24 +59,39 @@ def _mortar_splash_plan() -> DeploymentPlan:
         metadata=DeploymentPlanMetadata(name="mortar_splash"),
         actions=[
             DeploymentAction(
-                tick=0, kind="deploy_troop", entity_type="barbarian",
-                position=(47.5, 24.5), level=1,
+                tick=0,
+                kind="deploy_troop",
+                entity_type="barbarian",
+                position=(47.5, 24.5),
+                level=1,
             ),
             DeploymentAction(
-                tick=0, kind="deploy_troop", entity_type="barbarian",
-                position=(47.5, 25.5), level=1,
+                tick=0,
+                kind="deploy_troop",
+                entity_type="barbarian",
+                position=(47.5, 25.5),
+                level=1,
             ),
             DeploymentAction(
-                tick=0, kind="deploy_troop", entity_type="barbarian",
-                position=(47.5, 26.5), level=1,
+                tick=0,
+                kind="deploy_troop",
+                entity_type="barbarian",
+                position=(47.5, 26.5),
+                level=1,
             ),
             DeploymentAction(
-                tick=0, kind="deploy_troop", entity_type="barbarian",
-                position=(48.5, 25.5), level=1,
+                tick=0,
+                kind="deploy_troop",
+                entity_type="barbarian",
+                position=(48.5, 25.5),
+                level=1,
             ),
             DeploymentAction(
-                tick=0, kind="deploy_troop", entity_type="barbarian",
-                position=(49.5, 25.5), level=1,
+                tick=0,
+                kind="deploy_troop",
+                entity_type="barbarian",
+                position=(49.5, 25.5),
+                level=1,
             ),
         ],
     )
@@ -97,10 +112,7 @@ def test_mortar_single_impact_damages_three_or_more_clustered_barbarians() -> No
     while not sim.is_terminal():
         _, events = sim.step_tick()
         for ev in events:
-            if (
-                ev.type is EventType.DAMAGE
-                and ev.payload.get("kind") == AttackKind.RANGED.value
-            ):
+            if ev.type is EventType.DAMAGE and ev.payload.get("kind") == AttackKind.RANGED.value:
                 splash_damages_per_tick[ev.tick] = splash_damages_per_tick.get(ev.tick, 0) + 1
 
     multi_hit_ticks = [t for t, n in splash_damages_per_tick.items() if n >= 3]
@@ -118,8 +130,11 @@ def test_mortar_impact_position_snapped_to_tile_center_at_fire_time() -> None:
         actions=[
             # 47.7, 25.3 — fractional position; tile-center snap should be (47.5, 25.5).
             DeploymentAction(
-                tick=0, kind="deploy_troop", entity_type="barbarian",
-                position=(47.7, 25.3), level=1,
+                tick=0,
+                kind="deploy_troop",
+                entity_type="barbarian",
+                position=(47.7, 25.3),
+                level=1,
             ),
         ],
     )
@@ -152,8 +167,11 @@ def test_air_defense_ignores_ground_only_troops() -> None:
         metadata=DeploymentPlanMetadata(name="g"),
         actions=[
             DeploymentAction(
-                tick=0, kind="deploy_troop", entity_type="barbarian",
-                position=(2.5, 21.5), level=6,
+                tick=0,
+                kind="deploy_troop",
+                entity_type="barbarian",
+                position=(2.5, 21.5),
+                level=6,
             ),
         ],
     )
@@ -164,8 +182,7 @@ def test_air_defense_ignores_ground_only_troops() -> None:
         _, events = sim.step_tick()
         for ev in events:
             assert not (
-                ev.type is EventType.PROJECTILE_FIRED
-                and ev.payload.get("attacker_id") == ad_id
+                ev.type is EventType.PROJECTILE_FIRED and ev.payload.get("attacker_id") == ad_id
             ), "Air Defense fired at a ground troop; target_filter=air must filter it"
 
 
@@ -211,7 +228,8 @@ def test_homing_projectile_silently_despawns_when_target_already_dead() -> None:
     state, events = sim.step_tick()
 
     cannon_damage_events = [
-        e for e in events
+        e
+        for e in events
         if e.type is EventType.DAMAGE and e.payload.get("attacker_id") == cannon_id
     ]
     assert not cannon_damage_events, (
@@ -236,12 +254,18 @@ def test_wizard_tower_splash_never_damages_buildings() -> None:
         metadata=DeploymentPlanMetadata(name="wt-test"),
         actions=[
             DeploymentAction(
-                tick=0, kind="deploy_troop", entity_type="barbarian",
-                position=(2.5, 21.5), level=6,
+                tick=0,
+                kind="deploy_troop",
+                entity_type="barbarian",
+                position=(2.5, 21.5),
+                level=6,
             ),
             DeploymentAction(
-                tick=0, kind="deploy_troop", entity_type="barbarian",
-                position=(2.5, 22.5), level=6,
+                tick=0,
+                kind="deploy_troop",
+                entity_type="barbarian",
+                position=(2.5, 22.5),
+                level=6,
             ),
         ],
     )
@@ -278,8 +302,11 @@ def test_archer_tower_filter_both_fires_on_ground_troop() -> None:
         metadata=DeploymentPlanMetadata(name="g"),
         actions=[
             DeploymentAction(
-                tick=0, kind="deploy_troop", entity_type="barbarian",
-                position=(2.5, 21.5), level=6,
+                tick=0,
+                kind="deploy_troop",
+                entity_type="barbarian",
+                position=(2.5, 21.5),
+                level=6,
             ),
         ],
     )

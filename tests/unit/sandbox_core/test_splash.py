@@ -10,7 +10,9 @@ def _b(id: int, origin: tuple[int, int] = (10, 10), is_wall: bool = False) -> Sp
         id=id,
         origin=origin,
         footprint=(1, 1) if is_wall else (3, 3),
-        hitbox_inset=0.5 if is_wall else 1.0,
+        # Walls have no inset (full tile is the hitbox); 3×3 buildings use the
+        # default 0.5 inset (inner 2×2 hitbox).
+        hitbox_inset=0.0 if is_wall else 0.5,
         is_wall=is_wall,
         destroyed=False,
     )
@@ -74,8 +76,8 @@ def test_splash_walls_filter_skips_walls_when_false() -> None:
 
 
 def test_splash_walls_filter_includes_walls_when_true() -> None:
-    # Wall at (13,13) has 1x1 footprint with inset 0.5 → hitbox point (13.5, 13.5).
-    # Distance from center (11.5, 11.5) is sqrt(8) ≈ 2.828, so radius must exceed that.
+    # Wall at (13,13) has 1x1 footprint with inset 0.0 → hitbox = full tile [13..14, 13..14].
+    # From center (11.5, 11.5) the closest hitbox point is (13.0, 13.0); distance sqrt(2*1.5²) ≈ 2.121.
     out = resolve_splash(
         center=(11.5, 11.5),
         radius=3.0,

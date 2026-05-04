@@ -468,8 +468,10 @@ class Sim:
         if hits_buildings:
             for b in self._world.buildings:
                 bt = self._catalogue_buildings[b.building_type]
-                inset = bt.hitbox_inset if bt.hitbox_inset is not None else default_hitbox_inset(
-                    bt.footprint
+                inset = (
+                    bt.hitbox_inset
+                    if bt.hitbox_inset is not None
+                    else default_hitbox_inset(bt.footprint)
                 )
                 splash_buildings.append(
                     SplashTargetBuilding(
@@ -726,8 +728,14 @@ class Sim:
                 if target is None:
                     continue
                 bt = self._catalogue_buildings[target.building_type]
-                inset = bt.hitbox_inset if bt.hitbox_inset is not None else default_hitbox_inset(bt.footprint)
-                dist = distance_point_to_square_hitbox(troop.position, target.origin, bt.footprint, inset)
+                inset = (
+                    bt.hitbox_inset
+                    if bt.hitbox_inset is not None
+                    else default_hitbox_inset(bt.footprint)
+                )
+                dist = distance_point_to_square_hitbox(
+                    troop.position, target.origin, bt.footprint, inset
+                )
                 stats = tt.stats_at(troop.level)
                 in_range = dist <= max(stats.range_tiles, 0.0) + 1e-9
                 if in_range and bt.is_wall:
@@ -1120,7 +1128,11 @@ class Sim:
             bt = self._catalogue_buildings[b.building_type]
             if not bt.is_wall:
                 continue
-            inset = bt.hitbox_inset if bt.hitbox_inset is not None else default_hitbox_inset(bt.footprint)
+            inset = (
+                bt.hitbox_inset
+                if bt.hitbox_inset is not None
+                else default_hitbox_inset(bt.footprint)
+            )
             d = distance_point_to_square_hitbox(position, b.origin, bt.footprint, inset)
             if d < best_dist:
                 best_dist = d

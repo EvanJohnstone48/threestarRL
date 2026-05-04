@@ -163,12 +163,13 @@ The editor and the `BaseLayout` validator enforce identical rules; the simulator
 The hitbox is the geometric region used for *targeting* (i.e., the region a troop must be in range of to attack the building). It is smaller than the footprint — a small "moat" of footprint tiles is walkable and unattackable around each non-wall building.
 
 - **Schema field.** `BuildingType.hitbox_inset: float | null` (per entity). `null` resolves to the default rule at load time; the in-memory `BuildingType` always carries an explicit float so combat code never branches on entity name.
-- **Default rule.** `hitbox_inset = max(footprint_size / 2 − 0.5, 0.5)`.
-  - 1×1 (wall): inset 0.5 (the full tile is the hitbox).
-  - 2×2: inset 0.5.
-  - 3×3: inset 1.0.
-  - 4×4: inset 1.5.
-- **Override.** Army Camp (4×4) overrides to inset 1.0.
+- **Default rule.** `hitbox_inset = 0.5` for every footprint size. The hitbox is the footprint shrunk by 0.5 tiles on each side, so it occupies the inner `(N−1)×(N−1)` region centered in an `N×N` footprint. Worked examples:
+  - 2×2 (Builder's Hut): hitbox 1×1.
+  - 3×3 (most defenses, CC, storages): hitbox 2×2.
+  - 4×4 (Town Hall): hitbox 3×3.
+- **Overrides.** Per-entity inset values declared in `data/manual_overrides.json`:
+  - **Army Camp** (4×4) → inset `1.0`, giving a 2×2 hitbox.
+  - **Wall** (1×1) → inset `0.0`, so the full tile is the hitbox.
 - **Hitbox shape is attacker-dependent.** For ground attackers, the hitbox is a **square** (footprint shrunk by `hitbox_inset` per side). For air attackers, the hitbox is a **circle** (radius = `hitbox_inset`, centered on footprint center). The "why" is part of the deferred targeting design.
 - **Walls.** A wall's footprint = its hitbox = 1×1 (a wall fills the full tile). Troops cannot squeeze through a wall-and-building corner.
 - **Implication.** Two adjacent non-wall buildings have hitboxes that don't touch — a 1-tile-wide walkable corridor exists between their hitbox edges. Pathfinding consumes this (deferred); building placement must not assume hitbox-adjacency means "no walk-through".

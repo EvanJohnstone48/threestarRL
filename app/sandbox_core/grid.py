@@ -86,13 +86,13 @@ def distance_point_to_square_hitbox(
 
 
 def default_hitbox_inset(footprint: tuple[int, int]) -> float:
-    """Default inset rule: max(footprint_size / 2 - 0.5, 0.5).
+    """Default inset rule: 0.5 tiles, regardless of footprint size.
 
-    Walls (1x1) and 2x2 footprints both default to 0.5 (full tile).
-    3x3 -> 1.0; 4x4 -> 1.5.
+    Per-entity overrides (army_camp = 1.0; wall = 0.0) live in
+    manual_overrides.json and are applied by the content loader.
     """
-    side = max(footprint)
-    return max(side / 2.0 - 0.5, 0.5)
+    del footprint  # signature kept for forward compat (e.g. shape-aware overrides).
+    return 0.5
 
 
 def overlap(

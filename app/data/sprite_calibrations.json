@@ -1,6 +1,139 @@
 {
   "schema_version": 1,
-  "buildings": {},
-  "troops": {},
-  "effects": {}
+  "buildings": {
+    "air_defense": {
+      "offset_x": 1.25,
+      "offset_y": 5,
+      "scale": 0.3768894828730003
+    },
+    "archer_tower": {
+      "offset_x": 0,
+      "offset_y": 3.75,
+      "scale": 0.5050679529955184
+    },
+    "army_camp": {
+      "offset_x": -2.5,
+      "offset_y": -12.5,
+      "scale": 0.2812407349502493
+    },
+    "barracks": {
+      "offset_x": 2.5,
+      "offset_y": -25,
+      "scale": 0.8638375985314751
+    },
+    "builders_hut": {
+      "offset_x": -1.25,
+      "offset_y": -15,
+      "scale": 0.5050679529955183
+    },
+    "cannon": {
+      "offset_x": 5,
+      "offset_y": 43.75,
+      "scale": 0.556837418177559
+    },
+    "clan_castle": {
+      "offset_x": 0,
+      "offset_y": 12.5,
+      "scale": 0.436296687610857
+    },
+    "elixir_collector": {
+      "offset_x": 0,
+      "offset_y": 10,
+      "scale": 0.3957339570166503
+    },
+    "elixir_storage": {
+      "offset_x": 0,
+      "offset_y": 0,
+      "scale": 0.35894236464095264
+    },
+    "gold_mine": {
+      "offset_x": -2.5,
+      "offset_y": 10,
+      "scale": 0.3418498710866215
+    },
+    "gold_storage": {
+      "offset_x": -2.5,
+      "offset_y": 7.5,
+      "scale": 0.3768894828730002
+    },
+    "laboratory": {
+      "offset_x": -1.25,
+      "offset_y": 17.5,
+      "scale": 0.39573395701665026
+    },
+    "mortar": {
+      "offset_x": 0,
+      "offset_y": 23.75,
+      "scale": 0.43629668761085694
+    },
+    "spell_factory": {
+      "offset_x": 1.25,
+      "offset_y": -22.5,
+      "scale": 0.8227024747918819
+    },
+    "town_hall": {
+      "offset_x": 0,
+      "offset_y": 25,
+      "scale": 0.6446089162177954
+    },
+    "wall": {
+      "offset_x": -1.25,
+      "offset_y": 31.25,
+      "scale": 0.2678483190002374
+    },
+    "wizard_tower": {
+      "offset_x": -1.25,
+      "offset_y": 10,
+      "scale": 0.5303213506452943
+    }
+  },
+  "troops": {
+    "archer": {
+      "offset_x": 2.2222990601417223,
+      "offset_y": -23.3336593631725,
+      "scale": 0.22035947491034075
+    },
+    "barbarian": {
+      "offset_x": 1.5278230106664523,
+      "offset_y": -23.88884139247125,
+      "scale": 0.1866728161170787
+    },
+    "giant": {
+      "offset_x": -2.2221769893336614,
+      "offset_y": -27.77811068557935,
+      "scale": 0.15660536473605605
+    },
+    "goblin": {
+      "offset_x": 3.3332654840006626,
+      "offset_y": -20.000244576489422,
+      "scale": 0.19987253960121606
+    },
+    "wall_breaker": {
+      "offset_x": 0,
+      "offset_y": -17.77798839733464,
+      "scale": 0.13528160219074056
+    },
+    "wizard": {
+      "offset_x": -1.1110884946668875,
+      "offset_y": -25.55585450642468,
+      "scale": 0.25509363714308314
+    }
+  },
+  "effects": {
+    "bolt": {
+      "offset_x": -1.1110884946667738,
+      "offset_y": -94.44561295251117,
+      "scale": 0.5303213506452944
+    },
+    "explosion": {
+      "offset_x": 0,
+      "offset_y": -5.555609929935372,
+      "scale": 0.19035479962020577
+    },
+    "splash": {
+      "offset_x": -1.1110884946667738,
+      "offset_y": -4.444512358309339,
+      "scale": 0.12270440108003679
+    }
+  }
 }

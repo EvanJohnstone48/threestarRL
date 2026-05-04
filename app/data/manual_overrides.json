@@ -3,6 +3,9 @@
   "buildings": {
     "army_camp": {
       "hitbox_inset": 1.0
+    },
+    "wall": {
+      "hitbox_inset": 0.0
     }
   },
   "troops": {

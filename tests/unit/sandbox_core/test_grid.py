@@ -62,22 +62,24 @@ def test_footprint_in_buildable_pass_and_fail() -> None:
     assert not footprint_in_buildable((2, 3), (3, 3))  # row 2 in deploy ring
 
 
-def test_default_hitbox_inset_per_size() -> None:
+def test_default_hitbox_inset_is_half_tile() -> None:
+    # New rule: every footprint defaults to 0.5; per-entity overrides
+    # (army_camp = 1.0, wall = 0.0) live in manual_overrides.json.
     assert default_hitbox_inset((1, 1)) == 0.5
     assert default_hitbox_inset((2, 2)) == 0.5
-    assert default_hitbox_inset((3, 3)) == 1.0
-    assert default_hitbox_inset((4, 4)) == 1.5
+    assert default_hitbox_inset((3, 3)) == 0.5
+    assert default_hitbox_inset((4, 4)) == 0.5
 
 
 def test_distance_to_3x3_hitbox() -> None:
-    # 3x3 cannon at (10, 10), inset 1.0 → hitbox r∈[11,12], c∈[11,12].
-    # From (5.0, 5.0) to closest hitbox point (11.0, 11.0): sqrt(36+36) = sqrt(72)
-    d = distance_point_to_square_hitbox((5.0, 5.0), (10, 10), (3, 3), 1.0)
-    assert math.isclose(d, math.sqrt(72), rel_tol=1e-9)
+    # 3x3 cannon at (10, 10), inset 0.5 → hitbox r∈[10.5,12.5], c∈[10.5,12.5].
+    # From (5.0, 5.0) to closest hitbox corner (10.5, 10.5): sqrt(30.25+30.25).
+    d = distance_point_to_square_hitbox((5.0, 5.0), (10, 10), (3, 3), 0.5)
+    assert math.isclose(d, math.sqrt(60.5), rel_tol=1e-9)
 
 
 def test_distance_inside_hitbox_is_zero() -> None:
-    d = distance_point_to_square_hitbox((11.5, 11.5), (10, 10), (3, 3), 1.0)
+    d = distance_point_to_square_hitbox((11.5, 11.5), (10, 10), (3, 3), 0.5)
     assert d == 0.0
 
 

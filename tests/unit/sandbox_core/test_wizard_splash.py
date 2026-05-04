@@ -100,12 +100,12 @@ def test_resolve_splash_with_splash_damages_walls_true_hits_wall() -> None:
         id=1,
         origin=(23, 23),
         footprint=(1, 1),
-        hitbox_inset=0.5,
+        hitbox_inset=0.0,
         is_wall=True,
         destroyed=False,
     )
-    # Splash centered at (21.5, 23.5) with radius 2.0 — wall hitbox at (23.5, 23.5),
-    # distance exactly 2.0.
+    # Splash centered at (21.5, 23.5) with radius 2.0 — wall hitbox = full tile
+    # [23..24, 23..24]; closest point (23.0, 23.5), distance 1.5 < 2.0 → wall hit.
     events = resolve_splash(
         center=(21.5, 23.5),
         radius=2.0,
@@ -129,7 +129,7 @@ def test_resolve_splash_with_splash_damages_walls_false_skips_wall() -> None:
         id=1,
         origin=(23, 23),
         footprint=(1, 1),
-        hitbox_inset=0.5,
+        hitbox_inset=0.0,
         is_wall=True,
         destroyed=False,
     )
@@ -185,7 +185,8 @@ def test_wizard_splash_emits_damage_events_on_adjacent_wall() -> None:
 
     cat = load_catalogue()
     wall_id = next(
-        b.id for b in sim._world.buildings  # type: ignore[attr-defined]
+        b.id
+        for b in sim._world.buildings  # type: ignore[attr-defined]
         if cat.buildings[b.building_type].is_wall
     )
 
@@ -218,9 +219,7 @@ def test_wizard_splash_progressively_damages_wall_over_multiple_shots() -> None:
     tick = 0
     while not sim.is_terminal() and tick < max_ticks:
         world, _events = sim.step_tick()
-        wall_buildings = [
-            b for b in world.buildings if cat.buildings[b.building_type].is_wall
-        ]
+        wall_buildings = [b for b in world.buildings if cat.buildings[b.building_type].is_wall]
         if not wall_buildings:
             break
         current_hp = wall_buildings[0].hp

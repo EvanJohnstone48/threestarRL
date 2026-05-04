@@ -18,7 +18,7 @@ def _bt(category: BuildingCategory, is_wall: bool = False) -> BuildingType:
         name=str(category.value),
         category=category,
         footprint=(1, 1) if is_wall else (3, 3),
-        hitbox_inset=0.5 if is_wall else 1.0,
+        hitbox_inset=0.0 if is_wall else 0.5,
         is_wall=is_wall,
         levels=[BuildingLevelStats(level=1, hp=100)],
     )

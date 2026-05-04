@@ -153,6 +153,4 @@ def test_full_th6_attack_casts_at_least_one_lightning() -> None:
         if ev["type"] == EventType.SPELL_CAST.value
         and cast(dict[str, Any], ev["payload"]).get("spell_type") == "lightning_spell"
     )
-    assert lightning_casts >= 1, (
-        f"AC violated: expected >=1 Lightning cast, got {lightning_casts}"
-    )
+    assert lightning_casts >= 1, f"AC violated: expected >=1 Lightning cast, got {lightning_casts}"
