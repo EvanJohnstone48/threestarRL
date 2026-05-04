@@ -1,0 +1,611 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "name": "full_th6_attack",
+    "notes": "Issue 010 — full TH6 attack: deploys all six troop types (Barbarian, Archer, Goblin, Giant, Wall Breaker, Wizard) from all four edges, casts 1 Lightning level-3 on the TH cluster. Reaches >=50% destruction reliably under placeholder pathing; runs to nothing-left termination after troops deplete.",
+    "author": "issue-010",
+    "created_at": "2026-05-04T00:00:00Z"
+  },
+  "actions": [
+    {
+      "tick": 0,
+      "kind": "deploy_troop",
+      "entity_type": "giant",
+      "position": [
+        48.5,
+        22.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 0,
+      "kind": "deploy_troop",
+      "entity_type": "giant",
+      "position": [
+        48.5,
+        23.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 0,
+      "kind": "deploy_troop",
+      "entity_type": "giant",
+      "position": [
+        48.5,
+        24.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 0,
+      "kind": "deploy_troop",
+      "entity_type": "giant",
+      "position": [
+        48.5,
+        25.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 0,
+      "kind": "deploy_troop",
+      "entity_type": "giant",
+      "position": [
+        1.5,
+        22.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 0,
+      "kind": "deploy_troop",
+      "entity_type": "giant",
+      "position": [
+        1.5,
+        23.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 0,
+      "kind": "deploy_troop",
+      "entity_type": "giant",
+      "position": [
+        1.5,
+        24.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 0,
+      "kind": "deploy_troop",
+      "entity_type": "giant",
+      "position": [
+        22.5,
+        48.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 0,
+      "kind": "deploy_troop",
+      "entity_type": "giant",
+      "position": [
+        23.5,
+        48.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 0,
+      "kind": "deploy_troop",
+      "entity_type": "giant",
+      "position": [
+        24.5,
+        48.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 0,
+      "kind": "deploy_troop",
+      "entity_type": "giant",
+      "position": [
+        22.5,
+        1.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 0,
+      "kind": "deploy_troop",
+      "entity_type": "giant",
+      "position": [
+        23.5,
+        1.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 0,
+      "kind": "deploy_troop",
+      "entity_type": "giant",
+      "position": [
+        24.5,
+        1.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 2,
+      "kind": "deploy_troop",
+      "entity_type": "barbarian",
+      "position": [
+        48.5,
+        20.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 2,
+      "kind": "deploy_troop",
+      "entity_type": "barbarian",
+      "position": [
+        48.5,
+        21.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 2,
+      "kind": "deploy_troop",
+      "entity_type": "barbarian",
+      "position": [
+        48.5,
+        26.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 2,
+      "kind": "deploy_troop",
+      "entity_type": "barbarian",
+      "position": [
+        48.5,
+        27.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 2,
+      "kind": "deploy_troop",
+      "entity_type": "barbarian",
+      "position": [
+        1.5,
+        20.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 2,
+      "kind": "deploy_troop",
+      "entity_type": "barbarian",
+      "position": [
+        1.5,
+        21.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 2,
+      "kind": "deploy_troop",
+      "entity_type": "barbarian",
+      "position": [
+        1.5,
+        25.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 2,
+      "kind": "deploy_troop",
+      "entity_type": "barbarian",
+      "position": [
+        1.5,
+        26.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 2,
+      "kind": "deploy_troop",
+      "entity_type": "barbarian",
+      "position": [
+        20.5,
+        48.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 2,
+      "kind": "deploy_troop",
+      "entity_type": "barbarian",
+      "position": [
+        21.5,
+        48.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 2,
+      "kind": "deploy_troop",
+      "entity_type": "barbarian",
+      "position": [
+        25.5,
+        48.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 2,
+      "kind": "deploy_troop",
+      "entity_type": "barbarian",
+      "position": [
+        26.5,
+        48.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 2,
+      "kind": "deploy_troop",
+      "entity_type": "barbarian",
+      "position": [
+        20.5,
+        1.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 2,
+      "kind": "deploy_troop",
+      "entity_type": "barbarian",
+      "position": [
+        21.5,
+        1.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 2,
+      "kind": "deploy_troop",
+      "entity_type": "barbarian",
+      "position": [
+        25.5,
+        1.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 2,
+      "kind": "deploy_troop",
+      "entity_type": "barbarian",
+      "position": [
+        26.5,
+        1.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 4,
+      "kind": "deploy_troop",
+      "entity_type": "wall_breaker",
+      "position": [
+        48.5,
+        22.5
+      ],
+      "level": 4
+    },
+    {
+      "tick": 4,
+      "kind": "deploy_troop",
+      "entity_type": "wall_breaker",
+      "position": [
+        48.5,
+        25.5
+      ],
+      "level": 4
+    },
+    {
+      "tick": 6,
+      "kind": "deploy_troop",
+      "entity_type": "barbarian",
+      "position": [
+        48.5,
+        18.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 6,
+      "kind": "deploy_troop",
+      "entity_type": "barbarian",
+      "position": [
+        48.5,
+        19.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 6,
+      "kind": "deploy_troop",
+      "entity_type": "barbarian",
+      "position": [
+        48.5,
+        28.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 6,
+      "kind": "deploy_troop",
+      "entity_type": "barbarian",
+      "position": [
+        48.5,
+        29.5
+      ],
+      "level": 6
+    },
+    {
+      "tick": 6,
+      "kind": "deploy_troop",
+      "entity_type": "archer",
+      "position": [
+        0.5,
+        15.5
+      ],
+      "level": 5
+    },
+    {
+      "tick": 6,
+      "kind": "deploy_troop",
+      "entity_type": "archer",
+      "position": [
+        0.5,
+        16.5
+      ],
+      "level": 5
+    },
+    {
+      "tick": 6,
+      "kind": "deploy_troop",
+      "entity_type": "archer",
+      "position": [
+        0.5,
+        31.5
+      ],
+      "level": 5
+    },
+    {
+      "tick": 6,
+      "kind": "deploy_troop",
+      "entity_type": "archer",
+      "position": [
+        0.5,
+        32.5
+      ],
+      "level": 5
+    },
+    {
+      "tick": 6,
+      "kind": "deploy_troop",
+      "entity_type": "archer",
+      "position": [
+        15.5,
+        47.5
+      ],
+      "level": 5
+    },
+    {
+      "tick": 6,
+      "kind": "deploy_troop",
+      "entity_type": "archer",
+      "position": [
+        16.5,
+        47.5
+      ],
+      "level": 5
+    },
+    {
+      "tick": 6,
+      "kind": "deploy_troop",
+      "entity_type": "archer",
+      "position": [
+        31.5,
+        47.5
+      ],
+      "level": 5
+    },
+    {
+      "tick": 6,
+      "kind": "deploy_troop",
+      "entity_type": "archer",
+      "position": [
+        32.5,
+        47.5
+      ],
+      "level": 5
+    },
+    {
+      "tick": 6,
+      "kind": "deploy_troop",
+      "entity_type": "archer",
+      "position": [
+        15.5,
+        0.5
+      ],
+      "level": 5
+    },
+    {
+      "tick": 6,
+      "kind": "deploy_troop",
+      "entity_type": "archer",
+      "position": [
+        16.5,
+        0.5
+      ],
+      "level": 5
+    },
+    {
+      "tick": 6,
+      "kind": "deploy_troop",
+      "entity_type": "archer",
+      "position": [
+        31.5,
+        0.5
+      ],
+      "level": 5
+    },
+    {
+      "tick": 6,
+      "kind": "deploy_troop",
+      "entity_type": "archer",
+      "position": [
+        32.5,
+        0.5
+      ],
+      "level": 5
+    },
+    {
+      "tick": 8,
+      "kind": "deploy_troop",
+      "entity_type": "archer",
+      "position": [
+        47.5,
+        16.5
+      ],
+      "level": 5
+    },
+    {
+      "tick": 8,
+      "kind": "deploy_troop",
+      "entity_type": "archer",
+      "position": [
+        47.5,
+        17.5
+      ],
+      "level": 5
+    },
+    {
+      "tick": 8,
+      "kind": "deploy_troop",
+      "entity_type": "archer",
+      "position": [
+        47.5,
+        30.5
+      ],
+      "level": 5
+    },
+    {
+      "tick": 8,
+      "kind": "deploy_troop",
+      "entity_type": "archer",
+      "position": [
+        47.5,
+        31.5
+      ],
+      "level": 5
+    },
+    {
+      "tick": 8,
+      "kind": "deploy_troop",
+      "entity_type": "wizard",
+      "position": [
+        1.5,
+        23.5
+      ],
+      "level": 2
+    },
+    {
+      "tick": 10,
+      "kind": "deploy_troop",
+      "entity_type": "wizard",
+      "position": [
+        48.5,
+        22.5
+      ],
+      "level": 2
+    },
+    {
+      "tick": 10,
+      "kind": "deploy_troop",
+      "entity_type": "wizard",
+      "position": [
+        48.5,
+        25.5
+      ],
+      "level": 2
+    },
+    {
+      "tick": 10,
+      "kind": "cast_spell",
+      "entity_type": "lightning_spell",
+      "position": [
+        24.0,
+        24.0
+      ],
+      "level": 3
+    },
+    {
+      "tick": 12,
+      "kind": "deploy_troop",
+      "entity_type": "goblin",
+      "position": [
+        47.5,
+        14.5
+      ],
+      "level": 4
+    },
+    {
+      "tick": 12,
+      "kind": "deploy_troop",
+      "entity_type": "goblin",
+      "position": [
+        47.5,
+        33.5
+      ],
+      "level": 4
+    },
+    {
+      "tick": 12,
+      "kind": "deploy_troop",
+      "entity_type": "goblin",
+      "position": [
+        1.5,
+        10.5
+      ],
+      "level": 4
+    },
+    {
+      "tick": 12,
+      "kind": "deploy_troop",
+      "entity_type": "goblin",
+      "position": [
+        1.5,
+        37.5
+      ],
+      "level": 4
+    },
+    {
+      "tick": 20,
+      "kind": "cast_spell",
+      "entity_type": "lightning_spell",
+      "position": [
+        24.0,
+        24.0
+      ],
+      "level": 3
+    }
+  ]
+}

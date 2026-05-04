@@ -8,9 +8,9 @@ non-determinism.
 
 Marked `slow` so it stays out of pre-commit; CI runs the full suite.
 
-Scenario registry: today only `tracer_smoke` exists. As `mortar_splash`
-(issue 005) and `full_th6_attack` (issue 010) land their committed sample
-bases / plans, append them to `SCENARIOS` — no other test changes required.
+Scenario registry: each (base, plan) sample pair from `app/data/sample_*` is
+appended as it lands. To add a new scenario, drop one line in `SCENARIOS` —
+no other test changes required.
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ from typing import Any, cast
 
 import pytest
 import sandbox_core
-from sandbox_core.content import DEFAULT_DATA_DIR, load_catalogue
+from sandbox_core.content import DEFAULT_DATA_DIR, load_catalogue, load_th_caps
 from sandbox_core.replay import compute_config_hash, replay_to_dict, serialize
 from sandbox_core.schemas import BaseLayout, DeploymentPlan
 from sandbox_core.sim import Sim
@@ -64,9 +64,11 @@ SCENARIOS: list[Scenario] = [
         base_path=SAMPLE_BASES / "lightning_destroys_mortar.json",
         plan_path=SAMPLE_PLANS / "lightning_destroys_mortar.json",
     ),
-    # Append when issue 010 lands its sample:
-    # Scenario("full_th6_attack", SAMPLE_BASES / "full_th6_attack.json",
-    #          SAMPLE_PLANS / "full_th6_attack.json"),
+    Scenario(
+        name="full_th6_attack",
+        base_path=SAMPLE_BASES / "full_th6_attack.json",
+        plan_path=SAMPLE_PLANS / "full_th6_attack.json",
+    ),
 ]
 
 MAX_DIFF_PATHS: int = 20
@@ -83,6 +85,9 @@ def _run_scenario(scenario: Scenario) -> tuple[dict[str, Any], str]:
     plan = DeploymentPlan.model_validate(plan_raw)
 
     catalogue = load_catalogue()
+    th_caps = load_th_caps()
+    spell_capacity_total = th_caps[base.th_level]["spell_capacity_total"]
+
     config_hash = compute_config_hash(
         base_raw,
         plan_raw,
@@ -95,6 +100,8 @@ def _run_scenario(scenario: Scenario) -> tuple[dict[str, Any], str]:
         plan,
         catalogue_buildings=catalogue.buildings,
         catalogue_troops=catalogue.troops,
+        catalogue_spells=catalogue.spells,
+        spell_capacity_total=spell_capacity_total,
         sim_version=sandbox_core.__version__,
         config_hash=config_hash,
     )
