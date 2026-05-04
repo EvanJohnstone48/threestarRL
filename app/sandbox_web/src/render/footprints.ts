@@ -5,7 +5,7 @@
 
 const FOOTPRINTS: Record<string, [number, number]> = {
   town_hall: [4, 4],
-  clan_castle: [4, 4],
+  clan_castle: [3, 3],
   army_camp: [4, 4],
   cannon: [3, 3],
   archer_tower: [3, 3],

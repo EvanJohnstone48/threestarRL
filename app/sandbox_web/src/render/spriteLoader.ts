@@ -4,7 +4,7 @@
 
 import { Assets, Texture } from "pixi.js";
 
-const BUILDING_TYPES = [
+export const BUILDING_TYPES = [
   "town_hall",
   "clan_castle",
   "army_camp",
@@ -24,14 +24,9 @@ const BUILDING_TYPES = [
   "wall",
 ];
 
-const TROOP_TYPES = [
-  "barbarian",
-  "archer",
-  "giant",
-  "goblin",
-  "wall_breaker",
-  "wizard",
-];
+export const TROOP_TYPES = ["barbarian", "archer", "giant", "goblin", "wall_breaker", "wizard"];
+
+export const EFFECT_TYPES = ["explosion", "bolt", "splash"];
 
 export type SpriteMap = Map<string, Texture | null>;
 
@@ -47,14 +42,22 @@ export async function loadAllSprites(): Promise<SpriteMap> {
   const entries = await Promise.all([
     ...BUILDING_TYPES.map(async (t) => {
       const tex = await tryLoad(`/sprites/buildings/${t}.png`);
-      return [t, tex] as const;
+      return [`building:${t}`, tex] as const;
     }),
     ...TROOP_TYPES.map(async (t) => {
       const tex = await tryLoad(`/sprites/troops/${t}.png`);
-      return [t, tex] as const;
+      return [`troop:${t}`, tex] as const;
+    }),
+    ...EFFECT_TYPES.map(async (t) => {
+      const tex = await tryLoad(`/sprites/effects/${t}.png`);
+      return [`effect:${t}`, tex] as const;
     }),
   ]);
-  return new Map(entries);
+  // Maintain backward-compat: also register building sprites under their bare
+  // type name so the existing iso renderer's map.get(building_type) still works.
+  const map = new Map<string, Texture | null>(entries);
+  for (const t of BUILDING_TYPES) map.set(t, map.get(`building:${t}`) ?? null);
+  return map;
 }
 
 export function anySpritesLoaded(map: SpriteMap): boolean {

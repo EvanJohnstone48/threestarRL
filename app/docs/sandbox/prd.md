@@ -133,7 +133,7 @@ These are the decisions locked in the dedicated sandbox grilling. They override 
 - **Coordinate convention.** `(row, col)` with origin `(0, 0)` at the **top-left**; `row` increases downward, `col` increases rightward (matches numpy `array[r, c]` and standard image conventions). Float positions for troops use the same axes.
 - **Tile centers** at half-integer coordinates: a tile `(r, c)` has center at `(r + 0.5, c + 0.5)` in float coords.
 - **Building origin** = the **top-left tile of its footprint**. A 3×3 Cannon at origin `(10, 12)` occupies tiles `(10..12, 12..14)`.
-- **All TH6 footprints are square** (1×1 walls, 2×2 (none at TH6), 3×3 most defenses + storages + Spell Factory + Lab, 4×4 TH + CC + Army Camp). Schema retains `[h, w]` for forward compatibility.
+- **All TH6 footprints are square** (1×1 walls, 2×2 (none at TH6), 3×3 most defenses + storages + Spell Factory + Lab + CC, 4×4 TH + Army Camp). Schema retains `[h, w]` for forward compatibility.
 
 ### 5.2 Building placement rules
 The editor and the `BaseLayout` validator enforce identical rules; the simulator may trust a validated layout.

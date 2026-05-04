@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { ReplayViewer } from "@/components/ReplayViewer";
 import { EditorPage } from "@/editor/EditorPage";
+import { SpriteCalibratorPage } from "@/sprites/SpriteCalibratorPage";
 
-type Tab = "viewer" | "editor";
+type Tab = "viewer" | "editor" | "sprites";
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("viewer");
@@ -26,7 +27,7 @@ export default function App() {
           flexShrink: 0,
         }}
       >
-        {(["viewer", "editor"] as Tab[]).map((t) => (
+        {(["viewer", "editor", "sprites"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -47,7 +48,9 @@ export default function App() {
         ))}
       </div>
       <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
-        {tab === "viewer" ? <ReplayViewer /> : <EditorPage />}
+        {tab === "viewer" && <ReplayViewer />}
+        {tab === "editor" && <EditorPage />}
+        {tab === "sprites" && <SpriteCalibratorPage />}
       </div>
     </div>
   );

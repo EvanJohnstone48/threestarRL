@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import type { BuildingPlacement } from "@/generated_types";
 import {
   createEditorState,
   enterPlaceMode,
@@ -362,7 +363,9 @@ describe("mirrorHorizontal", () => {
   });
 
   it("double mirror returns to original position", () => {
-    const original = [{ building_type: "cannon", origin: [10, 10], level: 1 }];
+    const original: BuildingPlacement[] = [
+      { building_type: "cannon", origin: [10, 10], level: 1 },
+    ];
     expect(mirrorHorizontal(mirrorHorizontal(original))[0].origin).toEqual([10, 10]);
   });
 
@@ -394,7 +397,9 @@ describe("mirrorVertical", () => {
   });
 
   it("double mirror returns to original position", () => {
-    const original = [{ building_type: "cannon", origin: [10, 10], level: 1 }];
+    const original: BuildingPlacement[] = [
+      { building_type: "cannon", origin: [10, 10], level: 1 },
+    ];
     expect(mirrorVertical(mirrorVertical(original))[0].origin).toEqual([10, 10]);
   });
 });
@@ -413,7 +418,9 @@ describe("rotate90CW", () => {
   });
 
   it("four rotations return to original position", () => {
-    const original = [{ building_type: "cannon", origin: [5, 20], level: 1 }];
+    const original: BuildingPlacement[] = [
+      { building_type: "cannon", origin: [5, 20], level: 1 },
+    ];
     const r1 = rotate90CW(original);
     const r2 = rotate90CW(r1);
     const r3 = rotate90CW(r2);
@@ -423,7 +430,9 @@ describe("rotate90CW", () => {
 
   it("rotated placements stay within buildable region (BUILDABLE_MIN=3, BUILDABLE_MAX=47)", () => {
     // Place a cannon at a corner of the buildable region
-    const placements = [{ building_type: "cannon", origin: [3, 3], level: 1 }];
+    const placements: BuildingPlacement[] = [
+      { building_type: "cannon", origin: [3, 3], level: 1 },
+    ];
     const result = rotate90CW(placements);
     const [r, c] = result[0].origin;
     expect(r).toBeGreaterThanOrEqual(3);

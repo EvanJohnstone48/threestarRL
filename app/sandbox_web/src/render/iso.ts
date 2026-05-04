@@ -30,6 +30,13 @@ import { footprintFor, TROOP_VISUAL_RADIUS_TILES } from "./footprints";
 import { gridToIsoScreen, ISO_TILE_H, ISO_TILE_W } from "./isoProjection";
 import { BUILDABLE_MAX_EXCLUSIVE, BUILDABLE_MIN, GRID_SIZE, TILE_SIZE } from "./projection";
 import type { SpriteMap } from "./spriteLoader";
+import {
+  DEFAULT_CALIBRATION,
+  getCalibration,
+  loadCalibrations,
+  type Calibration,
+  type SpriteCalibrations,
+} from "@/sprites/calibrations";
 
 const ZOOM_MIN = 0.25;
 const ZOOM_MAX = 4;
@@ -72,6 +79,7 @@ export class IsoRenderer {
   private entityLayer: Container;
   private hpBarLayer: Container;
   private sprites: SpriteMap;
+  private calibrations: SpriteCalibrations;
 
   private dragging = false;
   private lastPointer: { x: number; y: number } | null = null;
@@ -81,9 +89,10 @@ export class IsoRenderer {
   onEntityClick: ((kind: "building" | "troop", id: number) => void) | null = null;
   onBackgroundClick: (() => void) | null = null;
 
-  constructor(app: Application, sprites: SpriteMap) {
+  constructor(app: Application, sprites: SpriteMap, calibrations?: SpriteCalibrations) {
     this.app = app;
     this.sprites = sprites;
+    this.calibrations = calibrations ?? loadCalibrations();
 
     this.camera = new Container();
     this.gridLayer = new Container();
@@ -168,6 +177,7 @@ export class IsoRenderer {
       const bottom = south.y;
 
       const tex = this.sprites.get(b.building_type) ?? null;
+      const cal = getCalibration(this.calibrations, "buildings", b.building_type);
 
       items.push({
         z,
@@ -175,8 +185,9 @@ export class IsoRenderer {
           if (tex) {
             const spr = new Sprite(tex);
             spr.anchor.set(0.5, 1.0);
-            spr.x = south.x;
-            spr.y = south.y;
+            spr.x = south.x + cal.offset_x;
+            spr.y = south.y + cal.offset_y;
+            spr.scale.set(cal.scale, cal.scale);
             this.entityLayer.addChild(spr);
           } else {
             this.drawPlaceholderBuilding(b.building_type, b.level, r0, c0, fh, fw);
@@ -217,19 +228,34 @@ export class IsoRenderer {
       if (t.destroyed) continue;
       const pos = gridToIsoScreen(t.position[0], t.position[1]);
       const z = t.position[0] + t.position[1];
+      const troopTex = this.sprites.get(`troop:${t.troop_type}`) ?? null;
+      const cal: Calibration = troopTex
+        ? getCalibration(this.calibrations, "troops", t.troop_type)
+        : DEFAULT_CALIBRATION;
       items.push({
         z,
         draw: () => {
-          const circle = new Graphics();
-          circle.circle(pos.x, pos.y, TROOP_ISO_RADIUS).fill(0x66bb6a);
-          circle.circle(pos.x, pos.y, TROOP_ISO_RADIUS).stroke({ color: 0x000000, width: 1, alpha: 0.6 });
-          this.entityLayer.addChild(circle);
+          if (troopTex) {
+            const spr = new Sprite(troopTex);
+            spr.anchor.set(0.5, 0.5);
+            spr.x = pos.x + cal.offset_x;
+            spr.y = pos.y + cal.offset_y;
+            spr.scale.set(cal.scale, cal.scale);
+            this.entityLayer.addChild(spr);
+          } else {
+            const circle = new Graphics();
+            circle.circle(pos.x, pos.y, TROOP_ISO_RADIUS).fill(0x66bb6a);
+            circle
+              .circle(pos.x, pos.y, TROOP_ISO_RADIUS)
+              .stroke({ color: 0x000000, width: 1, alpha: 0.6 });
+            this.entityLayer.addChild(circle);
 
-          const label = t.troop_type.charAt(0).toUpperCase();
-          const text = new Text({ text: label, style: troopLabelStyle });
-          text.x = pos.x - text.width / 2;
-          text.y = pos.y - text.height / 2;
-          this.entityLayer.addChild(text);
+            const label = t.troop_type.charAt(0).toUpperCase();
+            const text = new Text({ text: label, style: troopLabelStyle });
+            text.x = pos.x - text.width / 2;
+            text.y = pos.y - text.height / 2;
+            this.entityLayer.addChild(text);
+          }
         },
         hp:
           t.hp < t.max_hp

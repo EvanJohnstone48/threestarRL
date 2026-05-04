@@ -416,7 +416,7 @@ export function EditorPage() {
   const [constraints, setConstraints] = useState<ConstraintResult[]>(() =>
     validateLayout([]),
   );
-  const [_highlightedIndices, setHighlightedIndices] = useState<number[]>([]);
+  const [, setHighlightedIndices] = useState<number[]>([]);
   const [metadata, setMetadata] = useState<BaseLayoutMetadata>(DEFAULT_METADATA);
   const [autosavePrompt, setAutosavePrompt] = useState(false);
   const [confirmClearAll, setConfirmClearAll] = useState(false);
