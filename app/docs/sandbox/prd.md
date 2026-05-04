@@ -54,7 +54,7 @@ Two parallel work streams. The sandbox-content track is what this PRD covers; th
 - Six golden-replay scenarios passing (see §11).
 - Sandbox-web manual editor functional: place all building types, drag-paint walls, validate, export.
 - Sandbox-web replay viewer functional: top-down view always works; isometric view loads user-supplied sprites with fallback.
-- Around 30 hand-built training bases + 5 frozen eval bases authored.
+- Around 30 authored training bases + 5 frozen eval bases authored (any mix of editor-authored and Cartographer-ingested-then-refined).
 
 ---
 
@@ -117,7 +117,7 @@ Two parallel work streams. The sandbox-content track is what this PRD covers; th
 - **AC-S1.3.** Six golden-replay scenarios pass (§11.2).
 - **AC-S1.4.** Defense targeting respects target filters per data: Air Defense ignores ground troops; Cannon/Mortar attack ground only; Archer Tower / Wizard Tower attack ground+air. (Targeting is deferred but the *filter respect* must be live in v1 — the deferred scope is *which target gets picked* among legal ones, not *which targets are legal*.)
 - **AC-S1.5.** The sandbox-web manual editor allows the user to author and export a TH6 base in under 10 minutes.
-- **AC-S1.6.** Around 30 hand-built training bases + 5 hand-built eval bases exist in `app/data/sample_bases/`.
+- **AC-S1.6.** Around 30 authored training bases + 5 authored eval bases exist in `app/data/sample_bases/`. Bases may be authored from scratch in the editor, ingested via the Cartographer and refined, or any mix.
 - **AC-S1.7.** A trained agent's replay (produced by the Barracks track) loads and visualizes correctly in sandbox-web.
 
 ---

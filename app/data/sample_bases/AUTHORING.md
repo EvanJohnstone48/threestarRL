@@ -78,6 +78,17 @@ For the eval set, use one base per archetype (compound-TH, war-base, farming-bas
 
 ---
 
+## Authoring sources
+
+Bases can come from two sources, used in any combination:
+
+1. **Author from scratch in the editor** — the original workflow.
+2. **Ingest via the Cartographer, then refine in the editor** — feed a TH6 base screenshot through the Cartographer pipeline to produce a `BaseLayout` JSON, import it into the editor, visually verify it matches the source image, and tweak as needed (fill metadata, fix any misaligned placements, adjust to the variety guidance above) before exporting.
+
+Whichever source is used, the export path is the same: the editor's "Export base.json" button. Metadata (`name`, `tags`, `notes`, `author`) must always be filled in by the human before export, even for Cartographer-ingested bases.
+
+---
+
 ## Editor workflow tips
 
 ### Keyboard shortcuts

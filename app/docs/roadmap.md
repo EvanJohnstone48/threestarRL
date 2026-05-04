@@ -16,6 +16,21 @@ Phases overlap in practice. Phase 1 sandbox-content authoring runs in parallel w
 
 ---
 
+## Execution sequence (revised 2026-05-04)
+
+The phase numbering above reflects PRD topology. The runtime order of work has been reorganized so that a working ingestion pipeline exists before the sample-base bank is finalized, and so the simulator's deferred mechanics land before any agent training begins. The actual sequence:
+
+1. **Phase 0** — done.
+2. **Phase 1 sandbox content (issues #1–#19, #22, #23)** — done. The simulator covers the full TH6 roster minus pathfinding and targeting, both still stubbed per `sandbox/prd.md` §1. The sandbox-web viewer and manual editor are feature-complete.
+3. **Phase 3 — The Cartographer (pulled forward).** Build the full screenshot-to-`BaseLayout` pipeline before completing the sample-base bank. A dedicated Cartographer grilling session expands this into its own issue set.
+4. **Issues #20 and #21 (5 eval bases + 30 training bases).** Author the sample-base bank using a mix of Cartographer-ingested bases (visually verified) and editor refinement. #20 is locked first per the eval-set-discipline rule.
+5. **Pathfinding and targeting.** Replace the deferred stubs (`NotImplementedError` placeholders in sandbox-core) with implementations faithful to the source game. Scoped via a dedicated grilling session as referenced in `sandbox/prd.md` §1.
+6. **Phase 1 MVP-Tiny RL track** — env scaffolding, random baseline, first PPO. Now meaningful because pathfinding and targeting are real.
+7. **Phase 2 — MVP-Real.** Full action/observation space, curriculum, mutations, eval automation.
+8. **Phase 4** — open-ended TH7+ extensions, as before.
+
+---
+
 ## Phase 0 — Foundation (tracer bullet)
 
 **Goal.** Prove the end-to-end path from input to output works. Deploy one troop on a tiny base, simulate the attack, write a replay, render it in the browser. Roughly 1–2 weeks.
@@ -94,8 +109,8 @@ Roughly 6–10 weeks.
 - These have HP and contribute to % destruction; no defensive behavior.
 - Author `th6_rules.json`: caps for each building type, total housing space, spell capacity.
 
-#### 1.1.5 Hand-author MVP-Real training set
-- Author `app/data/sample_bases/base_01.json` … `base_30.json` using the manual editor.
+#### 1.1.5 Author MVP-Real training set
+- Author `app/data/sample_bases/base_01.json` … `base_30.json`. Bases may be authored from scratch in the manual editor, ingested via the Cartographer and refined, or any mix. The Cartographer pipeline (Phase 3) is sequenced before this step in the revised execution order so it is available as a starting point.
 - Author `app/data/sample_bases/eval_01.json` … `eval_05.json` (frozen eval set).
 - Categorize each base by hand into easy/medium/hard for curriculum.
 
@@ -131,7 +146,7 @@ Roughly 6–10 weeks.
 
 - All TH6 entities present in `data/*.json` and respected by the simulator.
 - Six golden-replay scenarios passing (vanilla movement, splash Mortar, Wizard splash, WB pathing, Lightning, full TH6 attack).
-- ~30 hand-built bases + 5 eval bases authored.
+- ~30 training bases + 5 eval bases authored (editor-authored or Cartographer-ingested-then-refined).
 - Sandbox-web manual editor functional.
 - MVP-Tiny acceptance criterion (AC-B1): trained agent beats random baseline by ≥30 percentage points on tracer base.
 - A replay of the trained agent's attack is visualizable in sandbox-web.

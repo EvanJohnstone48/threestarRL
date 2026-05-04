@@ -10,7 +10,7 @@
 
 **HITL.** Author the 5 frozen eval bases at `app/data/sample_bases/eval_01.json` through `eval_05.json` per §10. **Authored before the 30 training bases** per the AUTHORING.md guidance from issue 019 — the eval set is the read-only ruler and must be locked first.
 
-Each base is hand-built using the editor and exported. Spread across stylistic variety:
+Each base is built using the editor and exported. Spread across stylistic variety:
 
 - One compound-TH style (TH centralized, defenses clustered around it).
 - One war-base style (asymmetric, anti-3-star design).
