@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Application } from "pixi.js";
 
 import type { Replay } from "@/generated_types";
@@ -21,6 +21,8 @@ import {
   togglePlay,
   type PlaybackState,
 } from "@/replay/playback";
+import { computeEventMarks, type EventMark } from "@/replay/eventMarks";
+import { getInspectorData, type InspectorData, type SelectedEntity } from "@/replay/inspector";
 import { TopDownRenderer } from "@/render/topdown";
 
 const RUNTIME_SIM_VERSION = "0.1.0";
@@ -30,6 +32,90 @@ interface RendererHandle {
   app: Application;
   renderer: TopDownRenderer;
 }
+
+// ---- Sub-components ---------------------------------------------------------
+
+function EventMarksBar({
+  marks,
+  totalTicks,
+}: {
+  marks: EventMark[];
+  totalTicks: number;
+}) {
+  return (
+    <div className="event-marks-bar" aria-hidden="true">
+      {totalTicks > 0 &&
+        marks.map((m, i) => {
+          const left = `${(m.tick / totalTicks) * 100}%`;
+          return (
+            <div
+              key={i}
+              className={`event-mark${m.type === "town_hall_destroyed" ? " event-mark-th" : ""}`}
+              style={{
+                left,
+                height: m.type === "town_hall_destroyed" ? undefined : `${m.sizePx}px`,
+                background: m.type === "town_hall_destroyed" ? undefined : m.color,
+                color: m.type === "town_hall_destroyed" ? m.color : undefined,
+              }}
+              title={m.tooltip}
+            >
+              {m.type === "town_hall_destroyed" ? "★" : null}
+            </div>
+          );
+        })}
+    </div>
+  );
+}
+
+function EntityInspector({
+  data,
+  onClose,
+}: {
+  data: InspectorData;
+  onClose: () => void;
+}) {
+  const hpPct = data.maxHp > 0 ? Math.round((data.hp / data.maxHp) * 100) : 0;
+  const title = `${data.entityType.replace(/_/g, " ")} L${data.level}`;
+
+  return (
+    <div className="inspector-panel" role="complementary" aria-label="Entity inspector">
+      <div className="inspector-header">
+        <span className="inspector-title">{title}</span>
+        <button
+          type="button"
+          className="inspector-close"
+          onClick={onClose}
+          aria-label="Close inspector"
+        >
+          ✕
+        </button>
+      </div>
+      {data.destroyed && <div className="inspector-destroyed">DESTROYED</div>}
+      <div className="inspector-row">
+        <span className="inspector-key">id</span>
+        <span className="inspector-value">{data.id}</span>
+      </div>
+      <div className="inspector-row">
+        <span className="inspector-key">HP</span>
+        <span className="inspector-value">
+          {data.hp} / {data.maxHp} ({hpPct}%)
+        </span>
+      </div>
+      <div className="inspector-row">
+        <span className="inspector-key">position</span>
+        <span className="inspector-value">
+          [{data.position[0].toFixed(1)}, {data.position[1].toFixed(1)}]
+        </span>
+      </div>
+      <div className="inspector-row">
+        <span className="inspector-key">kind</span>
+        <span className="inspector-value">{data.kind}</span>
+      </div>
+    </div>
+  );
+}
+
+// ---- Main component ---------------------------------------------------------
 
 export function ReplayViewer() {
   const canvasContainerRef = useRef<HTMLDivElement | null>(null);
@@ -42,6 +128,7 @@ export function ReplayViewer() {
   const [replay, setReplay] = useState<Replay | null>(null);
   const [playing, setPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [selectedEntity, setSelectedEntity] = useState<SelectedEntity>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -67,6 +154,9 @@ export function ReplayViewer() {
       container.appendChild(app.canvas);
       const renderer = new TopDownRenderer(app);
       handleRef.current = { app, renderer };
+
+      renderer.onEntityClick = (kind, id) => setSelectedEntity({ kind, id });
+      renderer.onBackgroundClick = () => setSelectedEntity(null);
 
       app.ticker.add(() => {
         const playback = playbackRef.current;
@@ -129,6 +219,7 @@ export function ReplayViewer() {
     setPlaying(false);
     setPlaybackTick(0);
     setPlaybackSpeed(1);
+    setSelectedEntity(null);
   }, []);
 
   const onFilePicked = useCallback(
@@ -188,6 +279,8 @@ export function ReplayViewer() {
     setPlaybackSpeed(speed);
   }, []);
 
+  const onCloseInspector = useCallback(() => setSelectedEntity(null), []);
+
   const onFitToGrid = useCallback(() => {
     handleRef.current?.renderer.fitToGrid();
   }, []);
@@ -215,11 +308,13 @@ export function ReplayViewer() {
         if (!playbackRef.current) return;
         const idx = SPEEDS.indexOf(playbackRef.current.speed);
         if (idx < SPEEDS.length - 1) onSetSpeed(SPEEDS[idx + 1]);
+      } else if (ev.code === "Escape") {
+        onCloseInspector();
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [onTogglePlay, onStep, onSetSpeed]);
+  }, [onTogglePlay, onStep, onSetSpeed, onCloseInspector]);
 
   const banner =
     replay && crossVersionBanner(replay, RUNTIME_SCHEMA_VERSION)
@@ -229,6 +324,16 @@ export function ReplayViewer() {
         : null;
 
   const totalTicks = replay ? replay.frames.length - 1 : 0;
+
+  const eventMarks = useMemo(
+    () => (replay ? computeEventMarks(replay.frames) : []),
+    [replay],
+  );
+
+  const currentFrame = replay
+    ? (replay.frames[Math.min(playbackTick, replay.frames.length - 1)] ?? null)
+    : null;
+  const inspectorData = getInspectorData(selectedEntity, currentFrame);
 
   return (
     <div className="viewer-root">
@@ -276,6 +381,9 @@ export function ReplayViewer() {
         {!replay && !loading && (
           <div className="drop-hint">Drag a replay JSON here, or click "Load replay…"</div>
         )}
+        {inspectorData && (
+          <EntityInspector data={inspectorData} onClose={onCloseInspector} />
+        )}
       </div>
       <div className="viewer-bottom" aria-label="Playback controls">
         <input
@@ -290,6 +398,7 @@ export function ReplayViewer() {
           onChange={(e) => onSeek(Number(e.target.value))}
           aria-label="Scrub timeline"
         />
+        <EventMarksBar marks={eventMarks} totalTicks={totalTicks} />
         <div className="bottom-controls">
           <button
             type="button"

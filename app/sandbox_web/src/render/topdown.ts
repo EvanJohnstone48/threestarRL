@@ -43,6 +43,9 @@ const HP_BAR_TROOP_H = 3;
 const ZOOM_MIN = 0.25;
 const ZOOM_MAX = 4;
 
+// Click threshold in screen pixels — below this distance a pointerup is a click.
+const CLICK_THRESHOLD_SQ = 25; // 5px
+
 const labelStyleSmall = new TextStyle({
   fontFamily: "monospace",
   fontSize: 10,
@@ -54,6 +57,10 @@ const labelStyleTiny = new TextStyle({
   fill: 0x111111,
 });
 
+type EntityHitArea =
+  | { kind: "building"; id: number; x: number; y: number; w: number; h: number }
+  | { kind: "troop"; id: number; cx: number; cy: number; r: number };
+
 export class TopDownRenderer {
   private app: Application;
   private camera: Container;
@@ -64,6 +71,12 @@ export class TopDownRenderer {
   private hpBarLayer: Container;
   private dragging = false;
   private lastPointer: { x: number; y: number } | null = null;
+  private pointerDownPos: { x: number; y: number } | null = null;
+  private entityHitAreas: EntityHitArea[] = [];
+
+  // Set these to receive entity-click and background-click callbacks.
+  onEntityClick: ((kind: "building" | "troop", id: number) => void) | null = null;
+  onBackgroundClick: (() => void) | null = null;
 
   constructor(app: Application) {
     this.app = app;
@@ -130,6 +143,7 @@ export class TopDownRenderer {
     this.troopLayer.removeChildren();
     this.projectileLayer.removeChildren();
     this.hpBarLayer.removeChildren();
+    this.entityHitAreas = [];
 
     for (const b of currentTickFrame.state.buildings) {
       if (b.destroyed) continue;
@@ -161,6 +175,8 @@ export class TopDownRenderer {
           b.max_hp,
         );
       }
+
+      this.entityHitAreas.push({ kind: "building", id: b.id, x, y, w: w * TILE_SIZE, h: h * TILE_SIZE });
     }
 
     for (const p of frame.projectiles) {
@@ -194,6 +210,8 @@ export class TopDownRenderer {
           t.max_hp,
         );
       }
+
+      this.entityHitAreas.push({ kind: "troop", id: t.id, cx: x, cy: y, r: radius });
     }
   }
 
@@ -210,6 +228,32 @@ export class TopDownRenderer {
       // make it green.
       fg.tint = COLOR_HP_FULL;
     }
+  }
+
+  private handleEntityClick(screenX: number, screenY: number): void {
+    const worldX = (screenX - this.camera.x) / this.camera.scale.x;
+    const worldY = (screenY - this.camera.y) / this.camera.scale.y;
+
+    // Troops first — rendered on top of buildings
+    for (const hit of this.entityHitAreas) {
+      if (hit.kind === "troop") {
+        const dx = worldX - hit.cx;
+        const dy = worldY - hit.cy;
+        if (dx * dx + dy * dy <= hit.r * hit.r) {
+          this.onEntityClick?.("troop", hit.id);
+          return;
+        }
+      }
+    }
+    for (const hit of this.entityHitAreas) {
+      if (hit.kind === "building") {
+        if (worldX >= hit.x && worldX < hit.x + hit.w && worldY >= hit.y && worldY < hit.y + hit.h) {
+          this.onEntityClick?.("building", hit.id);
+          return;
+        }
+      }
+    }
+    this.onBackgroundClick?.();
   }
 
   // Camera controls
@@ -243,14 +287,24 @@ export class TopDownRenderer {
     stage.on("pointerdown", (e: FederatedPointerEvent) => {
       this.dragging = true;
       this.lastPointer = { x: e.global.x, y: e.global.y };
+      this.pointerDownPos = { x: e.global.x, y: e.global.y };
     });
-    stage.on("pointerup", () => {
+    stage.on("pointerup", (e: FederatedPointerEvent) => {
+      if (this.pointerDownPos) {
+        const dx = e.global.x - this.pointerDownPos.x;
+        const dy = e.global.y - this.pointerDownPos.y;
+        if (dx * dx + dy * dy < CLICK_THRESHOLD_SQ) {
+          this.handleEntityClick(e.global.x, e.global.y);
+        }
+      }
       this.dragging = false;
       this.lastPointer = null;
+      this.pointerDownPos = null;
     });
     stage.on("pointerupoutside", () => {
       this.dragging = false;
       this.lastPointer = null;
+      this.pointerDownPos = null;
     });
     stage.on("pointermove", (e: FederatedPointerEvent) => {
       if (!this.dragging || this.lastPointer === null) return;
