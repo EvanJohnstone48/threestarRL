@@ -1,6 +1,6 @@
-"""Pydantic v2 schemas for sandbox-core v1 data contracts.
+"""Pydantic v2 schemas for sandbox-core data contracts.
 
-Every persisted JSON carries `schema_version: 1`. See:
+Every persisted JSON carries `schema_version: 2`. See:
 - app/docs/sandbox/prd.md §6 (data contracts)
 - app/docs/technical.md §4 (cross-subsystem contracts)
 """
@@ -13,7 +13,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-SCHEMA_VERSION: Literal[1] = 1
+SCHEMA_VERSION: Literal[2] = 2
 
 
 class _StrictModel(BaseModel):
@@ -198,18 +198,29 @@ class BuildingPlacement(_StrictModel):
     level: int | None = None
 
 
+class CartographerProvenance(_StrictModel):
+    source_screenshot: str
+    ingest_timestamp_utc: str
+    dataset_version: str
+    confidence_threshold: float
+    derived_pitch_px: float
+    derived_origin_px: tuple[float, float]
+    per_placement_confidence: dict[str, float]
+
+
 class BaseLayout(_StrictModel):
-    schema_version: Literal[1] = SCHEMA_VERSION
+    schema_version: Literal[2] = SCHEMA_VERSION
     metadata: BaseLayoutMetadata
     th_level: int = Field(ge=1, le=15)
     placements: list[BuildingPlacement]
     cc_contents: list[str] = Field(default_factory=list)
+    provenance: CartographerProvenance | None = None
 
     @field_validator("cc_contents")
     @classmethod
-    def _cc_empty_in_v1(cls, value: list[str]) -> list[str]:
+    def _cc_contents_must_be_empty(cls, value: list[str]) -> list[str]:
         if value:
-            raise ValueError("cc_contents must be empty in v1")
+            raise ValueError("cc_contents must be empty")
         return value
 
     @model_validator(mode="after")
@@ -238,7 +249,7 @@ class DeploymentAction(_StrictModel):
 
 
 class DeploymentPlan(_StrictModel):
-    schema_version: Literal[1] = SCHEMA_VERSION
+    schema_version: Literal[2] = SCHEMA_VERSION
     metadata: DeploymentPlanMetadata
     actions: list[DeploymentAction]
 
@@ -341,7 +352,7 @@ class ReplayMetadata(_StrictModel):
 
 
 class Replay(_StrictModel):
-    schema_version: Literal[1] = SCHEMA_VERSION
+    schema_version: Literal[2] = SCHEMA_VERSION
     metadata: ReplayMetadata
     initial_state: WorldState
     frames: list[TickFrame]
@@ -396,10 +407,29 @@ class SchemaMigrationError(ValueError):
 
 MigrationStep = Callable[[dict[str, Any]], dict[str, Any]]
 
+
+def _migrate_baselayout_v1_to_v2(payload: dict[str, Any]) -> dict[str, Any]:
+    updated = dict(payload)
+    updated["schema_version"] = 2
+    return updated
+
+
+def _migrate_deploymentplan_v1_to_v2(payload: dict[str, Any]) -> dict[str, Any]:
+    updated = dict(payload)
+    updated["schema_version"] = 2
+    return updated
+
+
+def _migrate_replay_v1_to_v2(payload: dict[str, Any]) -> dict[str, Any]:
+    updated = dict(payload)
+    updated["schema_version"] = 2
+    return updated
+
+
 MIGRATIONS: dict[str, list[MigrationStep]] = {
-    "BaseLayout": [],
-    "DeploymentPlan": [],
-    "Replay": [],
+    "BaseLayout": [_migrate_baselayout_v1_to_v2],
+    "DeploymentPlan": [_migrate_deploymentplan_v1_to_v2],
+    "Replay": [_migrate_replay_v1_to_v2],
 }
 
 
@@ -455,6 +485,7 @@ __all__ = [
     "BaseLayout",
     "BaseLayoutMetadata",
     "BuildingCategory",
+    "CartographerProvenance",
     "BuildingLevelStats",
     "BuildingPlacement",
     "BuildingState",

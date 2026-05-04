@@ -18,7 +18,7 @@ import pytest
 import sandbox_core
 from sandbox_core.content import DEFAULT_DATA_DIR, load_catalogue, load_th_caps
 from sandbox_core.replay import compute_config_hash, replay_to_dict, serialize
-from sandbox_core.schemas import BaseLayout, DeploymentPlan, EventType
+from sandbox_core.schemas import BaseLayout, DeploymentPlan, EventType, load_validated
 from sandbox_core.sim import Sim
 
 GOLDEN = Path(__file__).resolve().parent / "lightning_destroys_mortar.json"
@@ -31,8 +31,8 @@ def _produce_replay_dict() -> dict[str, object]:
     base_raw = json.loads(base_path.read_text(encoding="utf-8"))
     plan_raw = json.loads(plan_path.read_text(encoding="utf-8"))
 
-    base = BaseLayout.model_validate(base_raw)
-    plan = DeploymentPlan.model_validate(plan_raw)
+    base = load_validated(base_raw, BaseLayout)
+    plan = load_validated(plan_raw, DeploymentPlan)
 
     catalogue = load_catalogue()
     th_caps = load_th_caps()

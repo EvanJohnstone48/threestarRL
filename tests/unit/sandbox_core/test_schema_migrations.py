@@ -49,11 +49,12 @@ def test_v1_fixture_validates_against_current_schema(
 
 
 @pytest.mark.parametrize(("fixture_name", "schema_cls"), V1_FIXTURES)
-def test_migrate_to_latest_is_noop_at_v1(fixture_name: str, schema_cls: type[BaseModel]) -> None:
+def test_v1_fixture_migrates_to_latest(fixture_name: str, schema_cls: type[BaseModel]) -> None:
     raw = _load_fixture(fixture_name)
     migrated = migrate_to_latest(raw, schema_cls)
-    assert migrated == raw
     assert migrated is not raw, "migrate_to_latest must not mutate input"
+    assert raw["schema_version"] == 1
+    assert migrated["schema_version"] == SCHEMA_VERSION
 
 
 def test_migrations_registered_for_every_persisted_schema() -> None:
@@ -95,9 +96,9 @@ def test_migrate_defaults_missing_schema_version_to_one() -> None:
     raw = _load_fixture("baselayout_v1.json")
     raw.pop("schema_version")
     migrated = migrate_to_latest(raw, BaseLayout)
-    assert "schema_version" not in migrated
+    assert migrated["schema_version"] == SCHEMA_VERSION
     instance = BaseLayout.model_validate(migrated)
-    assert instance.schema_version == 1
+    assert instance.schema_version == SCHEMA_VERSION
 
 
 def test_migration_chain_runs_when_versions_differ() -> None:

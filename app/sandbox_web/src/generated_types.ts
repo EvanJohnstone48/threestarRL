@@ -6,7 +6,7 @@
 // After editing the Pydantic schemas, regenerate this file and commit the
 // result. CI and pre-commit fail if this file drifts from the schemas.
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export type AttackKind =
   | "melee"
@@ -55,11 +55,12 @@ export type TroopCategory =
   | "ground";
 
 export interface BaseLayout {
-  schema_version: 1;
+  schema_version: 2;
   metadata: BaseLayoutMetadata;
   th_level: number;
   placements: BuildingPlacement[];
   cc_contents: string[];
+  provenance: CartographerProvenance | null;
 }
 
 export interface BaseLayoutMetadata {
@@ -112,6 +113,16 @@ export interface BuildingType {
   levels: BuildingLevelStats[];
 }
 
+export interface CartographerProvenance {
+  source_screenshot: string;
+  ingest_timestamp_utc: string;
+  dataset_version: string;
+  confidence_threshold: number;
+  derived_pitch_px: number;
+  derived_origin_px: [number, number];
+  per_placement_confidence: { [key: string]: number };
+}
+
 export interface DeploymentAction {
   tick: number;
   kind: "deploy_troop" | "cast_spell";
@@ -121,7 +132,7 @@ export interface DeploymentAction {
 }
 
 export interface DeploymentPlan {
-  schema_version: 1;
+  schema_version: 2;
   metadata: DeploymentPlanMetadata;
   actions: DeploymentAction[];
 }
@@ -154,7 +165,7 @@ export interface Projectile {
 }
 
 export interface Replay {
-  schema_version: 1;
+  schema_version: 2;
   metadata: ReplayMetadata;
   initial_state: WorldState;
   frames: TickFrame[];
