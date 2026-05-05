@@ -7,12 +7,14 @@ from pathlib import Path
 import numpy as np
 
 from cartographer.align import AlignedPlacement
+from cartographer.detect import Detection
 
 
 def render(
     image: np.ndarray,
     placements: list[AlignedPlacement],
     wall_tiles: list[tuple[int, int]],
+    sub_threshold: list[Detection],
     pitch: float,
     origin: tuple[float, float],
     out_path: Path,
@@ -20,12 +22,17 @@ def render(
     """Save an annotated copy of *image* to *out_path*.
 
     Draws a labelled rectangle for each aligned placement over the source image.
+    Sub-threshold detections are drawn in orange from their raw pixel bbox.
     """
-    from PIL import Image, ImageDraw, ImageFont
+    from PIL import Image, ImageDraw
 
     pil_img = Image.fromarray(image).convert("RGB")
     draw = ImageDraw.Draw(pil_img)
     ox, oy = origin
+
+    for det in sub_threshold:
+        x1, y1, x2, y2 = det.bbox_xyxy
+        draw.rectangle([x1, y1, x2, y2], outline=(255, 140, 0), width=1)
 
     for p in placements:
         tx, ty = p.origin

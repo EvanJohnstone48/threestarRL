@@ -18,7 +18,7 @@ dependencies = [
 
 [project.optional-dependencies]
 cartographer = [
-    "inference-sdk>=0.9",
+    "requests>=2.31",
     "opencv-python>=4.9",
     "pillow>=10.0",
 ]

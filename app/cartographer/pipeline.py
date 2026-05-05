@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 from sandbox_core.schemas import BaseLayout
@@ -36,10 +37,18 @@ def run(screenshot_path: Path, out_path: Path | None = None) -> BaseLayout:
     out_path = Path(out_path)
     diag_path = out_path.with_name(out_path.stem + ".diag.png")
 
+    api_key = os.environ.get("ROBOFLOW_API_KEY", "")
+
     image = preprocess.load(screenshot_path)
-    detections = detect.run(image)
+    accepted, sub_threshold = detect.run(
+        image,
+        project_name=cfg["project_name"],
+        dataset_version=cfg["dataset_version"],
+        confidence_threshold=cfg["confidence_threshold"],
+        api_key=api_key,
+    )
     pitch, origin = grid.run(image)
-    placements = align.run(detections, pitch, origin)
+    placements = align.run(accepted, pitch, origin)
     wall_tiles = walls.run(image, pitch, origin)
 
     try:
@@ -54,8 +63,8 @@ def run(screenshot_path: Path, out_path: Path | None = None) -> BaseLayout:
             out_path=out_path,
         )
     except Exception:
-        diagnostic.render(image, placements, wall_tiles, pitch, origin, diag_path)
+        diagnostic.render(image, placements, wall_tiles, sub_threshold, pitch, origin, diag_path)
         raise
 
-    diagnostic.render(image, placements, wall_tiles, pitch, origin, diag_path)
+    diagnostic.render(image, placements, wall_tiles, sub_threshold, pitch, origin, diag_path)
     return layout

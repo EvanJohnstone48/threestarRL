@@ -5,10 +5,16 @@
 
 from __future__ import annotations
 
+import base64
+import io
 from dataclasses import dataclass
 from enum import StrEnum
 
 import numpy as np
+
+
+class MissingAPIKeyError(RuntimeError):
+    """Raised when ROBOFLOW_API_KEY is not set."""
 
 
 class RoboflowClass(StrEnum):
@@ -46,6 +52,8 @@ TRAP_CLASSES: frozenset[str] = frozenset(
     }
 )
 
+_ENDPOINT_BASE = "https://detect.roboflow.com"
+
 
 @dataclass(frozen=True)
 class Detection:
@@ -54,15 +62,65 @@ class Detection:
     confidence: float
 
 
-def run(image: np.ndarray) -> list[Detection]:
-    """Stub: returns a single Town Hall detection at the image centre with confidence 1.0."""
-    h, w = image.shape[:2]
-    cx, cy = w / 2.0, h / 2.0
-    half = 40.0
-    return [
-        Detection(
-            class_name=RoboflowClass.TOWN_HALL,
-            bbox_xyxy=(cx - half, cy - half, cx + half, cy + half),
-            confidence=1.0,
+def _image_to_base64(image: np.ndarray) -> str:
+    from PIL import Image
+
+    buf = io.BytesIO()
+    Image.fromarray(image).save(buf, format="JPEG")
+    return base64.b64encode(buf.getvalue()).decode("ascii")
+
+
+def _parse_response(
+    data: dict,
+    confidence_threshold: float,
+) -> tuple[list[Detection], list[Detection]]:
+    """Split Roboflow predictions into accepted and sub-threshold detections."""
+    accepted: list[Detection] = []
+    sub_threshold: list[Detection] = []
+    for pred in data.get("predictions", []):
+        x, y = float(pred["x"]), float(pred["y"])
+        w, h = float(pred["width"]), float(pred["height"])
+        bbox_xyxy = (x - w / 2, y - h / 2, x + w / 2, y + h / 2)
+        conf = float(pred["confidence"])
+        det = Detection(
+            class_name=pred["class"],
+            bbox_xyxy=bbox_xyxy,
+            confidence=conf,
         )
-    ]
+        if conf >= confidence_threshold:
+            accepted.append(det)
+        else:
+            sub_threshold.append(det)
+    return accepted, sub_threshold
+
+
+def run(
+    image: np.ndarray,
+    project_name: str,
+    dataset_version: str,
+    confidence_threshold: float,
+    api_key: str,
+) -> tuple[list[Detection], list[Detection]]:
+    """Call the Roboflow model and return (accepted, sub_threshold) detections.
+
+    Raises MissingAPIKeyError if api_key is empty.
+    """
+    import requests
+
+    if not api_key:
+        raise MissingAPIKeyError(
+            "Set ROBOFLOW_API_KEY to run real detection. "
+            "To run with stub detections instead, pass a synthetic image to the pipeline "
+            "and mock cartographer.detect.run in your tests."
+        )
+    b64 = _image_to_base64(image)
+    url = f"{_ENDPOINT_BASE}/{project_name}/{dataset_version}"
+    resp = requests.post(
+        url,
+        params={"api_key": api_key},
+        data=b64,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        timeout=60,
+    )
+    resp.raise_for_status()
+    return _parse_response(resp.json(), confidence_threshold)

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
-import pytest
 
 
 def _make_png(tmp_path: Path, w: int = 64, h: int = 64) -> Path:
@@ -18,13 +18,30 @@ def _make_png(tmp_path: Path, w: int = 64, h: int = 64) -> Path:
     return p
 
 
+def _stub_detect(image, *, project_name, dataset_version, confidence_threshold, api_key):
+    from cartographer.detect import Detection
+
+    h, w = image.shape[:2]
+    cx, cy = w / 2.0, h / 2.0
+    half = 40.0
+    accepted = [
+        Detection(
+            class_name="town_hall",
+            bbox_xyxy=(cx - half, cy - half, cx + half, cy + half),
+            confidence=1.0,
+        )
+    ]
+    return accepted, []
+
+
 def test_run_produces_json_and_diag_png(tmp_path: Path) -> None:
     from cartographer.pipeline import run
     from sandbox_core.schemas import BaseLayout
 
     screenshot = _make_png(tmp_path)
     out = tmp_path / "out.json"
-    layout = run(screenshot, out)
+    with patch("cartographer.detect.run", side_effect=_stub_detect):
+        layout = run(screenshot, out)
 
     assert isinstance(layout, BaseLayout)
     assert out.exists()
@@ -38,7 +55,8 @@ def test_run_json_validates_against_v3_schema(tmp_path: Path) -> None:
 
     screenshot = _make_png(tmp_path)
     out = tmp_path / "result.json"
-    run(screenshot, out)
+    with patch("cartographer.detect.run", side_effect=_stub_detect):
+        run(screenshot, out)
 
     data = json.loads(out.read_text())
     layout = BaseLayout.model_validate(data)
