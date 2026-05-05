@@ -145,7 +145,15 @@ Detection rejection is via the existing global `confidence_threshold` only. Neit
 
 ### 4.8 Inference
 
-Hosted Roboflow inference by default. Per-ingest HTTPS call to the project's hosted endpoint via the official Roboflow Inference SDK. API key loaded from `ROBOFLOW_API_KEY` env var, never committed. `app/data/cartographer_config.json` carries `{ project_name, dataset_version, confidence_threshold }`. Hosted vs. local choice is encapsulated entirely inside the `detect` module; downstream stages depend only on the `Detection` data type.
+Hosted Roboflow inference by default. Per-ingest HTTPS call to the project's hosted endpoint. API key loaded from `ROBOFLOW_API_KEY` env var, never committed. `app/data/cartographer_config.json` carries `{ project_name, dataset_version, confidence_threshold }`. Hosted vs. local choice is encapsulated entirely inside the `detect` module; downstream stages depend only on the `Detection` data type.
+
+The `detect` module calls the model directly at `https://detect.roboflow.com/{project_name}/{dataset_version}` with the API key as a query param and the image as base64 in the body. The Roboflow Inference SDK (`inference-sdk`) is unavailable on Python 3.13 wheels as of v0.9; a direct HTTPS POST via `requests` is the supported path until SDK 3.13 wheels land. The Roboflow workflow wrapper `evans-workspace-drjsi / detect-count-and-visualize` (which adds count + annotated image outputs) is intentionally not used — its outputs are duplicated by `diagnostic.py`, and the workflow router currently 404s on every `serverless|detect|infer.roboflow.com/infer/workflows/{ws}/{id}` permutation we tried. Use the model endpoint.
+
+Reference assets for the API call live in `app/cartographer/resources/`:
+- `apicall.png` — the Roboflow-generated Python snippet shown in the workspace UI (workspace `evans-workspace-drjsi`, workflow `detect-count-and-visualize`, underlying model `home-village-building-detector/3`).
+- `workflow.png` — the Roboflow workflow graph: `image → object detection model → bounding box visualization + property definition (count) → label visualization → outputs (count_objects, output_image, predictions)`.
+- `roboflow_example_image.png` — annotated bbox + confidence visualization from a workflow run, useful as a reference for what well-aligned detections look like.
+- `roboflow_example_fullimage.png` — a TH6 home-village screenshot used as the smoke-test input by `scripts/roboflow_smoke.py`. On model `home-village-building-detector/3` it returns 46 detections covering all expected TH6 classes (1× town_hall, 1× clan_castle, 2× archer_tower, 3× cannon, 1× mortar, 2× air_defense, 1× wizard_tower, 1× air_sweeper, 6× gold_mine, 6× elixir_collector, 2× gold_storage, 2× elixir_storage, 3× army_camp, 3× barracks, 1× lab, 1× spell_factory, 4× builders_hut, 3× bomb, 2× giant_bomb, 1× air_bomb) with mean confidence ≈0.75. Use this as the canonical "live API works" check.
 
 ### 4.9 Output bundle and naming
 
