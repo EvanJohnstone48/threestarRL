@@ -287,20 +287,51 @@ screenshot.png
   │
   ▼
 ┌──────────────────────────────────────┐
-│ Stage 3 — Bbox-to-grid alignment      │   cartographer/align.py
-│  - map bbox centers to tile coords    │
-│  - infer footprints from bbox size    │
-│    + class-specific footprint catalog │
+│ Stage 3 — Iso-grid derivation         │   cartographer/grid.py
+│  - grass-mask + Otsu binary           │
+│  - edge-map projection autocorrelation│
+│    per iso axis                       │
+│  - derives (pitch, origin) only;      │
+│    iso angles and grid size (44×44)   │
+│    are hardcoded constants            │
+└──────────────────────────────────────┘
+  │
+  ▼
+┌──────────────────────────────────────┐
+│ Stage 4 — Bbox-to-grid alignment      │   cartographer/align.py
+│  - bbox bottom-center anchor          │
+│  - footprints are sourced from the   │
+│    class label; bbox size is          │
+│    sanity-check only                  │
+│  - per-class calibrated offsets       │
+│  - iso-basis matrix inversion         │
 │  - resolve overlaps                   │
 └──────────────────────────────────────┘
   │
   ▼
 ┌──────────────────────────────────────┐
-│ Stage 4 — Schema emission             │   cartographer/emit.py
+│ Stage 5 — Wall classification         │   cartographer/walls.py
+│  - convex hull of placement origins  │
+│  - candidate filtering via            │
+│    pointPolygonTest                   │
+│  - iso-basis colour sampling vs       │
+│    stone centroid threshold           │
+└──────────────────────────────────────┘
+  │
+  ▼
+┌──────────────────────────────────────┐
+│ Stage 6 — Schema emission             │   cartographer/emit.py
 │  - construct BaseLayout pydantic obj  │
 │  - validate against schema            │
 │  - fail loudly on uncertain detects   │
 │  - write JSON                         │
+└──────────────────────────────────────┘
+  │
+  ▼
+┌──────────────────────────────────────┐
+│ Stage 7 — Diagnostic overlay          │   cartographer/diagnostic.py
+│  - co-located .diag.png with bbox,   │
+│    grid, and placement annotations    │
 └──────────────────────────────────────┘
   │
   ▼

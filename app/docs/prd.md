@@ -131,6 +131,11 @@ The project has three subsystems. Each has independent FRs but they share data c
 - AC-C1. (v2) On a sample of 20 real TH6 base screenshots, Cartographer emits valid `BaseLayout` JSONs that, when loaded into the Sandbox, render without errors.
 - AC-C2. (v2) An agent trained under MVP-Real successfully attacks at least 50% of Cartographer-ingested bases without crashing the env.
 - AC-C3. (v2) Detection accuracy against a hand-labeled gold set of 10 screenshots exceeds 90% F1 on building class and 95% IoU on bounding box.
+- AC-C4. (v2) On the 20-screenshot eval set, every accepted detection's tile origin matches the hand-labeled ground-truth origin exactly (zero-tile tolerance) when run with a fresh per-dataset-version calibration.
+- AC-C5. (v2) Wall classification on a 5-screenshot wall-labeled subset achieves ≥95% precision and ≥90% recall.
+- AC-C6. (v2) Negative tests covering grid cross-validation failure, overlapping detections, zero detections, and out-of-bounds placement each assert no JSON written, the typed exception raised, and the diagnostic PNG produced.
+- AC-C7. (v2) Every successful ingestion produces a JSON whose `provenance` is fully populated (including `calibration_dataset_version` and `reviewed`) and round-trips through Pydantic v2 cleanly.
+- AC-C8. (v2) A CI test loads the Roboflow class list and the keys of `app/data/buildings.json` (excluding `wall`) and asserts set equality.
 
 **Out of scope for v1.**
 
@@ -141,6 +146,17 @@ The project has three subsystems. Each has independent FRs but they share data c
 - Real-time screenshot capture from a phone or emulator.
 - Detecting in-progress attacks (only static base layouts).
 - Detecting troop levels, hero levels, or any non-layout metadata.
+- Multi-screenshot ingestion or multi-zoom stitching for one base.
+- Auto-cropping, auto-zoom-detection, or device-agnostic ingestion.
+- Custom scenery, skins, or non-grass home-village backgrounds.
+- Roboflow as a wall detector (walls use the post-grid colour classifier).
+- Synthetic training data via sandbox-web (training is real-only).
+- Local Roboflow inference (hosted only in v2; swap point is the `detect` module).
+- Manual-recovery integration into sandbox-web (failed ingestions produce a diagnostic PNG).
+- Batch ingestion modes (one screenshot, one CLI invocation).
+- Auto-completeness checks (e.g., exactly one Town Hall per base).
+- Base-archetype classification.
+- Per-class confidence thresholds (single global threshold in v2).
 
 ## 6. Cross-cutting requirements
 
