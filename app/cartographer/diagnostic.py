@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
 from cartographer.align import AlignedPlacement
 from cartographer.detect import Detection
+from cartographer.grid import ISO_ANGLE_1, ISO_ANGLE_2
 
 
 def render(
@@ -18,11 +21,17 @@ def render(
     pitch: float,
     origin: tuple[float, float],
     out_path: Path,
+    *,
+    grid_failed: bool = False,
 ) -> None:
     """Save an annotated copy of *image* to *out_path*.
 
-    Draws a labelled rectangle for each aligned placement over the source image.
-    Sub-threshold detections are drawn in orange from their raw pixel bbox.
+    Draws:
+    - Sub-threshold detections in orange (raw pixel bbox).
+    - Aligned placements in red with class labels.
+    - Wall tiles in blue.
+    - Inferred iso grid as grey tick lines (unless *grid_failed*).
+    - Red border with "GRID FAIL" text when *grid_failed* is True.
     """
     from PIL import Image, ImageDraw
 
@@ -49,5 +58,42 @@ def render(
         y0 = oy + ty * pitch
         draw.rectangle([x0, y0, x0 + pitch, y0 + pitch], outline=(0, 0, 255), width=1)
 
+    if grid_failed:
+        w, h = pil_img.size
+        draw.rectangle([0, 0, w - 1, h - 1], outline=(255, 0, 0), width=4)
+        draw.text((4, 4), "GRID FAIL", fill=(255, 0, 0))
+    else:
+        _draw_grid(draw, pil_img.size, pitch, origin)
+
     out_path.parent.mkdir(parents=True, exist_ok=True)
     pil_img.save(out_path)
+
+
+def _draw_grid(
+    draw: Any,
+    size: tuple[int, int],
+    pitch: float,
+    origin: tuple[float, float],
+) -> None:
+    """Draw iso grid lines as grey tick marks on the image."""
+    w, h = size
+    ox, oy = origin
+
+    d1 = (math.cos(ISO_ANGLE_1), math.sin(ISO_ANGLE_1))
+    d2 = (math.cos(ISO_ANGLE_2), math.sin(ISO_ANGLE_2))
+
+    # Number of grid lines to draw along each axis direction
+    n_lines = int(max(w, h) / pitch) + 4
+
+    for axis_d, other_d in ((d1, d2), (d2, d1)):
+        for k in range(-n_lines, n_lines):
+            # Base point on the grid line
+            bx = ox + k * pitch * other_d[0]
+            by = oy + k * pitch * other_d[1]
+            # Extend along axis_d far enough to cross the full image
+            length = max(w, h) * 2.0
+            x0 = bx - axis_d[0] * length
+            y0 = by - axis_d[1] * length
+            x1 = bx + axis_d[0] * length
+            y1 = by + axis_d[1] * length
+            draw.line([(x0, y0), (x1, y1)], fill=(128, 128, 128), width=1)

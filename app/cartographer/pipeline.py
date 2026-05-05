@@ -5,15 +5,17 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+from typing import Any
 
 from sandbox_core.schemas import BaseLayout
 
 from cartographer import align, detect, diagnostic, emit, grid, preprocess, walls
+from cartographer.grid import GridCrossValidationError
 
 _CONFIG_PATH = Path(__file__).parent.parent / "data" / "cartographer_config.json"
 
 
-def _load_config() -> dict:
+def _load_config() -> dict[str, Any]:
     return json.loads(_CONFIG_PATH.read_text(encoding="utf-8"))
 
 
@@ -47,7 +49,12 @@ def run(screenshot_path: Path, out_path: Path | None = None) -> BaseLayout:
         confidence_threshold=cfg["confidence_threshold"],
         api_key=api_key,
     )
-    pitch, origin = grid.run(image)
+    try:
+        pitch, origin = grid.run(image, detections=accepted)
+    except GridCrossValidationError:
+        diagnostic.render(image, [], [], sub_threshold, 64.0, (0.0, 0.0), diag_path, grid_failed=True)
+        raise
+
     placements = align.run(accepted, pitch, origin)
     wall_tiles = walls.run(image, pitch, origin)
 
