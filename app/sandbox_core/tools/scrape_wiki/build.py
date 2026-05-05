@@ -61,6 +61,12 @@ BUILDING_STATIC: Final[dict[str, dict[str, Any]]] = {
         "target_filter": "air",
         "projectile_speed_tiles_per_sec": 22.0,
     },
+    "air_sweeper": {
+        "category": "defense",
+        "footprint": [2, 2],
+        "target_filter": "air",
+        "min_range_tiles": 1.0,
+    },
     "wizard_tower": {
         "category": "defense",
         "footprint": [3, 3],
@@ -178,10 +184,62 @@ def build_spell(name: str, table: WikiTable | None) -> dict[str, Any]:
     return {"name": name, "levels": levels}
 
 
+# Static (non-stats) trap properties. Per-level damage / radius / spring_capacity
+# come from the wiki tables; everything else is intrinsic and curated.
+TRAP_STATIC: Final[dict[str, dict[str, Any]]] = {
+    "bomb": {
+        "kind": "bomb",
+        "footprint": [1, 1],
+        "target_filter": "ground",
+        "trigger_radius_tiles": 1.5,
+        "fuse_ticks": 15,
+    },
+    "giant_bomb": {
+        "kind": "giant_bomb",
+        "footprint": [2, 2],
+        "target_filter": "ground",
+        "trigger_radius_tiles": 2.0,
+        "fuse_ticks": 15,
+    },
+    "spring_trap": {
+        "kind": "spring_trap",
+        "footprint": [1, 1],
+        "target_filter": "ground",
+        "trigger_radius_tiles": 0.7,
+        "fuse_ticks": 0,
+    },
+    "air_bomb": {
+        "kind": "air_bomb",
+        "footprint": [1, 1],
+        "target_filter": "air",
+        "trigger_radius_tiles": 4.0,
+        "fuse_ticks": 0,
+    },
+}
+
+
+def build_trap(name: str, table: WikiTable | None) -> dict[str, Any]:
+    """Build a TrapType-shaped dict from static + parsed-level data.
+
+    Per-level fields (damage, damage_radius_tiles, spring_capacity) often need
+    `manual_overrides.json` patches because the wiki encodes them in narrative
+    form rather than a single tidy table.
+    """
+    static = dict(TRAP_STATIC.get(name, {}))
+    levels = _normalized_rows(table) if table else []
+    return {
+        "name": name,
+        **static,
+        "levels": levels,
+    }
+
+
 __all__ = [
     "BUILDING_STATIC",
+    "TRAP_STATIC",
     "TROOP_STATIC",
     "build_building",
     "build_spell",
+    "build_trap",
     "build_troop",
 ]

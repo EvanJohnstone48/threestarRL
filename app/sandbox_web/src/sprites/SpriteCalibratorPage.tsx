@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Application, Texture } from "pixi.js";
 import { footprintFor } from "@/render/footprints";
-import { BUILDING_TYPES, EFFECT_TYPES, TROOP_TYPES, loadAllSprites } from "@/render/spriteLoader";
+import { BUILDING_TYPES, EFFECT_TYPES, TRAP_TYPES, TROOP_TYPES, loadAllSprites } from "@/render/spriteLoader";
 import type { SpriteMap } from "@/render/spriteLoader";
 import {
   DEFAULT_CALIBRATION,
@@ -38,6 +38,10 @@ const PALETTE: PaletteGroup[] = [
     entries: TROOP_TYPES.map((t) => ({ kind: "troops" as const, name: t, display: t })),
   },
   {
+    label: "Traps",
+    entries: TRAP_TYPES.map((t) => ({ kind: "traps" as const, name: t, display: t })),
+  },
+  {
     label: "Effects",
     entries: EFFECT_TYPES.map((t) => ({ kind: "effects" as const, name: t, display: t })),
   },
@@ -49,13 +53,15 @@ function spriteKeyFor(entry: PaletteEntry): string {
       return `building:${entry.name}`;
     case "troops":
       return `troop:${entry.name}`;
+    case "traps":
+      return `trap:${entry.name}`;
     case "effects":
       return `effect:${entry.name}`;
   }
 }
 
 function selectionFor(entry: PaletteEntry): CalibratorSelection {
-  if (entry.kind === "buildings") {
+  if (entry.kind === "buildings" || entry.kind === "traps") {
     const [fh] = footprintFor(entry.name);
     return { kind: entry.kind, name: entry.name, footprintSize: fh };
   }
@@ -181,7 +187,8 @@ export function SpriteCalibratorPage() {
   const overriddenCount =
     Object.keys(cals.buildings).length +
     Object.keys(cals.troops).length +
-    Object.keys(cals.effects).length;
+    Object.keys(cals.effects).length +
+    Object.keys(cals.traps).length;
 
   return (
     <div style={styles.root}>

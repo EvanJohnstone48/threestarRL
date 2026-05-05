@@ -32,7 +32,7 @@ def test_run_produces_json_and_diag_png(tmp_path: Path) -> None:
     assert diag.exists()
 
 
-def test_run_json_validates_against_v2_schema(tmp_path: Path) -> None:
+def test_run_json_validates_against_v3_schema(tmp_path: Path) -> None:
     from cartographer.pipeline import run
     from sandbox_core.schemas import BaseLayout
 
@@ -42,5 +42,5 @@ def test_run_json_validates_against_v2_schema(tmp_path: Path) -> None:
 
     data = json.loads(out.read_text())
     layout = BaseLayout.model_validate(data)
-    assert layout.schema_version == 2
+    assert layout.schema_version == 3
     assert layout.provenance is not None

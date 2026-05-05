@@ -1,0 +1,120 @@
+{
+  "entries": [
+    {
+      "footprint": [
+        1,
+        1
+      ],
+      "fuse_ticks": 15,
+      "kind": "bomb",
+      "levels": [
+        {
+          "damage": 20,
+          "damage_radius_tiles": 3.0,
+          "level": 1,
+          "spring_capacity": 0,
+          "unlocked_at_th": 3
+        },
+        {
+          "damage": 24,
+          "damage_radius_tiles": 3.0,
+          "level": 2,
+          "spring_capacity": 0,
+          "unlocked_at_th": 3
+        },
+        {
+          "damage": 29,
+          "damage_radius_tiles": 3.0,
+          "level": 3,
+          "spring_capacity": 0,
+          "unlocked_at_th": 5
+        }
+      ],
+      "name": "bomb",
+      "target_filter": "ground",
+      "trigger_radius_tiles": 1.5
+    },
+    {
+      "footprint": [
+        2,
+        2
+      ],
+      "fuse_ticks": 15,
+      "kind": "giant_bomb",
+      "levels": [
+        {
+          "damage": 175,
+          "damage_radius_tiles": 3.0,
+          "level": 1,
+          "spring_capacity": 0,
+          "unlocked_at_th": 6
+        },
+        {
+          "damage": 200,
+          "damage_radius_tiles": 3.5,
+          "level": 2,
+          "spring_capacity": 0,
+          "unlocked_at_th": 6
+        }
+      ],
+      "name": "giant_bomb",
+      "target_filter": "ground",
+      "trigger_radius_tiles": 2.0
+    },
+    {
+      "footprint": [
+        1,
+        1
+      ],
+      "fuse_ticks": 0,
+      "kind": "spring_trap",
+      "levels": [
+        {
+          "damage": 0,
+          "damage_radius_tiles": 0.0,
+          "level": 1,
+          "spring_capacity": 15,
+          "unlocked_at_th": 4
+        },
+        {
+          "damage": 0,
+          "damage_radius_tiles": 0.0,
+          "level": 2,
+          "spring_capacity": 16,
+          "unlocked_at_th": 6
+        }
+      ],
+      "name": "spring_trap",
+      "target_filter": "ground",
+      "trigger_radius_tiles": 0.7
+    },
+    {
+      "footprint": [
+        1,
+        1
+      ],
+      "fuse_ticks": 0,
+      "kind": "air_bomb",
+      "levels": [
+        {
+          "damage": 100,
+          "damage_radius_tiles": 3.0,
+          "level": 1,
+          "spring_capacity": 0,
+          "unlocked_at_th": 5
+        },
+        {
+          "damage": 120,
+          "damage_radius_tiles": 3.0,
+          "level": 2,
+          "spring_capacity": 0,
+          "unlocked_at_th": 5
+        }
+      ],
+      "name": "air_bomb",
+      "target_filter": "air",
+      "trigger_radius_tiles": 4.0
+    }
+  ],
+  "schema_version": 1
+}

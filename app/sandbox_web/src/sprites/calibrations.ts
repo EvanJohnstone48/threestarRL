@@ -23,9 +23,10 @@ export interface SpriteCalibrations {
   buildings: Record<string, Calibration>;
   troops: Record<string, Calibration>;
   effects: Record<string, Calibration>;
+  traps: Record<string, Calibration>;
 }
 
-export type CalibrationKind = "buildings" | "troops" | "effects";
+export type CalibrationKind = "buildings" | "troops" | "effects" | "traps";
 
 export const DEFAULT_CALIBRATION: Calibration = {
   offset_x: 0,
@@ -36,7 +37,7 @@ export const DEFAULT_CALIBRATION: Calibration = {
 const LOCAL_STORAGE_KEY = "threestarrl.sprite_calibrations.v1";
 
 export function emptyCalibrations(): SpriteCalibrations {
-  return { schema_version: 1, buildings: {}, troops: {}, effects: {} };
+  return { schema_version: 1, buildings: {}, troops: {}, effects: {}, traps: {} };
 }
 
 function isCalibration(value: unknown): value is Calibration {
@@ -66,6 +67,7 @@ function sanitize(raw: unknown): SpriteCalibrations {
   out.buildings = sanitizeBucket(r.buildings);
   out.troops = sanitizeBucket(r.troops);
   out.effects = sanitizeBucket(r.effects);
+  out.traps = sanitizeBucket(r.traps);
   return out;
 }
 
@@ -82,6 +84,7 @@ export function loadCalibrations(): SpriteCalibrations {
       buildings: { ...fromBundle.buildings, ...fromLocal.buildings },
       troops: { ...fromBundle.troops, ...fromLocal.troops },
       effects: { ...fromBundle.effects, ...fromLocal.effects },
+      traps: { ...fromBundle.traps, ...fromLocal.traps },
     };
   } catch {
     return fromBundle;
@@ -126,6 +129,7 @@ export function serializeForDownload(cals: SpriteCalibrations): string {
     buildings: sortBucket(cals.buildings),
     troops: sortBucket(cals.troops),
     effects: sortBucket(cals.effects),
+    traps: sortBucket(cals.traps),
   };
   return JSON.stringify(sorted, null, 2) + "\n";
 }

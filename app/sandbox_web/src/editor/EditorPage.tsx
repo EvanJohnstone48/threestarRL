@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Application } from "pixi.js";
-import type { BuildingPlacement, BaseLayout, BaseLayoutMetadata } from "@/generated_types";
+import type {
+  BuildingPlacement,
+  BaseLayout,
+  BaseLayoutMetadata,
+  TrapPlacement,
+} from "@/generated_types";
 import { TH6_CAPS } from "./th6Caps";
 import {
   createEditorState,
@@ -24,6 +29,7 @@ import {
 import { validateLayout, type ConstraintResult } from "./validator";
 import { EditorRenderer } from "./EditorRenderer";
 import { categoryForBuilding } from "@/render/colors";
+import { isTrapType } from "@/render/footprints";
 import {
   createHistoryState,
   pushHistory,
@@ -62,6 +68,7 @@ const PALETTE_GROUPS: PaletteGroup[] = [
       { type: "archer_tower", displayName: "Archer Tower" },
       { type: "mortar", displayName: "Mortar" },
       { type: "air_defense", displayName: "Air Defense" },
+      { type: "air_sweeper", displayName: "Air Sweeper" },
       { type: "wizard_tower", displayName: "Wizard Tower" },
     ],
   },
@@ -91,6 +98,15 @@ const PALETTE_GROUPS: PaletteGroup[] = [
     label: "Walls",
     entries: [{ type: "wall", displayName: "Wall" }],
   },
+  {
+    label: "Traps",
+    entries: [
+      { type: "bomb", displayName: "Bomb" },
+      { type: "giant_bomb", displayName: "Giant Bomb" },
+      { type: "spring_trap", displayName: "Spring Trap" },
+      { type: "air_bomb", displayName: "Air Bomb" },
+    ],
+  },
 ];
 
 // --- Helper ---
@@ -100,6 +116,7 @@ function countPlaced(placements: BuildingPlacement[], type: string): number {
 }
 
 function buildingDisplayColor(type: string): string {
+  if (isTrapType(type)) return "#ff5252";
   const cat = categoryForBuilding(type);
   switch (cat) {
     case "town_hall":
@@ -686,15 +703,26 @@ export function EditorPage() {
   );
 
   const handleExport = useCallback(() => {
+    const buildings: BuildingPlacement[] = [];
+    const traps: TrapPlacement[] = [];
+    for (const p of editorState.placements) {
+      if (isTrapType(p.building_type)) {
+        traps.push({ trap_type: p.building_type, origin: p.origin, level: p.level });
+      } else {
+        buildings.push(p);
+      }
+    }
     const layout: BaseLayout = {
-      schema_version: 1,
+      schema_version: 3,
       metadata: {
         ...metadata,
         created_at: metadata.created_at || new Date().toISOString(),
       },
       th_level: 6,
-      placements: editorState.placements,
+      placements: buildings,
+      traps,
       cc_contents: [],
+      provenance: null,
     };
     const blob = new Blob([JSON.stringify(layout, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -717,7 +745,13 @@ export function EditorPage() {
       reader.onload = (ev) => {
         try {
           const layout = JSON.parse(ev.target?.result as string) as BaseLayout;
-          const placements = layout.placements ?? [];
+          const buildings = layout.placements ?? [];
+          const traps = (layout.traps ?? []).map<BuildingPlacement>((t) => ({
+            building_type: t.trap_type,
+            origin: t.origin,
+            level: t.level,
+          }));
+          const placements = [...buildings, ...traps];
           const meta: BaseLayoutMetadata = layout.metadata ?? DEFAULT_METADATA;
           setEditorState((prev) => {
             setHistory((h) => pushHistory(h, prev.placements));

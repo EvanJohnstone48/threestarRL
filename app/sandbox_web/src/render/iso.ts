@@ -22,8 +22,12 @@ import {
   COLOR_BUILDABLE,
   COLOR_GRID_BG,
   COLOR_PROJECTILE,
+  TRAP_COLOR,
+  TRAP_DETONATED_COLOR,
+  TRAP_TRIGGERED_COLOR,
   buildingLabel,
   hpBarColor,
+  trapLabel,
 } from "./colors";
 import { footprintFor, TROOP_VISUAL_RADIUS_TILES } from "./footprints";
 import { gridToIsoScreen, ISO_TILE_H, ISO_TILE_W } from "./isoProjection";
@@ -85,6 +89,8 @@ export class IsoRenderer {
   private lastPointer: { x: number; y: number } | null = null;
   private pointerDownPos: { x: number; y: number } | null = null;
   private entityHitAreas: EntityHitArea[] = [];
+  private buildingsVisible = true;
+  private trapsVisible = true;
 
   onEntityClick: ((kind: "building" | "troop", id: number) => void) | null = null;
   onBackgroundClick: (() => void) | null = null;
@@ -112,6 +118,14 @@ export class IsoRenderer {
     this.camera.visible = visible;
   }
 
+  setBuildingsVisible(visible: boolean): void {
+    this.buildingsVisible = visible;
+  }
+
+  setTrapsVisible(visible: boolean): void {
+    this.trapsVisible = visible;
+  }
+
   renderFrame(frame: InterpolatedFrame, currentTickFrame: TickFrame): void {
     this.updateTerrain(currentTickFrame.state.buildings);
     this.entityLayer.removeChildren();
@@ -121,7 +135,7 @@ export class IsoRenderer {
     type DrawItem = { z: number; draw: () => void; hp?: (() => void) | undefined };
     const items: DrawItem[] = [];
 
-    for (const b of currentTickFrame.state.buildings) {
+    if (this.buildingsVisible) for (const b of currentTickFrame.state.buildings) {
       if (b.destroyed) continue;
       const [fh, fw] = footprintFor(b.building_type);
       const r0 = b.origin[0];
@@ -185,6 +199,54 @@ export class IsoRenderer {
           const dot = new Graphics();
           dot.circle(pos.x, pos.y, 3).fill(COLOR_PROJECTILE);
           this.entityLayer.addChild(dot);
+        },
+      });
+    }
+
+    if (this.trapsVisible) for (const trap of currentTickFrame.state.traps ?? []) {
+      const [fh, fw] = footprintFor(trap.trap_type);
+      const r0 = trap.origin[0];
+      const c0 = trap.origin[1];
+      const south = gridToIsoScreen(r0 + fh, c0 + fw);
+      const dN = gridToIsoScreen(r0, c0);
+      const dE = gridToIsoScreen(r0, c0 + fw);
+      const dW = gridToIsoScreen(r0 + fh, c0);
+      const z = r0 + fh + c0 + fw;
+      const trapTex = this.sprites.get(`trap:${trap.trap_type}`) ?? null;
+      const cal = getCalibration(this.calibrations, "traps", trap.trap_type);
+      const tintColor = trap.detonated
+        ? TRAP_DETONATED_COLOR
+        : trap.triggered
+          ? TRAP_TRIGGERED_COLOR
+          : TRAP_COLOR;
+      items.push({
+        z,
+        draw: () => {
+          if (trapTex) {
+            const spr = new Sprite(trapTex);
+            spr.anchor.set(0.5, 1.0);
+            spr.x = south.x + cal.offset_x;
+            spr.y = south.y + cal.offset_y;
+            spr.scale.set(cal.scale, cal.scale);
+            if (trap.detonated) spr.alpha = 0.4;
+            this.entityLayer.addChild(spr);
+          } else {
+            const g = new Graphics();
+            g.poly([dN.x, dN.y, dE.x, dE.y, south.x, south.y, dW.x, dW.y]).fill({
+              color: tintColor,
+              alpha: trap.detonated ? 0.3 : 0.7,
+            });
+            this.entityLayer.addChild(g);
+            const text = new Text({
+              text: trapLabel(trap.trap_type, trap.level),
+              style: placeholderStyle,
+            });
+            const cx = (dN.x + south.x) / 2;
+            const cy = (dN.y + south.y) / 2;
+            text.x = cx - text.width / 2;
+            text.y = cy - text.height / 2;
+            this.entityLayer.addChild(text);
+          }
         },
       });
     }

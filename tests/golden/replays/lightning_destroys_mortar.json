@@ -77,6 +77,7 @@
           }
         ],
         "tick": 0,
+        "traps": [],
         "troops": []
       },
       "tick": 0
@@ -169,6 +170,7 @@
           }
         ],
         "tick": 1,
+        "traps": [],
         "troops": []
       },
       "tick": 1
@@ -261,6 +263,7 @@
           }
         ],
         "tick": 2,
+        "traps": [],
         "troops": []
       },
       "tick": 2
@@ -353,6 +356,7 @@
           }
         ],
         "tick": 3,
+        "traps": [],
         "troops": []
       },
       "tick": 3
@@ -445,6 +449,7 @@
           }
         ],
         "tick": 4,
+        "traps": [],
         "troops": []
       },
       "tick": 4
@@ -524,6 +529,7 @@
         },
         "spells": [],
         "tick": 5,
+        "traps": [],
         "troops": []
       },
       "tick": 5
@@ -605,6 +611,7 @@
           }
         ],
         "tick": 6,
+        "traps": [],
         "troops": []
       },
       "tick": 6
@@ -697,6 +704,7 @@
           }
         ],
         "tick": 7,
+        "traps": [],
         "troops": []
       },
       "tick": 7
@@ -789,6 +797,7 @@
           }
         ],
         "tick": 8,
+        "traps": [],
         "troops": []
       },
       "tick": 8
@@ -881,6 +890,7 @@
           }
         ],
         "tick": 9,
+        "traps": [],
         "troops": []
       },
       "tick": 9
@@ -973,6 +983,7 @@
           }
         ],
         "tick": 10,
+        "traps": [],
         "troops": []
       },
       "tick": 10
@@ -1067,6 +1078,7 @@
         },
         "spells": [],
         "tick": 11,
+        "traps": [],
         "troops": []
       },
       "tick": 11
@@ -1120,11 +1132,12 @@
     },
     "spells": [],
     "tick": 0,
+    "traps": [],
     "troops": []
   },
   "metadata": {
     "base_name": "lightning_destroys_mortar",
-    "config_hash": "e73f0bc13604e31d88cd43190d85e8c1e082607bc91f0b76fc0b7379b74aa5bb",
+    "config_hash": "70b0574d8699b04ea713963be2bf7a6d6295499ef260444335aa4860e61c21dc",
     "episode_id": "",
     "final_score": {
       "destruction_pct": 50.0,
@@ -1139,5 +1152,5 @@
     "started_at": "",
     "total_ticks": 12
   },
-  "schema_version": 2
+  "schema_version": 3
 }

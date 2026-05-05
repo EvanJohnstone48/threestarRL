@@ -16,7 +16,7 @@ describe("Phase 0 tracer_smoke replay", () => {
 
   it("parses without error", () => {
     const replay = parseReplay(text);
-    expect(replay.schema_version).toBe(1);
+    expect(replay.schema_version).toBe(3);
     expect(replay.frames.length).toBeGreaterThan(0);
     expect(replay.metadata.base_name).toBe("tracer");
   });

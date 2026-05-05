@@ -61,7 +61,7 @@ def test_generate_emits_strenum_unions() -> None:
 
 
 def test_generate_emits_schema_version_constant() -> None:
-    assert "export const SCHEMA_VERSION = 2;" in generate()
+    assert "export const SCHEMA_VERSION = 3;" in generate()
 
 
 def test_committed_file_matches_generator() -> None:

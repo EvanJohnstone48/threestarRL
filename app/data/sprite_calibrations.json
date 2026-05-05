@@ -6,6 +6,11 @@
       "offset_y": 5,
       "scale": 0.3768894828730003
     },
+    "air_sweeper": {
+      "offset_x": 3.3333875548087235,
+      "offset_y": -1.1111586075286368,
+      "scale": 0.8638375985314758
+    },
     "archer_tower": {
       "offset_x": 0,
       "offset_y": 3.75,
@@ -67,9 +72,9 @@
       "scale": 0.43629668761085694
     },
     "spell_factory": {
-      "offset_x": 2.3610884946668875,
-      "offset_y": 15.278171937921229,
-      "scale": 0.3589423646409526
+      "offset_x": -5.555564544142385,
+      "offset_y": 41.11164776050725,
+      "scale": 0.7462153966366272
     },
     "town_hall": {
       "offset_x": 0,
@@ -85,6 +90,28 @@
       "offset_x": -1.25,
       "offset_y": 10,
       "scale": 0.5303213506452943
+    }
+  },
+  "traps": {
+    "air_bomb": {
+      "offset_x": 0,
+      "offset_y": 0,
+      "scale": 0.3
+    },
+    "bomb": {
+      "offset_x": 0,
+      "offset_y": 0,
+      "scale": 0.3
+    },
+    "giant_bomb": {
+      "offset_x": 0,
+      "offset_y": 0,
+      "scale": 0.4
+    },
+    "spring_trap": {
+      "offset_x": 0,
+      "offset_y": 0,
+      "scale": 0.3
     }
   },
   "troops": {

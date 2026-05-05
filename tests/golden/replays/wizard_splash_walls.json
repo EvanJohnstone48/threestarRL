@@ -76,6 +76,7 @@
         },
         "spells": [],
         "tick": 0,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -155,6 +156,7 @@
         },
         "spells": [],
         "tick": 1,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -234,6 +236,7 @@
         },
         "spells": [],
         "tick": 2,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -313,6 +316,7 @@
         },
         "spells": [],
         "tick": 3,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -392,6 +396,7 @@
         },
         "spells": [],
         "tick": 4,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -471,6 +476,7 @@
         },
         "spells": [],
         "tick": 5,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -550,6 +556,7 @@
         },
         "spells": [],
         "tick": 6,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -629,6 +636,7 @@
         },
         "spells": [],
         "tick": 7,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -708,6 +716,7 @@
         },
         "spells": [],
         "tick": 8,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -787,6 +796,7 @@
         },
         "spells": [],
         "tick": 9,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -866,6 +876,7 @@
         },
         "spells": [],
         "tick": 10,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -945,6 +956,7 @@
         },
         "spells": [],
         "tick": 11,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -1024,6 +1036,7 @@
         },
         "spells": [],
         "tick": 12,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -1103,6 +1116,7 @@
         },
         "spells": [],
         "tick": 13,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -1182,6 +1196,7 @@
         },
         "spells": [],
         "tick": 14,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -1261,6 +1276,7 @@
         },
         "spells": [],
         "tick": 15,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -1340,6 +1356,7 @@
         },
         "spells": [],
         "tick": 16,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -1419,6 +1436,7 @@
         },
         "spells": [],
         "tick": 17,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -1498,6 +1516,7 @@
         },
         "spells": [],
         "tick": 18,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -1577,6 +1596,7 @@
         },
         "spells": [],
         "tick": 19,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -1656,6 +1676,7 @@
         },
         "spells": [],
         "tick": 20,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -1735,6 +1756,7 @@
         },
         "spells": [],
         "tick": 21,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -1814,6 +1836,7 @@
         },
         "spells": [],
         "tick": 22,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -1893,6 +1916,7 @@
         },
         "spells": [],
         "tick": 23,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -1972,6 +1996,7 @@
         },
         "spells": [],
         "tick": 24,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -2051,6 +2076,7 @@
         },
         "spells": [],
         "tick": 25,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -2130,6 +2156,7 @@
         },
         "spells": [],
         "tick": 26,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -2209,6 +2236,7 @@
         },
         "spells": [],
         "tick": 27,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -2288,6 +2316,7 @@
         },
         "spells": [],
         "tick": 28,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -2367,6 +2396,7 @@
         },
         "spells": [],
         "tick": 29,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -2446,6 +2476,7 @@
         },
         "spells": [],
         "tick": 30,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -2525,6 +2556,7 @@
         },
         "spells": [],
         "tick": 31,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -2604,6 +2636,7 @@
         },
         "spells": [],
         "tick": 32,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -2683,6 +2716,7 @@
         },
         "spells": [],
         "tick": 33,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -2762,6 +2796,7 @@
         },
         "spells": [],
         "tick": 34,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -2841,6 +2876,7 @@
         },
         "spells": [],
         "tick": 35,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -2920,6 +2956,7 @@
         },
         "spells": [],
         "tick": 36,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -2999,6 +3036,7 @@
         },
         "spells": [],
         "tick": 37,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -3078,6 +3116,7 @@
         },
         "spells": [],
         "tick": 38,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -3157,6 +3196,7 @@
         },
         "spells": [],
         "tick": 39,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -3236,6 +3276,7 @@
         },
         "spells": [],
         "tick": 40,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -3315,6 +3356,7 @@
         },
         "spells": [],
         "tick": 41,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -3394,6 +3436,7 @@
         },
         "spells": [],
         "tick": 42,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -3473,6 +3516,7 @@
         },
         "spells": [],
         "tick": 43,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -3552,6 +3596,7 @@
         },
         "spells": [],
         "tick": 44,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -3631,6 +3676,7 @@
         },
         "spells": [],
         "tick": 45,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -3710,6 +3756,7 @@
         },
         "spells": [],
         "tick": 46,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -3789,6 +3836,7 @@
         },
         "spells": [],
         "tick": 47,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -3868,6 +3916,7 @@
         },
         "spells": [],
         "tick": 48,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -3947,6 +3996,7 @@
         },
         "spells": [],
         "tick": 49,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -4026,6 +4076,7 @@
         },
         "spells": [],
         "tick": 50,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -4105,6 +4156,7 @@
         },
         "spells": [],
         "tick": 51,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -4184,6 +4236,7 @@
         },
         "spells": [],
         "tick": 52,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -4263,6 +4316,7 @@
         },
         "spells": [],
         "tick": 53,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -4342,6 +4396,7 @@
         },
         "spells": [],
         "tick": 54,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -4421,6 +4476,7 @@
         },
         "spells": [],
         "tick": 55,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -4500,6 +4556,7 @@
         },
         "spells": [],
         "tick": 56,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -4579,6 +4636,7 @@
         },
         "spells": [],
         "tick": 57,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -4658,6 +4716,7 @@
         },
         "spells": [],
         "tick": 58,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -4737,6 +4796,7 @@
         },
         "spells": [],
         "tick": 59,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -4816,6 +4876,7 @@
         },
         "spells": [],
         "tick": 60,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -4895,6 +4956,7 @@
         },
         "spells": [],
         "tick": 61,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -4974,6 +5036,7 @@
         },
         "spells": [],
         "tick": 62,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -5053,6 +5116,7 @@
         },
         "spells": [],
         "tick": 63,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -5132,6 +5196,7 @@
         },
         "spells": [],
         "tick": 64,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -5211,6 +5276,7 @@
         },
         "spells": [],
         "tick": 65,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -5290,6 +5356,7 @@
         },
         "spells": [],
         "tick": 66,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -5369,6 +5436,7 @@
         },
         "spells": [],
         "tick": 67,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -5448,6 +5516,7 @@
         },
         "spells": [],
         "tick": 68,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -5527,6 +5596,7 @@
         },
         "spells": [],
         "tick": 69,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -5606,6 +5676,7 @@
         },
         "spells": [],
         "tick": 70,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -5685,6 +5756,7 @@
         },
         "spells": [],
         "tick": 71,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -5764,6 +5836,7 @@
         },
         "spells": [],
         "tick": 72,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -5843,6 +5916,7 @@
         },
         "spells": [],
         "tick": 73,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -5922,6 +5996,7 @@
         },
         "spells": [],
         "tick": 74,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -6001,6 +6076,7 @@
         },
         "spells": [],
         "tick": 75,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -6080,6 +6156,7 @@
         },
         "spells": [],
         "tick": 76,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -6159,6 +6236,7 @@
         },
         "spells": [],
         "tick": 77,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -6238,6 +6316,7 @@
         },
         "spells": [],
         "tick": 78,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -6317,6 +6396,7 @@
         },
         "spells": [],
         "tick": 79,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -6396,6 +6476,7 @@
         },
         "spells": [],
         "tick": 80,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -6475,6 +6556,7 @@
         },
         "spells": [],
         "tick": 81,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -6554,6 +6636,7 @@
         },
         "spells": [],
         "tick": 82,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -6633,6 +6716,7 @@
         },
         "spells": [],
         "tick": 83,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -6712,6 +6796,7 @@
         },
         "spells": [],
         "tick": 84,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -6791,6 +6876,7 @@
         },
         "spells": [],
         "tick": 85,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -6870,6 +6956,7 @@
         },
         "spells": [],
         "tick": 86,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -6949,6 +7036,7 @@
         },
         "spells": [],
         "tick": 87,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -7028,6 +7116,7 @@
         },
         "spells": [],
         "tick": 88,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -7107,6 +7196,7 @@
         },
         "spells": [],
         "tick": 89,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -7186,6 +7276,7 @@
         },
         "spells": [],
         "tick": 90,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -7265,6 +7356,7 @@
         },
         "spells": [],
         "tick": 91,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -7378,6 +7470,7 @@
         },
         "spells": [],
         "tick": 92,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -7480,6 +7573,7 @@
         },
         "spells": [],
         "tick": 93,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -7590,6 +7684,7 @@
         },
         "spells": [],
         "tick": 94,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -7669,6 +7764,7 @@
         },
         "spells": [],
         "tick": 95,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -7748,6 +7844,7 @@
         },
         "spells": [],
         "tick": 96,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -7827,6 +7924,7 @@
         },
         "spells": [],
         "tick": 97,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -7906,6 +8004,7 @@
         },
         "spells": [],
         "tick": 98,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -7985,6 +8084,7 @@
         },
         "spells": [],
         "tick": 99,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -8064,6 +8164,7 @@
         },
         "spells": [],
         "tick": 100,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -8143,6 +8244,7 @@
         },
         "spells": [],
         "tick": 101,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -8222,6 +8324,7 @@
         },
         "spells": [],
         "tick": 102,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -8301,6 +8404,7 @@
         },
         "spells": [],
         "tick": 103,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -8380,6 +8484,7 @@
         },
         "spells": [],
         "tick": 104,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -8459,6 +8564,7 @@
         },
         "spells": [],
         "tick": 105,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -8538,6 +8644,7 @@
         },
         "spells": [],
         "tick": 106,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -8651,6 +8758,7 @@
         },
         "spells": [],
         "tick": 107,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -8753,6 +8861,7 @@
         },
         "spells": [],
         "tick": 108,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -8863,6 +8972,7 @@
         },
         "spells": [],
         "tick": 109,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -8942,6 +9052,7 @@
         },
         "spells": [],
         "tick": 110,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -9021,6 +9132,7 @@
         },
         "spells": [],
         "tick": 111,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -9100,6 +9212,7 @@
         },
         "spells": [],
         "tick": 112,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -9179,6 +9292,7 @@
         },
         "spells": [],
         "tick": 113,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -9258,6 +9372,7 @@
         },
         "spells": [],
         "tick": 114,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -9337,6 +9452,7 @@
         },
         "spells": [],
         "tick": 115,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -9416,6 +9532,7 @@
         },
         "spells": [],
         "tick": 116,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -9495,6 +9612,7 @@
         },
         "spells": [],
         "tick": 117,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -9574,6 +9692,7 @@
         },
         "spells": [],
         "tick": 118,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -9653,6 +9772,7 @@
         },
         "spells": [],
         "tick": 119,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -9732,6 +9852,7 @@
         },
         "spells": [],
         "tick": 120,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -9811,6 +9932,7 @@
         },
         "spells": [],
         "tick": 121,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -9924,6 +10046,7 @@
         },
         "spells": [],
         "tick": 122,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -10026,6 +10149,7 @@
         },
         "spells": [],
         "tick": 123,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -10136,6 +10260,7 @@
         },
         "spells": [],
         "tick": 124,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -10215,6 +10340,7 @@
         },
         "spells": [],
         "tick": 125,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -10294,6 +10420,7 @@
         },
         "spells": [],
         "tick": 126,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -10373,6 +10500,7 @@
         },
         "spells": [],
         "tick": 127,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -10452,6 +10580,7 @@
         },
         "spells": [],
         "tick": 128,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -10531,6 +10660,7 @@
         },
         "spells": [],
         "tick": 129,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -10610,6 +10740,7 @@
         },
         "spells": [],
         "tick": 130,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -10689,6 +10820,7 @@
         },
         "spells": [],
         "tick": 131,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -10768,6 +10900,7 @@
         },
         "spells": [],
         "tick": 132,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -10847,6 +10980,7 @@
         },
         "spells": [],
         "tick": 133,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -10926,6 +11060,7 @@
         },
         "spells": [],
         "tick": 134,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -11005,6 +11140,7 @@
         },
         "spells": [],
         "tick": 135,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -11084,6 +11220,7 @@
         },
         "spells": [],
         "tick": 136,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -11197,6 +11334,7 @@
         },
         "spells": [],
         "tick": 137,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -11299,6 +11437,7 @@
         },
         "spells": [],
         "tick": 138,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -11409,6 +11548,7 @@
         },
         "spells": [],
         "tick": 139,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -11488,6 +11628,7 @@
         },
         "spells": [],
         "tick": 140,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -11567,6 +11708,7 @@
         },
         "spells": [],
         "tick": 141,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -11646,6 +11788,7 @@
         },
         "spells": [],
         "tick": 142,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -11725,6 +11868,7 @@
         },
         "spells": [],
         "tick": 143,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -11804,6 +11948,7 @@
         },
         "spells": [],
         "tick": 144,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -11883,6 +12028,7 @@
         },
         "spells": [],
         "tick": 145,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -11962,6 +12108,7 @@
         },
         "spells": [],
         "tick": 146,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -12041,6 +12188,7 @@
         },
         "spells": [],
         "tick": 147,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -12120,6 +12268,7 @@
         },
         "spells": [],
         "tick": 148,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -12199,6 +12348,7 @@
         },
         "spells": [],
         "tick": 149,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -12278,6 +12428,7 @@
         },
         "spells": [],
         "tick": 150,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -12357,6 +12508,7 @@
         },
         "spells": [],
         "tick": 151,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -12470,6 +12622,7 @@
         },
         "spells": [],
         "tick": 152,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -12572,6 +12725,7 @@
         },
         "spells": [],
         "tick": 153,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -12702,6 +12856,7 @@
         },
         "spells": [],
         "tick": 154,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -12781,6 +12936,7 @@
         },
         "spells": [],
         "tick": 155,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -12860,6 +13016,7 @@
         },
         "spells": [],
         "tick": 156,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -12939,6 +13096,7 @@
         },
         "spells": [],
         "tick": 157,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -13018,6 +13176,7 @@
         },
         "spells": [],
         "tick": 158,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -13097,6 +13256,7 @@
         },
         "spells": [],
         "tick": 159,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -13176,6 +13336,7 @@
         },
         "spells": [],
         "tick": 160,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -13255,6 +13416,7 @@
         },
         "spells": [],
         "tick": 161,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -13334,6 +13496,7 @@
         },
         "spells": [],
         "tick": 162,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -13413,6 +13576,7 @@
         },
         "spells": [],
         "tick": 163,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -13492,6 +13656,7 @@
         },
         "spells": [],
         "tick": 164,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -13571,6 +13736,7 @@
         },
         "spells": [],
         "tick": 165,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -13650,6 +13816,7 @@
         },
         "spells": [],
         "tick": 166,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -13763,6 +13930,7 @@
         },
         "spells": [],
         "tick": 167,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -13865,6 +14033,7 @@
         },
         "spells": [],
         "tick": 168,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -13965,6 +14134,7 @@
         },
         "spells": [],
         "tick": 169,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -14044,6 +14214,7 @@
         },
         "spells": [],
         "tick": 170,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -14123,6 +14294,7 @@
         },
         "spells": [],
         "tick": 171,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -14202,6 +14374,7 @@
         },
         "spells": [],
         "tick": 172,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -14281,6 +14454,7 @@
         },
         "spells": [],
         "tick": 173,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -14360,6 +14534,7 @@
         },
         "spells": [],
         "tick": 174,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -14439,6 +14614,7 @@
         },
         "spells": [],
         "tick": 175,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -14518,6 +14694,7 @@
         },
         "spells": [],
         "tick": 176,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -14597,6 +14774,7 @@
         },
         "spells": [],
         "tick": 177,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -14676,6 +14854,7 @@
         },
         "spells": [],
         "tick": 178,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -14755,6 +14934,7 @@
         },
         "spells": [],
         "tick": 179,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -14834,6 +15014,7 @@
         },
         "spells": [],
         "tick": 180,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -14913,6 +15094,7 @@
         },
         "spells": [],
         "tick": 181,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -14992,6 +15174,7 @@
         },
         "spells": [],
         "tick": 182,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -15071,6 +15254,7 @@
         },
         "spells": [],
         "tick": 183,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -15150,6 +15334,7 @@
         },
         "spells": [],
         "tick": 184,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -15229,6 +15414,7 @@
         },
         "spells": [],
         "tick": 185,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -15308,6 +15494,7 @@
         },
         "spells": [],
         "tick": 186,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -15387,6 +15574,7 @@
         },
         "spells": [],
         "tick": 187,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -15466,6 +15654,7 @@
         },
         "spells": [],
         "tick": 188,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -15545,6 +15734,7 @@
         },
         "spells": [],
         "tick": 189,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -15624,6 +15814,7 @@
         },
         "spells": [],
         "tick": 190,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -15703,6 +15894,7 @@
         },
         "spells": [],
         "tick": 191,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -15782,6 +15974,7 @@
         },
         "spells": [],
         "tick": 192,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -15861,6 +16054,7 @@
         },
         "spells": [],
         "tick": 193,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -15940,6 +16134,7 @@
         },
         "spells": [],
         "tick": 194,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -16019,6 +16214,7 @@
         },
         "spells": [],
         "tick": 195,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -16098,6 +16294,7 @@
         },
         "spells": [],
         "tick": 196,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -16177,6 +16374,7 @@
         },
         "spells": [],
         "tick": 197,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -16256,6 +16454,7 @@
         },
         "spells": [],
         "tick": 198,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -16335,6 +16534,7 @@
         },
         "spells": [],
         "tick": 199,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -16414,6 +16614,7 @@
         },
         "spells": [],
         "tick": 200,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -16493,6 +16694,7 @@
         },
         "spells": [],
         "tick": 201,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -16572,6 +16774,7 @@
         },
         "spells": [],
         "tick": 202,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -16651,6 +16854,7 @@
         },
         "spells": [],
         "tick": 203,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -16730,6 +16934,7 @@
         },
         "spells": [],
         "tick": 204,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -16809,6 +17014,7 @@
         },
         "spells": [],
         "tick": 205,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -16888,6 +17094,7 @@
         },
         "spells": [],
         "tick": 206,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -16967,6 +17174,7 @@
         },
         "spells": [],
         "tick": 207,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -17046,6 +17254,7 @@
         },
         "spells": [],
         "tick": 208,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -17125,6 +17334,7 @@
         },
         "spells": [],
         "tick": 209,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -17204,6 +17414,7 @@
         },
         "spells": [],
         "tick": 210,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -17283,6 +17494,7 @@
         },
         "spells": [],
         "tick": 211,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -17362,6 +17574,7 @@
         },
         "spells": [],
         "tick": 212,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -17441,6 +17654,7 @@
         },
         "spells": [],
         "tick": 213,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -17520,6 +17734,7 @@
         },
         "spells": [],
         "tick": 214,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -17599,6 +17814,7 @@
         },
         "spells": [],
         "tick": 215,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -17678,6 +17894,7 @@
         },
         "spells": [],
         "tick": 216,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -17757,6 +17974,7 @@
         },
         "spells": [],
         "tick": 217,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -17836,6 +18054,7 @@
         },
         "spells": [],
         "tick": 218,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -17915,6 +18134,7 @@
         },
         "spells": [],
         "tick": 219,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -17994,6 +18214,7 @@
         },
         "spells": [],
         "tick": 220,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -18073,6 +18294,7 @@
         },
         "spells": [],
         "tick": 221,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -18152,6 +18374,7 @@
         },
         "spells": [],
         "tick": 222,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -18231,6 +18454,7 @@
         },
         "spells": [],
         "tick": 223,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -18310,6 +18534,7 @@
         },
         "spells": [],
         "tick": 224,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -18389,6 +18614,7 @@
         },
         "spells": [],
         "tick": 225,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -18468,6 +18694,7 @@
         },
         "spells": [],
         "tick": 226,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -18547,6 +18774,7 @@
         },
         "spells": [],
         "tick": 227,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -18626,6 +18854,7 @@
         },
         "spells": [],
         "tick": 228,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -18705,6 +18934,7 @@
         },
         "spells": [],
         "tick": 229,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -18784,6 +19014,7 @@
         },
         "spells": [],
         "tick": 230,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -18863,6 +19094,7 @@
         },
         "spells": [],
         "tick": 231,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -18942,6 +19174,7 @@
         },
         "spells": [],
         "tick": 232,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -19021,6 +19254,7 @@
         },
         "spells": [],
         "tick": 233,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -19100,6 +19334,7 @@
         },
         "spells": [],
         "tick": 234,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -19179,6 +19414,7 @@
         },
         "spells": [],
         "tick": 235,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -19258,6 +19494,7 @@
         },
         "spells": [],
         "tick": 236,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -19337,6 +19574,7 @@
         },
         "spells": [],
         "tick": 237,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -19416,6 +19654,7 @@
         },
         "spells": [],
         "tick": 238,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -19495,6 +19734,7 @@
         },
         "spells": [],
         "tick": 239,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -19574,6 +19814,7 @@
         },
         "spells": [],
         "tick": 240,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -19653,6 +19894,7 @@
         },
         "spells": [],
         "tick": 241,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -19732,6 +19974,7 @@
         },
         "spells": [],
         "tick": 242,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -19811,6 +20054,7 @@
         },
         "spells": [],
         "tick": 243,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -19890,6 +20134,7 @@
         },
         "spells": [],
         "tick": 244,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -19969,6 +20214,7 @@
         },
         "spells": [],
         "tick": 245,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -20048,6 +20294,7 @@
         },
         "spells": [],
         "tick": 246,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -20127,6 +20374,7 @@
         },
         "spells": [],
         "tick": 247,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -20206,6 +20454,7 @@
         },
         "spells": [],
         "tick": 248,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -20285,6 +20534,7 @@
         },
         "spells": [],
         "tick": 249,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -20364,6 +20614,7 @@
         },
         "spells": [],
         "tick": 250,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -20443,6 +20694,7 @@
         },
         "spells": [],
         "tick": 251,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -20522,6 +20774,7 @@
         },
         "spells": [],
         "tick": 252,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -20601,6 +20854,7 @@
         },
         "spells": [],
         "tick": 253,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -20680,6 +20934,7 @@
         },
         "spells": [],
         "tick": 254,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -20759,6 +21014,7 @@
         },
         "spells": [],
         "tick": 255,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -20838,6 +21094,7 @@
         },
         "spells": [],
         "tick": 256,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -20917,6 +21174,7 @@
         },
         "spells": [],
         "tick": 257,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -20996,6 +21254,7 @@
         },
         "spells": [],
         "tick": 258,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -21075,6 +21334,7 @@
         },
         "spells": [],
         "tick": 259,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -21154,6 +21414,7 @@
         },
         "spells": [],
         "tick": 260,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -21233,6 +21494,7 @@
         },
         "spells": [],
         "tick": 261,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -21312,6 +21574,7 @@
         },
         "spells": [],
         "tick": 262,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -21391,6 +21654,7 @@
         },
         "spells": [],
         "tick": 263,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -21504,6 +21768,7 @@
         },
         "spells": [],
         "tick": 264,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -21606,6 +21871,7 @@
         },
         "spells": [],
         "tick": 265,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -21708,6 +21974,7 @@
         },
         "spells": [],
         "tick": 266,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -21798,6 +22065,7 @@
         },
         "spells": [],
         "tick": 267,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -21877,6 +22145,7 @@
         },
         "spells": [],
         "tick": 268,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -21956,6 +22225,7 @@
         },
         "spells": [],
         "tick": 269,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -22035,6 +22305,7 @@
         },
         "spells": [],
         "tick": 270,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -22114,6 +22385,7 @@
         },
         "spells": [],
         "tick": 271,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -22193,6 +22465,7 @@
         },
         "spells": [],
         "tick": 272,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -22272,6 +22545,7 @@
         },
         "spells": [],
         "tick": 273,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -22351,6 +22625,7 @@
         },
         "spells": [],
         "tick": 274,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -22430,6 +22705,7 @@
         },
         "spells": [],
         "tick": 275,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -22509,6 +22785,7 @@
         },
         "spells": [],
         "tick": 276,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -22588,6 +22865,7 @@
         },
         "spells": [],
         "tick": 277,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -22667,6 +22945,7 @@
         },
         "spells": [],
         "tick": 278,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -22780,6 +23059,7 @@
         },
         "spells": [],
         "tick": 279,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -22882,6 +23162,7 @@
         },
         "spells": [],
         "tick": 280,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -22984,6 +23265,7 @@
         },
         "spells": [],
         "tick": 281,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -23074,6 +23356,7 @@
         },
         "spells": [],
         "tick": 282,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -23153,6 +23436,7 @@
         },
         "spells": [],
         "tick": 283,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -23232,6 +23516,7 @@
         },
         "spells": [],
         "tick": 284,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -23311,6 +23596,7 @@
         },
         "spells": [],
         "tick": 285,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -23390,6 +23676,7 @@
         },
         "spells": [],
         "tick": 286,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -23469,6 +23756,7 @@
         },
         "spells": [],
         "tick": 287,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -23548,6 +23836,7 @@
         },
         "spells": [],
         "tick": 288,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -23627,6 +23916,7 @@
         },
         "spells": [],
         "tick": 289,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -23706,6 +23996,7 @@
         },
         "spells": [],
         "tick": 290,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -23785,6 +24076,7 @@
         },
         "spells": [],
         "tick": 291,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -23864,6 +24156,7 @@
         },
         "spells": [],
         "tick": 292,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -23943,6 +24236,7 @@
         },
         "spells": [],
         "tick": 293,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -24056,6 +24350,7 @@
         },
         "spells": [],
         "tick": 294,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -24158,6 +24453,7 @@
         },
         "spells": [],
         "tick": 295,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -24260,6 +24556,7 @@
         },
         "spells": [],
         "tick": 296,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -24350,6 +24647,7 @@
         },
         "spells": [],
         "tick": 297,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -24429,6 +24727,7 @@
         },
         "spells": [],
         "tick": 298,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -24508,6 +24807,7 @@
         },
         "spells": [],
         "tick": 299,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -24587,6 +24887,7 @@
         },
         "spells": [],
         "tick": 300,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -24666,6 +24967,7 @@
         },
         "spells": [],
         "tick": 301,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -24745,6 +25047,7 @@
         },
         "spells": [],
         "tick": 302,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -24824,6 +25127,7 @@
         },
         "spells": [],
         "tick": 303,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -24903,6 +25207,7 @@
         },
         "spells": [],
         "tick": 304,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -24982,6 +25287,7 @@
         },
         "spells": [],
         "tick": 305,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -25061,6 +25367,7 @@
         },
         "spells": [],
         "tick": 306,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -25140,6 +25447,7 @@
         },
         "spells": [],
         "tick": 307,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -25219,6 +25527,7 @@
         },
         "spells": [],
         "tick": 308,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -25332,6 +25641,7 @@
         },
         "spells": [],
         "tick": 309,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -25434,6 +25744,7 @@
         },
         "spells": [],
         "tick": 310,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -25536,6 +25847,7 @@
         },
         "spells": [],
         "tick": 311,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -25626,6 +25938,7 @@
         },
         "spells": [],
         "tick": 312,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -25705,6 +26018,7 @@
         },
         "spells": [],
         "tick": 313,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -25784,6 +26098,7 @@
         },
         "spells": [],
         "tick": 314,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -25863,6 +26178,7 @@
         },
         "spells": [],
         "tick": 315,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -25942,6 +26258,7 @@
         },
         "spells": [],
         "tick": 316,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -26021,6 +26338,7 @@
         },
         "spells": [],
         "tick": 317,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -26100,6 +26418,7 @@
         },
         "spells": [],
         "tick": 318,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -26179,6 +26498,7 @@
         },
         "spells": [],
         "tick": 319,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -26258,6 +26578,7 @@
         },
         "spells": [],
         "tick": 320,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -26337,6 +26658,7 @@
         },
         "spells": [],
         "tick": 321,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -26416,6 +26738,7 @@
         },
         "spells": [],
         "tick": 322,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -26495,6 +26818,7 @@
         },
         "spells": [],
         "tick": 323,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -26608,6 +26932,7 @@
         },
         "spells": [],
         "tick": 324,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -26710,6 +27035,7 @@
         },
         "spells": [],
         "tick": 325,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -26812,6 +27138,7 @@
         },
         "spells": [],
         "tick": 326,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -26902,6 +27229,7 @@
         },
         "spells": [],
         "tick": 327,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -26981,6 +27309,7 @@
         },
         "spells": [],
         "tick": 328,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -27060,6 +27389,7 @@
         },
         "spells": [],
         "tick": 329,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -27139,6 +27469,7 @@
         },
         "spells": [],
         "tick": 330,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -27218,6 +27549,7 @@
         },
         "spells": [],
         "tick": 331,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -27297,6 +27629,7 @@
         },
         "spells": [],
         "tick": 332,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -27376,6 +27709,7 @@
         },
         "spells": [],
         "tick": 333,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -27455,6 +27789,7 @@
         },
         "spells": [],
         "tick": 334,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -27534,6 +27869,7 @@
         },
         "spells": [],
         "tick": 335,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -27613,6 +27949,7 @@
         },
         "spells": [],
         "tick": 336,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -27692,6 +28029,7 @@
         },
         "spells": [],
         "tick": 337,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -27771,6 +28109,7 @@
         },
         "spells": [],
         "tick": 338,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -27884,6 +28223,7 @@
         },
         "spells": [],
         "tick": 339,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -27986,6 +28326,7 @@
         },
         "spells": [],
         "tick": 340,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -28088,6 +28429,7 @@
         },
         "spells": [],
         "tick": 341,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -28178,6 +28520,7 @@
         },
         "spells": [],
         "tick": 342,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -28257,6 +28600,7 @@
         },
         "spells": [],
         "tick": 343,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -28336,6 +28680,7 @@
         },
         "spells": [],
         "tick": 344,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -28415,6 +28760,7 @@
         },
         "spells": [],
         "tick": 345,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -28494,6 +28840,7 @@
         },
         "spells": [],
         "tick": 346,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -28573,6 +28920,7 @@
         },
         "spells": [],
         "tick": 347,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -28652,6 +29000,7 @@
         },
         "spells": [],
         "tick": 348,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -28731,6 +29080,7 @@
         },
         "spells": [],
         "tick": 349,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -28810,6 +29160,7 @@
         },
         "spells": [],
         "tick": 350,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -28889,6 +29240,7 @@
         },
         "spells": [],
         "tick": 351,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -28968,6 +29320,7 @@
         },
         "spells": [],
         "tick": 352,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -29047,6 +29400,7 @@
         },
         "spells": [],
         "tick": 353,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -29160,6 +29514,7 @@
         },
         "spells": [],
         "tick": 354,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -29262,6 +29617,7 @@
         },
         "spells": [],
         "tick": 355,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -29364,6 +29720,7 @@
         },
         "spells": [],
         "tick": 356,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -29454,6 +29811,7 @@
         },
         "spells": [],
         "tick": 357,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -29533,6 +29891,7 @@
         },
         "spells": [],
         "tick": 358,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -29612,6 +29971,7 @@
         },
         "spells": [],
         "tick": 359,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -29691,6 +30051,7 @@
         },
         "spells": [],
         "tick": 360,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -29770,6 +30131,7 @@
         },
         "spells": [],
         "tick": 361,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -29849,6 +30211,7 @@
         },
         "spells": [],
         "tick": 362,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -29928,6 +30291,7 @@
         },
         "spells": [],
         "tick": 363,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -30007,6 +30371,7 @@
         },
         "spells": [],
         "tick": 364,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -30086,6 +30451,7 @@
         },
         "spells": [],
         "tick": 365,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -30165,6 +30531,7 @@
         },
         "spells": [],
         "tick": 366,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -30244,6 +30611,7 @@
         },
         "spells": [],
         "tick": 367,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -30323,6 +30691,7 @@
         },
         "spells": [],
         "tick": 368,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -30436,6 +30805,7 @@
         },
         "spells": [],
         "tick": 369,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -30538,6 +30908,7 @@
         },
         "spells": [],
         "tick": 370,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -30640,6 +31011,7 @@
         },
         "spells": [],
         "tick": 371,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -30730,6 +31102,7 @@
         },
         "spells": [],
         "tick": 372,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -30809,6 +31182,7 @@
         },
         "spells": [],
         "tick": 373,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -30888,6 +31262,7 @@
         },
         "spells": [],
         "tick": 374,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -30967,6 +31342,7 @@
         },
         "spells": [],
         "tick": 375,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -31046,6 +31422,7 @@
         },
         "spells": [],
         "tick": 376,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -31125,6 +31502,7 @@
         },
         "spells": [],
         "tick": 377,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -31204,6 +31582,7 @@
         },
         "spells": [],
         "tick": 378,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -31283,6 +31662,7 @@
         },
         "spells": [],
         "tick": 379,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -31362,6 +31742,7 @@
         },
         "spells": [],
         "tick": 380,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -31441,6 +31822,7 @@
         },
         "spells": [],
         "tick": 381,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -31520,6 +31902,7 @@
         },
         "spells": [],
         "tick": 382,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -31599,6 +31982,7 @@
         },
         "spells": [],
         "tick": 383,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -31712,6 +32096,7 @@
         },
         "spells": [],
         "tick": 384,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -31814,6 +32199,7 @@
         },
         "spells": [],
         "tick": 385,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -31916,6 +32302,7 @@
         },
         "spells": [],
         "tick": 386,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -32006,6 +32393,7 @@
         },
         "spells": [],
         "tick": 387,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -32085,6 +32473,7 @@
         },
         "spells": [],
         "tick": 388,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -32164,6 +32553,7 @@
         },
         "spells": [],
         "tick": 389,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -32243,6 +32633,7 @@
         },
         "spells": [],
         "tick": 390,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -32322,6 +32713,7 @@
         },
         "spells": [],
         "tick": 391,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -32401,6 +32793,7 @@
         },
         "spells": [],
         "tick": 392,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -32480,6 +32873,7 @@
         },
         "spells": [],
         "tick": 393,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -32559,6 +32953,7 @@
         },
         "spells": [],
         "tick": 394,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -32638,6 +33033,7 @@
         },
         "spells": [],
         "tick": 395,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -32717,6 +33113,7 @@
         },
         "spells": [],
         "tick": 396,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -32796,6 +33193,7 @@
         },
         "spells": [],
         "tick": 397,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -32875,6 +33273,7 @@
         },
         "spells": [],
         "tick": 398,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -32988,6 +33387,7 @@
         },
         "spells": [],
         "tick": 399,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -33090,6 +33490,7 @@
         },
         "spells": [],
         "tick": 400,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -33192,6 +33593,7 @@
         },
         "spells": [],
         "tick": 401,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -33282,6 +33684,7 @@
         },
         "spells": [],
         "tick": 402,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -33361,6 +33764,7 @@
         },
         "spells": [],
         "tick": 403,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -33440,6 +33844,7 @@
         },
         "spells": [],
         "tick": 404,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -33519,6 +33924,7 @@
         },
         "spells": [],
         "tick": 405,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -33598,6 +34004,7 @@
         },
         "spells": [],
         "tick": 406,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -33677,6 +34084,7 @@
         },
         "spells": [],
         "tick": 407,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -33756,6 +34164,7 @@
         },
         "spells": [],
         "tick": 408,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -33835,6 +34244,7 @@
         },
         "spells": [],
         "tick": 409,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -33914,6 +34324,7 @@
         },
         "spells": [],
         "tick": 410,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -33993,6 +34404,7 @@
         },
         "spells": [],
         "tick": 411,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -34072,6 +34484,7 @@
         },
         "spells": [],
         "tick": 412,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -34151,6 +34564,7 @@
         },
         "spells": [],
         "tick": 413,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -34264,6 +34678,7 @@
         },
         "spells": [],
         "tick": 414,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -34366,6 +34781,7 @@
         },
         "spells": [],
         "tick": 415,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -34468,6 +34884,7 @@
         },
         "spells": [],
         "tick": 416,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -34558,6 +34975,7 @@
         },
         "spells": [],
         "tick": 417,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -34637,6 +35055,7 @@
         },
         "spells": [],
         "tick": 418,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -34716,6 +35135,7 @@
         },
         "spells": [],
         "tick": 419,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -34795,6 +35215,7 @@
         },
         "spells": [],
         "tick": 420,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -34874,6 +35295,7 @@
         },
         "spells": [],
         "tick": 421,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -34953,6 +35375,7 @@
         },
         "spells": [],
         "tick": 422,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -35032,6 +35455,7 @@
         },
         "spells": [],
         "tick": 423,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -35111,6 +35535,7 @@
         },
         "spells": [],
         "tick": 424,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -35190,6 +35615,7 @@
         },
         "spells": [],
         "tick": 425,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -35269,6 +35695,7 @@
         },
         "spells": [],
         "tick": 426,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -35348,6 +35775,7 @@
         },
         "spells": [],
         "tick": 427,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -35427,6 +35855,7 @@
         },
         "spells": [],
         "tick": 428,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -35540,6 +35969,7 @@
         },
         "spells": [],
         "tick": 429,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -35642,6 +36072,7 @@
         },
         "spells": [],
         "tick": 430,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -35744,6 +36175,7 @@
         },
         "spells": [],
         "tick": 431,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -35834,6 +36266,7 @@
         },
         "spells": [],
         "tick": 432,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -35913,6 +36346,7 @@
         },
         "spells": [],
         "tick": 433,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -35992,6 +36426,7 @@
         },
         "spells": [],
         "tick": 434,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -36071,6 +36506,7 @@
         },
         "spells": [],
         "tick": 435,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -36150,6 +36586,7 @@
         },
         "spells": [],
         "tick": 436,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -36229,6 +36666,7 @@
         },
         "spells": [],
         "tick": 437,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -36308,6 +36746,7 @@
         },
         "spells": [],
         "tick": 438,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -36387,6 +36826,7 @@
         },
         "spells": [],
         "tick": 439,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -36466,6 +36906,7 @@
         },
         "spells": [],
         "tick": 440,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -36545,6 +36986,7 @@
         },
         "spells": [],
         "tick": 441,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -36624,6 +37066,7 @@
         },
         "spells": [],
         "tick": 442,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -36703,6 +37146,7 @@
         },
         "spells": [],
         "tick": 443,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -36816,6 +37260,7 @@
         },
         "spells": [],
         "tick": 444,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -36918,6 +37363,7 @@
         },
         "spells": [],
         "tick": 445,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -37020,6 +37466,7 @@
         },
         "spells": [],
         "tick": 446,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -37110,6 +37557,7 @@
         },
         "spells": [],
         "tick": 447,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -37189,6 +37637,7 @@
         },
         "spells": [],
         "tick": 448,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -37268,6 +37717,7 @@
         },
         "spells": [],
         "tick": 449,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -37347,6 +37797,7 @@
         },
         "spells": [],
         "tick": 450,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -37426,6 +37877,7 @@
         },
         "spells": [],
         "tick": 451,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -37505,6 +37957,7 @@
         },
         "spells": [],
         "tick": 452,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -37584,6 +38037,7 @@
         },
         "spells": [],
         "tick": 453,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -37663,6 +38117,7 @@
         },
         "spells": [],
         "tick": 454,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -37742,6 +38197,7 @@
         },
         "spells": [],
         "tick": 455,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -37821,6 +38277,7 @@
         },
         "spells": [],
         "tick": 456,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -37900,6 +38357,7 @@
         },
         "spells": [],
         "tick": 457,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -37979,6 +38437,7 @@
         },
         "spells": [],
         "tick": 458,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -38092,6 +38551,7 @@
         },
         "spells": [],
         "tick": 459,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -38194,6 +38654,7 @@
         },
         "spells": [],
         "tick": 460,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -38296,6 +38757,7 @@
         },
         "spells": [],
         "tick": 461,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -38386,6 +38848,7 @@
         },
         "spells": [],
         "tick": 462,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -38465,6 +38928,7 @@
         },
         "spells": [],
         "tick": 463,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -38544,6 +39008,7 @@
         },
         "spells": [],
         "tick": 464,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -38623,6 +39088,7 @@
         },
         "spells": [],
         "tick": 465,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -38702,6 +39168,7 @@
         },
         "spells": [],
         "tick": 466,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -38781,6 +39248,7 @@
         },
         "spells": [],
         "tick": 467,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -38860,6 +39328,7 @@
         },
         "spells": [],
         "tick": 468,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -38939,6 +39408,7 @@
         },
         "spells": [],
         "tick": 469,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -39018,6 +39488,7 @@
         },
         "spells": [],
         "tick": 470,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -39097,6 +39568,7 @@
         },
         "spells": [],
         "tick": 471,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -39176,6 +39648,7 @@
         },
         "spells": [],
         "tick": 472,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -39255,6 +39728,7 @@
         },
         "spells": [],
         "tick": 473,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -39368,6 +39842,7 @@
         },
         "spells": [],
         "tick": 474,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -39470,6 +39945,7 @@
         },
         "spells": [],
         "tick": 475,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -39572,6 +40048,7 @@
         },
         "spells": [],
         "tick": 476,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -39662,6 +40139,7 @@
         },
         "spells": [],
         "tick": 477,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -39741,6 +40219,7 @@
         },
         "spells": [],
         "tick": 478,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -39820,6 +40299,7 @@
         },
         "spells": [],
         "tick": 479,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -39899,6 +40379,7 @@
         },
         "spells": [],
         "tick": 480,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -39978,6 +40459,7 @@
         },
         "spells": [],
         "tick": 481,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -40057,6 +40539,7 @@
         },
         "spells": [],
         "tick": 482,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -40136,6 +40619,7 @@
         },
         "spells": [],
         "tick": 483,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -40215,6 +40699,7 @@
         },
         "spells": [],
         "tick": 484,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -40294,6 +40779,7 @@
         },
         "spells": [],
         "tick": 485,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -40373,6 +40859,7 @@
         },
         "spells": [],
         "tick": 486,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -40452,6 +40939,7 @@
         },
         "spells": [],
         "tick": 487,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -40531,6 +41019,7 @@
         },
         "spells": [],
         "tick": 488,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -40644,6 +41133,7 @@
         },
         "spells": [],
         "tick": 489,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -40746,6 +41236,7 @@
         },
         "spells": [],
         "tick": 490,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -40848,6 +41339,7 @@
         },
         "spells": [],
         "tick": 491,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -40938,6 +41430,7 @@
         },
         "spells": [],
         "tick": 492,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -41017,6 +41510,7 @@
         },
         "spells": [],
         "tick": 493,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -41096,6 +41590,7 @@
         },
         "spells": [],
         "tick": 494,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -41175,6 +41670,7 @@
         },
         "spells": [],
         "tick": 495,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -41254,6 +41750,7 @@
         },
         "spells": [],
         "tick": 496,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -41333,6 +41830,7 @@
         },
         "spells": [],
         "tick": 497,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -41412,6 +41910,7 @@
         },
         "spells": [],
         "tick": 498,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -41491,6 +41990,7 @@
         },
         "spells": [],
         "tick": 499,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -41570,6 +42070,7 @@
         },
         "spells": [],
         "tick": 500,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -41649,6 +42150,7 @@
         },
         "spells": [],
         "tick": 501,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -41728,6 +42230,7 @@
         },
         "spells": [],
         "tick": 502,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -41807,6 +42310,7 @@
         },
         "spells": [],
         "tick": 503,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -41920,6 +42424,7 @@
         },
         "spells": [],
         "tick": 504,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -42022,6 +42527,7 @@
         },
         "spells": [],
         "tick": 505,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -42124,6 +42630,7 @@
         },
         "spells": [],
         "tick": 506,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -42214,6 +42721,7 @@
         },
         "spells": [],
         "tick": 507,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -42293,6 +42801,7 @@
         },
         "spells": [],
         "tick": 508,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -42372,6 +42881,7 @@
         },
         "spells": [],
         "tick": 509,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -42451,6 +42961,7 @@
         },
         "spells": [],
         "tick": 510,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -42530,6 +43041,7 @@
         },
         "spells": [],
         "tick": 511,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -42609,6 +43121,7 @@
         },
         "spells": [],
         "tick": 512,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -42688,6 +43201,7 @@
         },
         "spells": [],
         "tick": 513,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -42767,6 +43281,7 @@
         },
         "spells": [],
         "tick": 514,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -42846,6 +43361,7 @@
         },
         "spells": [],
         "tick": 515,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -42925,6 +43441,7 @@
         },
         "spells": [],
         "tick": 516,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -43004,6 +43521,7 @@
         },
         "spells": [],
         "tick": 517,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -43083,6 +43601,7 @@
         },
         "spells": [],
         "tick": 518,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -43196,6 +43715,7 @@
         },
         "spells": [],
         "tick": 519,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -43298,6 +43818,7 @@
         },
         "spells": [],
         "tick": 520,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -43400,6 +43921,7 @@
         },
         "spells": [],
         "tick": 521,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -43490,6 +44012,7 @@
         },
         "spells": [],
         "tick": 522,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -43569,6 +44092,7 @@
         },
         "spells": [],
         "tick": 523,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -43648,6 +44172,7 @@
         },
         "spells": [],
         "tick": 524,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -43727,6 +44252,7 @@
         },
         "spells": [],
         "tick": 525,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -43806,6 +44332,7 @@
         },
         "spells": [],
         "tick": 526,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -43885,6 +44412,7 @@
         },
         "spells": [],
         "tick": 527,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -43964,6 +44492,7 @@
         },
         "spells": [],
         "tick": 528,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -44043,6 +44572,7 @@
         },
         "spells": [],
         "tick": 529,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -44122,6 +44652,7 @@
         },
         "spells": [],
         "tick": 530,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -44201,6 +44732,7 @@
         },
         "spells": [],
         "tick": 531,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -44280,6 +44812,7 @@
         },
         "spells": [],
         "tick": 532,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -44359,6 +44892,7 @@
         },
         "spells": [],
         "tick": 533,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -44472,6 +45006,7 @@
         },
         "spells": [],
         "tick": 534,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -44574,6 +45109,7 @@
         },
         "spells": [],
         "tick": 535,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -44676,6 +45212,7 @@
         },
         "spells": [],
         "tick": 536,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -44766,6 +45303,7 @@
         },
         "spells": [],
         "tick": 537,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -44845,6 +45383,7 @@
         },
         "spells": [],
         "tick": 538,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -44924,6 +45463,7 @@
         },
         "spells": [],
         "tick": 539,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -45003,6 +45543,7 @@
         },
         "spells": [],
         "tick": 540,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -45082,6 +45623,7 @@
         },
         "spells": [],
         "tick": 541,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -45161,6 +45703,7 @@
         },
         "spells": [],
         "tick": 542,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -45240,6 +45783,7 @@
         },
         "spells": [],
         "tick": 543,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -45319,6 +45863,7 @@
         },
         "spells": [],
         "tick": 544,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -45398,6 +45943,7 @@
         },
         "spells": [],
         "tick": 545,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -45477,6 +46023,7 @@
         },
         "spells": [],
         "tick": 546,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -45556,6 +46103,7 @@
         },
         "spells": [],
         "tick": 547,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -45635,6 +46183,7 @@
         },
         "spells": [],
         "tick": 548,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -45748,6 +46297,7 @@
         },
         "spells": [],
         "tick": 549,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -45850,6 +46400,7 @@
         },
         "spells": [],
         "tick": 550,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -45952,6 +46503,7 @@
         },
         "spells": [],
         "tick": 551,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -46042,6 +46594,7 @@
         },
         "spells": [],
         "tick": 552,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -46121,6 +46674,7 @@
         },
         "spells": [],
         "tick": 553,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -46200,6 +46754,7 @@
         },
         "spells": [],
         "tick": 554,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -46279,6 +46834,7 @@
         },
         "spells": [],
         "tick": 555,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -46358,6 +46914,7 @@
         },
         "spells": [],
         "tick": 556,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -46437,6 +46994,7 @@
         },
         "spells": [],
         "tick": 557,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -46516,6 +47074,7 @@
         },
         "spells": [],
         "tick": 558,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -46595,6 +47154,7 @@
         },
         "spells": [],
         "tick": 559,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -46674,6 +47234,7 @@
         },
         "spells": [],
         "tick": 560,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -46753,6 +47314,7 @@
         },
         "spells": [],
         "tick": 561,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -46832,6 +47394,7 @@
         },
         "spells": [],
         "tick": 562,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -46911,6 +47474,7 @@
         },
         "spells": [],
         "tick": 563,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -47024,6 +47588,7 @@
         },
         "spells": [],
         "tick": 564,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -47126,6 +47691,7 @@
         },
         "spells": [],
         "tick": 565,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -47228,6 +47794,7 @@
         },
         "spells": [],
         "tick": 566,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -47318,6 +47885,7 @@
         },
         "spells": [],
         "tick": 567,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -47397,6 +47965,7 @@
         },
         "spells": [],
         "tick": 568,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -47476,6 +48045,7 @@
         },
         "spells": [],
         "tick": 569,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -47555,6 +48125,7 @@
         },
         "spells": [],
         "tick": 570,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -47634,6 +48205,7 @@
         },
         "spells": [],
         "tick": 571,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -47713,6 +48285,7 @@
         },
         "spells": [],
         "tick": 572,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -47792,6 +48365,7 @@
         },
         "spells": [],
         "tick": 573,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -47871,6 +48445,7 @@
         },
         "spells": [],
         "tick": 574,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -47950,6 +48525,7 @@
         },
         "spells": [],
         "tick": 575,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -48029,6 +48605,7 @@
         },
         "spells": [],
         "tick": 576,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -48108,6 +48685,7 @@
         },
         "spells": [],
         "tick": 577,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -48187,6 +48765,7 @@
         },
         "spells": [],
         "tick": 578,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -48300,6 +48879,7 @@
         },
         "spells": [],
         "tick": 579,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -48402,6 +48982,7 @@
         },
         "spells": [],
         "tick": 580,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -48504,6 +49085,7 @@
         },
         "spells": [],
         "tick": 581,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -48609,6 +49191,7 @@
         },
         "spells": [],
         "tick": 582,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -48687,11 +49270,12 @@
     },
     "spells": [],
     "tick": 0,
+    "traps": [],
     "troops": []
   },
   "metadata": {
     "base_name": "wizard_splash_walls",
-    "config_hash": "2f80c974173bdc19ebdcc0d2da68b1f8ac5ef1538f9f035449b3491b60fea428",
+    "config_hash": "647ee5a514951e8399bb7e19ad7816a105adebc1d7065051b2955f54a120b19c",
     "episode_id": "",
     "final_score": {
       "destruction_pct": 100.0,
@@ -48706,5 +49290,5 @@
     "started_at": "",
     "total_ticks": 583
   },
-  "schema_version": 2
+  "schema_version": 3
 }

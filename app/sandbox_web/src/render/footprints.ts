@@ -11,6 +11,7 @@ const FOOTPRINTS: Record<string, [number, number]> = {
   archer_tower: [3, 3],
   mortar: [3, 3],
   air_defense: [3, 3],
+  air_sweeper: [2, 2],
   wizard_tower: [3, 3],
   barracks: [3, 3],
   laboratory: [3, 3],
@@ -21,10 +22,25 @@ const FOOTPRINTS: Record<string, [number, number]> = {
   elixir_storage: [3, 3],
   builders_hut: [2, 2],
   wall: [1, 1],
+  bomb: [1, 1],
+  giant_bomb: [2, 2],
+  spring_trap: [1, 1],
+  air_bomb: [1, 1],
 };
 
 export function footprintFor(buildingType: string): [number, number] {
   return FOOTPRINTS[buildingType] ?? [1, 1];
+}
+
+export const TRAP_TYPE_NAMES: ReadonlySet<string> = new Set([
+  "bomb",
+  "giant_bomb",
+  "spring_trap",
+  "air_bomb",
+]);
+
+export function isTrapType(typeName: string): boolean {
+  return TRAP_TYPE_NAMES.has(typeName);
 }
 
 // Troop visual radius in tiles (single-letter circle marker — PRD §8.1).

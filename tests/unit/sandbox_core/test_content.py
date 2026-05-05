@@ -70,25 +70,28 @@ def test_apply_overrides_only_named_entities() -> None:
         {"name": "town_hall", "category": "town_hall"},
     ]
     overrides = {"buildings": {"cannon": {"category": "army"}}}
-    b, _, _ = apply_overrides(buildings=buildings, troops=[], spells=[], overrides=overrides)
+    b, _, _, _ = apply_overrides(
+        buildings=buildings, troops=[], spells=[], traps=[], overrides=overrides
+    )
     assert b[0]["category"] == "army"
     assert b[1]["category"] == "town_hall"
 
 
 def test_apply_overrides_handles_empty_override_doc() -> None:
-    b, t, s = apply_overrides(
-        buildings=[{"name": "x"}], troops=[{"name": "y"}], spells=[], overrides={}
+    b, t, s, tr = apply_overrides(
+        buildings=[{"name": "x"}], troops=[{"name": "y"}], spells=[], traps=[], overrides={}
     )
     assert b == [{"name": "x"}]
     assert t == [{"name": "y"}]
     assert s == []
+    assert tr == []
 
 
 def test_apply_overrides_skips_unknown_entity_names() -> None:
     """Override entries for entities not in the scraped list are silently skipped."""
     overrides = {"troops": {"unknown_troop": {"hp": 999}}}
-    _, t, _ = apply_overrides(
-        buildings=[], troops=[{"name": "barbarian"}], spells=[], overrides=overrides
+    _, t, _, _ = apply_overrides(
+        buildings=[], troops=[{"name": "barbarian"}], spells=[], traps=[], overrides=overrides
     )
     assert t == [{"name": "barbarian"}]
 

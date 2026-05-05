@@ -6,6 +6,7 @@ export const BUILDING_TYPES = [
   "archer_tower",
   "mortar",
   "air_defense",
+  "air_sweeper",
   "wizard_tower",
   "barracks",
   "laboratory",
@@ -19,6 +20,8 @@ export const BUILDING_TYPES = [
 ];
 
 export const TROOP_TYPES = ["barbarian", "archer", "giant", "goblin", "wall_breaker", "wizard"];
+
+export const TRAP_TYPES = ["bomb", "giant_bomb", "spring_trap", "air_bomb"];
 
 export const EFFECT_TYPES = ["explosion", "bolt", "splash"];
 
@@ -37,6 +40,10 @@ export function buildingSpriteUrlCandidates(buildingType: string): string[] {
       (filename) => `/sprites/buildings/${filename}`,
     ),
   ];
+}
+
+export function trapSpriteUrlCandidates(trapType: string): string[] {
+  return [`/sprites/traps/${trapType}.png`];
 }
 
 export function terrainSpriteUrlCandidates(terrainType: string): string[] {

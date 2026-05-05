@@ -14,6 +14,7 @@ _FOOTPRINTS: dict[str, tuple[int, int]] = {
     "archer_tower": (3, 3),
     "mortar": (3, 3),
     "air_defense": (3, 3),
+    "air_sweeper": (2, 2),
     "wizard_tower": (3, 3),
     "army_camp": (5, 5),
     "barracks": (3, 3),
@@ -24,6 +25,10 @@ _FOOTPRINTS: dict[str, tuple[int, int]] = {
     "gold_storage": (4, 4),
     "elixir_storage": (4, 4),
     "builders_hut": (2, 2),
+    "bomb": (1, 1),
+    "giant_bomb": (2, 2),
+    "spring_trap": (1, 1),
+    "air_bomb": (1, 1),
 }
 
 

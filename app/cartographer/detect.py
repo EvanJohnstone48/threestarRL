@@ -18,6 +18,7 @@ class RoboflowClass(StrEnum):
     ARCHER_TOWER = "archer_tower"
     MORTAR = "mortar"
     AIR_DEFENSE = "air_defense"
+    AIR_SWEEPER = "air_sweeper"
     WIZARD_TOWER = "wizard_tower"
     ARMY_CAMP = "army_camp"
     BARRACKS = "barracks"
@@ -28,6 +29,22 @@ class RoboflowClass(StrEnum):
     GOLD_STORAGE = "gold_storage"
     ELIXIR_STORAGE = "elixir_storage"
     BUILDERS_HUT = "builders_hut"
+    BOMB = "bomb"
+    GIANT_BOMB = "giant_bomb"
+    SPRING_TRAP = "spring_trap"
+    AIR_BOMB = "air_bomb"
+
+
+# Trap classes are routed into BaseLayout.traps rather than placements; the
+# alignment + emit stages dispatch on this set.
+TRAP_CLASSES: frozenset[str] = frozenset(
+    {
+        RoboflowClass.BOMB,
+        RoboflowClass.GIANT_BOMB,
+        RoboflowClass.SPRING_TRAP,
+        RoboflowClass.AIR_BOMB,
+    }
+)
 
 
 @dataclass(frozen=True)

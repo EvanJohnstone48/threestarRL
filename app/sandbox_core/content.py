@@ -33,7 +33,7 @@ from typing import Any, cast
 from pydantic import TypeAdapter
 
 from sandbox_core.grid import default_hitbox_inset
-from sandbox_core.schemas import BuildingType, SpellType, TroopType
+from sandbox_core.schemas import BuildingType, SpellType, TrapType, TroopType
 
 DEFAULT_DATA_DIR: Path = Path(__file__).resolve().parents[1] / "data"
 
@@ -44,22 +44,25 @@ TH_CAPS_FILENAME = "th_caps.json"
 _BuildingListAdapter = TypeAdapter(list[BuildingType])
 _TroopListAdapter = TypeAdapter(list[TroopType])
 _SpellListAdapter = TypeAdapter(list[SpellType])
+_TrapListAdapter = TypeAdapter(list[TrapType])
 
 
 class ContentCatalogue:
-    """Immutable catalogue of building / troop / spell types, keyed by name."""
+    """Immutable catalogue of building / troop / spell / trap types, keyed by name."""
 
-    __slots__ = ("buildings", "spells", "troops")
+    __slots__ = ("buildings", "spells", "traps", "troops")
 
     def __init__(
         self,
         buildings: dict[str, BuildingType],
         troops: dict[str, TroopType],
         spells: dict[str, SpellType],
+        traps: dict[str, TrapType] | None = None,
     ) -> None:
         self.buildings = buildings
         self.troops = troops
         self.spells = spells
+        self.traps = traps or {}
 
     def building(self, name: str) -> BuildingType:
         try:
@@ -78,6 +81,12 @@ class ContentCatalogue:
             return self.spells[name]
         except KeyError as e:
             raise KeyError(f"unknown spell type: {name!r}") from e
+
+    def trap(self, name: str) -> TrapType:
+        try:
+            return self.traps[name]
+        except KeyError as e:
+            raise KeyError(f"unknown trap type: {name!r}") from e
 
 
 def merge_entity_overrides(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
@@ -117,19 +126,26 @@ def apply_overrides(
     buildings: list[dict[str, Any]],
     troops: list[dict[str, Any]],
     spells: list[dict[str, Any]],
+    traps: list[dict[str, Any]],
     overrides: dict[str, Any],
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+) -> tuple[
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+]:
     """Apply `manual_overrides.json` content to scraped raw lists.
 
     `overrides` is the parsed `manual_overrides.json` dict. Lookup is by entity
     `name`. Entities not mentioned in the override file pass through unchanged.
-    Returns (buildings, troops, spells) as raw dicts ready for Pydantic
+    Returns (buildings, troops, spells, traps) as raw dicts ready for Pydantic
     validation.
     """
     return (
         _apply_per_kind(buildings, overrides.get("buildings", {})),
         _apply_per_kind(troops, overrides.get("troops", {})),
         _apply_per_kind(spells, overrides.get("spells", {})),
+        _apply_per_kind(traps, overrides.get("traps", {})),
     )
 
 
@@ -172,25 +188,29 @@ def load_catalogue(data_dir: Path | None = None) -> ContentCatalogue:
     buildings_data = _load_entries(base / "buildings.json")
     troops_data = _load_entries(base / "troops.json")
     spells_data = _load_entries_optional(base / "spells.json")
+    traps_data = _load_entries_optional(base / "traps.json")
 
     overrides_path = base / OVERRIDES_FILENAME
     if overrides_path.exists():
         overrides = json.loads(overrides_path.read_text(encoding="utf-8"))
-        buildings_data, troops_data, spells_data = apply_overrides(
+        buildings_data, troops_data, spells_data, traps_data = apply_overrides(
             buildings=buildings_data,
             troops=troops_data,
             spells=spells_data,
+            traps=traps_data,
             overrides=overrides,
         )
 
     buildings = _resolve_hitbox_insets(_BuildingListAdapter.validate_python(buildings_data))
     troops = _TroopListAdapter.validate_python(troops_data)
     spells = _SpellListAdapter.validate_python(spells_data)
+    traps = _TrapListAdapter.validate_python(traps_data)
 
     return ContentCatalogue(
         buildings={b.name: b for b in buildings},
         troops={t.name: t for t in troops},
         spells={s.name: s for s in spells},
+        traps={tr.name: tr for tr in traps},
     )
 
 

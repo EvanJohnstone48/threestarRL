@@ -26,6 +26,10 @@ export const BUILDING_COLORS: Record<BuildingCategory, number> = {
   builder_hut: 0xb9d4ff,
 };
 
+export const TRAP_COLOR = 0xff5252;
+export const TRAP_TRIGGERED_COLOR = 0xffaa00;
+export const TRAP_DETONATED_COLOR = 0x555555;
+
 export const TROOP_COLORS: Record<TroopCategory, number> = {
   ground: 0x66bb6a,
   air: 0x29b6f6,
@@ -38,6 +42,7 @@ const BUILDING_LABEL_PREFIX: Record<string, string> = {
   archer_tower: "AT",
   mortar: "MT",
   air_defense: "AD",
+  air_sweeper: "AS",
   wizard_tower: "WT",
   wall: "",
   army_camp: "AC",
@@ -49,7 +54,16 @@ const BUILDING_LABEL_PREFIX: Record<string, string> = {
   gold_storage: "GS",
   elixir_storage: "ES",
   builders_hut: "BH",
+  bomb: "B",
+  giant_bomb: "GB",
+  spring_trap: "SP",
+  air_bomb: "AB",
 };
+
+export function trapLabel(trapType: string, level: number): string {
+  const prefix = BUILDING_LABEL_PREFIX[trapType] ?? "T";
+  return `${prefix}${level}`;
+}
 
 export function buildingLabel(buildingType: string, level: number): string {
   const prefix = BUILDING_LABEL_PREFIX[buildingType] ?? buildingType.slice(0, 2).toUpperCase();
@@ -89,6 +103,7 @@ const BUILDING_CATEGORY: Record<string, BuildingCategory> = {
   archer_tower: "defense",
   mortar: "defense",
   air_defense: "defense",
+  air_sweeper: "defense",
   wizard_tower: "defense",
   wall: "wall",
   army_camp: "army",

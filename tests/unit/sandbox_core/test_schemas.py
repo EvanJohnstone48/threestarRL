@@ -26,8 +26,8 @@ def _meta(name: str = "test") -> BaseLayoutMetadata:
     return BaseLayoutMetadata(name=name, th_level=6)
 
 
-def test_schema_version_is_two() -> None:
-    assert SCHEMA_VERSION == 2
+def test_schema_version_is_three() -> None:
+    assert SCHEMA_VERSION == 3
 
 
 def test_baselayout_th_level_consistency_required() -> None:
@@ -80,7 +80,7 @@ def test_baselayout_v2_with_provenance_round_trips() -> None:
         placements=[BuildingPlacement(building_type="town_hall", origin=(15, 15))],
         provenance=provenance,
     )
-    assert layout.schema_version == 2
+    assert layout.schema_version == 3
     recovered = BaseLayout.model_validate_json(layout.model_dump_json())
     assert recovered.provenance is not None
     assert recovered.provenance.source_screenshot == "bases/th6_01.png"
@@ -96,8 +96,9 @@ def test_baselayout_v1_loads_via_migration() -> None:
         "cc_contents": [],
     }
     layout = load_validated(v1_payload, BaseLayout)
-    assert layout.schema_version == 2
+    assert layout.schema_version == 3
     assert layout.provenance is None
+    assert layout.traps == []
 
 
 def test_baselayout_v2_provenance_none_is_valid() -> None:
@@ -108,7 +109,7 @@ def test_baselayout_v2_provenance_none_is_valid() -> None:
         provenance=None,
     )
     assert layout.provenance is None
-    assert layout.schema_version == 2
+    assert layout.schema_version == 3
 
 
 def test_replay_round_trip_through_json() -> None:

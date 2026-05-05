@@ -142,6 +142,8 @@ export function ReplayViewer() {
   const [dragOver, setDragOver] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("topdown");
   const [isoAvailable, setIsoAvailable] = useState(false);
+  const [buildingsVisible, setBuildingsVisible] = useState(true);
+  const [trapsVisible, setTrapsVisible] = useState(true);
 
   // Mount Pixi app once. Sprite loading happens concurrently with app init.
   useEffect(() => {
@@ -341,6 +343,30 @@ export function ReplayViewer() {
     setViewMode(next);
   }, []);
 
+  const onToggleBuildings = useCallback(() => {
+    const h = handleRef.current;
+    setBuildingsVisible((prev) => {
+      const next = !prev;
+      if (h) {
+        h.topdown.setBuildingsVisible(next);
+        h.iso?.setBuildingsVisible(next);
+      }
+      return next;
+    });
+  }, []);
+
+  const onToggleTraps = useCallback(() => {
+    const h = handleRef.current;
+    setTrapsVisible((prev) => {
+      const next = !prev;
+      if (h) {
+        h.topdown.setTrapsVisible(next);
+        h.iso?.setTrapsVisible(next);
+      }
+      return next;
+    });
+  }, []);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (ev: KeyboardEvent) => {
@@ -407,6 +433,22 @@ export function ReplayViewer() {
               {viewMode === "iso" ? "ISO" : "TOP"} view
             </button>
           )}
+          <button
+            type="button"
+            onClick={onToggleBuildings}
+            title="Show / hide buildings"
+            aria-pressed={!buildingsVisible}
+          >
+            {buildingsVisible ? "Hide buildings" : "Show buildings"}
+          </button>
+          <button
+            type="button"
+            onClick={onToggleTraps}
+            title="Show / hide traps"
+            aria-pressed={!trapsVisible}
+          >
+            {trapsVisible ? "Hide traps" : "Show traps"}
+          </button>
           <label className="file-picker">
             Load replay…
             <input

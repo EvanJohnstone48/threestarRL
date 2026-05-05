@@ -12,7 +12,7 @@ from typing import Final, Literal
 WIKI_BASE: Final[str] = "https://clashofclans.fandom.com/wiki"
 TROOP_MOVEMENT_URL: Final[str] = f"{WIKI_BASE}/Troop_Movement_Speed"
 
-EntityKind = Literal["building", "troop", "spell"]
+EntityKind = Literal["building", "troop", "spell", "trap"]
 
 
 # (canonical_name, wiki_slug) — canonical_name is the snake_case key used in
@@ -24,6 +24,7 @@ BUILDING_ENTITIES: Final[tuple[tuple[str, str], ...]] = (
     ("archer_tower", "Archer_Tower"),
     ("mortar", "Mortar"),
     ("air_defense", "Air_Defense"),
+    ("air_sweeper", "Air_Sweeper"),
     ("wizard_tower", "Wizard_Tower"),
     ("wall", "Wall"),
     ("army_camp", "Army_Camp"),
@@ -48,6 +49,13 @@ TROOP_ENTITIES: Final[tuple[tuple[str, str], ...]] = (
 
 SPELL_ENTITIES: Final[tuple[tuple[str, str], ...]] = (("lightning_spell", "Lightning_Spell"),)
 
+TRAP_ENTITIES: Final[tuple[tuple[str, str], ...]] = (
+    ("bomb", "Bomb"),
+    ("giant_bomb", "Giant_Bomb"),
+    ("spring_trap", "Spring_Trap"),
+    ("air_bomb", "Air_Bomb"),
+)
+
 
 def entity_url(slug: str) -> str:
     """Return the absolute Fan Wiki URL for an entity slug."""
@@ -62,12 +70,15 @@ def all_entities() -> tuple[tuple[str, str, EntityKind], ...]:
         out.append((name, slug, "troop"))
     for name, slug in SPELL_ENTITIES:
         out.append((name, slug, "spell"))
+    for name, slug in TRAP_ENTITIES:
+        out.append((name, slug, "trap"))
     return tuple(out)
 
 
 __all__ = [
     "BUILDING_ENTITIES",
     "SPELL_ENTITIES",
+    "TRAP_ENTITIES",
     "TROOP_ENTITIES",
     "TROOP_MOVEMENT_URL",
     "WIKI_BASE",

@@ -7,17 +7,21 @@ import {
   BUILDING_TYPES,
   EFFECT_TYPES,
   TERRAIN_TYPES,
+  TRAP_TYPES,
   TROOP_TYPES,
   buildingSpriteUrlCandidates,
   terrainSpriteUrlCandidates,
+  trapSpriteUrlCandidates,
 } from "./spritePaths";
 export {
   BUILDING_TYPES,
   EFFECT_TYPES,
   TERRAIN_TYPES,
+  TRAP_TYPES,
   TROOP_TYPES,
   buildingSpriteUrlCandidates,
   terrainSpriteUrlCandidates,
+  trapSpriteUrlCandidates,
 } from "./spritePaths";
 
 export type SpriteMap = Map<string, Texture | null>;
@@ -47,6 +51,10 @@ export async function loadAllSprites(): Promise<SpriteMap> {
     ...TROOP_TYPES.map(async (t) => {
       const tex = await tryLoad(`/sprites/troops/${t}.png`);
       return [`troop:${t}`, tex] as const;
+    }),
+    ...TRAP_TYPES.map(async (t) => {
+      const tex = await tryLoadFirst(trapSpriteUrlCandidates(t));
+      return [`trap:${t}`, tex] as const;
     }),
     ...EFFECT_TYPES.map(async (t) => {
       const tex = await tryLoad(`/sprites/effects/${t}.png`);

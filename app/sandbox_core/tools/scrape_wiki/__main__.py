@@ -36,16 +36,18 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, TypeAdapter
 
-from sandbox_core.schemas import BuildingType, SpellType, TroopType
+from sandbox_core.schemas import BuildingType, SpellType, TrapType, TroopType
 from sandbox_core.tools.scrape_wiki.build import (
     build_building,
     build_spell,
+    build_trap,
     build_troop,
 )
 from sandbox_core.tools.scrape_wiki.cache import DEFAULT_CACHE_DIR_NAME, HtmlCache
 from sandbox_core.tools.scrape_wiki.entities import (
     BUILDING_ENTITIES,
     SPELL_ENTITIES,
+    TRAP_ENTITIES,
     TROOP_ENTITIES,
     entity_url,
 )
@@ -53,7 +55,7 @@ from sandbox_core.tools.scrape_wiki.parse import extract_level_table
 
 LOGGER = logging.getLogger("scrape_wiki")
 
-OnlyKind = Literal["buildings", "troops", "spells", "caps", "all"]
+OnlyKind = Literal["buildings", "troops", "spells", "traps", "caps", "all"]
 USER_AGENT = "threestarRL-sandbox-core scrape_wiki/0.1 (+https://github.com)"
 
 # Hand-curated TH6 caps that the scraper emits when no `th_caps.json` exists
@@ -67,6 +69,7 @@ DEFAULT_TH_CAPS: dict[str, Any] = {
             "archer_tower": 0,
             "mortar": 0,
             "air_defense": 0,
+            "air_sweeper": 0,
             "wizard_tower": 0,
             "town_hall": 1,
             "clan_castle": 0,
@@ -87,6 +90,7 @@ DEFAULT_TH_CAPS: dict[str, Any] = {
             "archer_tower": 1,
             "mortar": 0,
             "air_defense": 0,
+            "air_sweeper": 0,
             "wizard_tower": 0,
             "town_hall": 1,
             "clan_castle": 0,
@@ -107,6 +111,7 @@ DEFAULT_TH_CAPS: dict[str, Any] = {
             "archer_tower": 1,
             "mortar": 1,
             "air_defense": 0,
+            "air_sweeper": 0,
             "wizard_tower": 0,
             "town_hall": 1,
             "clan_castle": 1,
@@ -127,6 +132,7 @@ DEFAULT_TH_CAPS: dict[str, Any] = {
             "archer_tower": 2,
             "mortar": 1,
             "air_defense": 1,
+            "air_sweeper": 0,
             "wizard_tower": 0,
             "town_hall": 1,
             "clan_castle": 1,
@@ -147,6 +153,7 @@ DEFAULT_TH_CAPS: dict[str, Any] = {
             "archer_tower": 3,
             "mortar": 2,
             "air_defense": 1,
+            "air_sweeper": 0,
             "wizard_tower": 1,
             "town_hall": 1,
             "clan_castle": 1,
@@ -167,6 +174,7 @@ DEFAULT_TH_CAPS: dict[str, Any] = {
             "archer_tower": 3,
             "mortar": 2,
             "air_defense": 2,
+            "air_sweeper": 1,
             "wizard_tower": 2,
             "town_hall": 1,
             "clan_castle": 1,
@@ -249,9 +257,21 @@ def _scrape_spells(cache: HtmlCache, refresh: bool) -> list[dict[str, Any]]:
     return out
 
 
+def _scrape_traps(cache: HtmlCache, refresh: bool) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for name, slug in TRAP_ENTITIES:
+        html = _fetch_html(slug, cache, refresh)
+        table = extract_level_table(html) if html else None
+        if table is None:
+            LOGGER.warning("no level table parsed for trap %s; emitting empty levels", name)
+        out.append(build_trap(name, table))
+    return out
+
+
 _BuildingListAdapter = TypeAdapter(list[BuildingType])
 _TroopListAdapter = TypeAdapter(list[TroopType])
 _SpellListAdapter = TypeAdapter(list[SpellType])
+_TrapListAdapter = TypeAdapter(list[TrapType])
 
 
 def _validate_entries(entries: list[dict[str, Any]], adapter: TypeAdapter[Any]) -> None:
@@ -325,6 +345,17 @@ def _emit_spells(out_dir: Path, cache: HtmlCache, refresh: bool) -> None:
     _write_canonical_json({"schema_version": 1, "entries": entries}, target)
 
 
+def _emit_traps(out_dir: Path, cache: HtmlCache, refresh: bool) -> None:
+    target = out_dir / "traps.json"
+    if not refresh and not _any_cached(cache, [s for _, s in TRAP_ENTITIES]):
+        LOGGER.info("traps: cache empty and no --refresh; running validate-and-emit on %s", target)
+        _write_validate_and_emit(target, TrapType)
+        return
+    entries = _scrape_traps(cache, refresh)
+    _validate_entries(entries, _TrapListAdapter)
+    _write_canonical_json({"schema_version": 1, "entries": entries}, target)
+
+
 def _emit_caps(out_dir: Path) -> None:
     """Write `th_caps.json` from the curated `DEFAULT_TH_CAPS` map.
 
@@ -365,9 +396,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--only",
-        choices=["buildings", "troops", "spells", "caps", "all"],
+        choices=["buildings", "troops", "spells", "traps", "caps", "all"],
         default="all",
-        help="emit only one of the four JSONs (default: all)",
+        help="emit only one of the JSONs (default: all)",
     )
     parser.add_argument(
         "--cache-dir",
@@ -401,6 +432,8 @@ def main(argv: list[str] | None = None) -> int:
             slugs.extend(s for _, s in TROOP_ENTITIES)
         if only in ("all", "spells"):
             slugs.extend(s for _, s in SPELL_ENTITIES)
+        if only in ("all", "traps"):
+            slugs.extend(s for _, s in TRAP_ENTITIES)
         for slug in slugs:
             cache.delete(slug)
 
@@ -410,6 +443,8 @@ def main(argv: list[str] | None = None) -> int:
         _emit_troops(out_dir, cache, refresh)
     if only in ("all", "spells"):
         _emit_spells(out_dir, cache, refresh)
+    if only in ("all", "traps"):
+        _emit_traps(out_dir, cache, refresh)
     if only in ("all", "caps"):
         _emit_caps(out_dir)
 

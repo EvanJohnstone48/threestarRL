@@ -107,7 +107,7 @@ export class SpriteCalibratorScene {
     this.currentSprite = null;
     if (!this.selection) return;
 
-    if (this.selection.kind === "buildings") {
+    if (this.selection.kind === "buildings" || this.selection.kind === "traps") {
       this.drawBuildingGrid(this.selection.name, this.selection.footprintSize);
     } else {
       this.drawTroopGrid();
@@ -234,7 +234,7 @@ export class SpriteCalibratorScene {
     const sel = this.selection;
     if (sel) {
       const caption = new Text({
-        text: `${sel.kind === "troops" ? "troop" : "effect"}: ${sel.name}  reference grid 3×3`,
+        text: `${sel.kind}: ${sel.name}  reference grid 3×3`,
         style: labelStyle,
       });
       caption.x = -caption.width / 2;
@@ -253,7 +253,7 @@ export class SpriteCalibratorScene {
     let anchorY: number;
     let anchorMode: { ax: number; ay: number };
 
-    if (this.selection.kind === "buildings") {
+    if (this.selection.kind === "buildings" || this.selection.kind === "traps") {
       const n = this.selection.footprintSize;
       const S = gridToIsoScreen(n, n);
       anchorX = S.x;

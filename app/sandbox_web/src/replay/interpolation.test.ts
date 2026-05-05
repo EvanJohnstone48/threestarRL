@@ -13,6 +13,7 @@ const frame = (
   state: {
     tick,
     buildings: [],
+    traps: [],
     troops: troops.map((t) => ({
       id: t.id,
       troop_type: "barbarian",

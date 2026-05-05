@@ -32,7 +32,7 @@ COMMITTED_DATA_DIR = REPO_ROOT / "app" / "data"
 def _seed_data_dir(target: Path) -> None:
     """Copy committed JSONs into a tmp dir for validate-and-emit testing."""
     target.mkdir(parents=True, exist_ok=True)
-    for name in ("buildings.json", "troops.json", "spells.json", "th_caps.json"):
+    for name in ("buildings.json", "troops.json", "spells.json", "traps.json", "th_caps.json"):
         src = COMMITTED_DATA_DIR / name
         if src.exists():
             shutil.copy2(src, target / name)
@@ -46,7 +46,7 @@ def test_validate_and_emit_no_network_no_cache(tmp_path: Path) -> None:
 
     rc = scraper_main(["--out", str(out_dir), "--cache-dir", str(cache_dir), "--quiet"])
     assert rc == 0
-    for name in ("buildings.json", "troops.json", "spells.json", "th_caps.json"):
+    for name in ("buildings.json", "troops.json", "spells.json", "traps.json", "th_caps.json"):
         assert (out_dir / name).exists()
 
 
@@ -59,7 +59,7 @@ def test_validate_and_emit_byte_identical_reruns(tmp_path: Path) -> None:
     scraper_main(["--out", str(out_dir), "--cache-dir", str(cache_dir), "--quiet"])
     snapshot = {
         name: (out_dir / name).read_bytes()
-        for name in ("buildings.json", "troops.json", "spells.json", "th_caps.json")
+        for name in ("buildings.json", "troops.json", "spells.json", "traps.json", "th_caps.json")
     }
 
     scraper_main(["--out", str(out_dir), "--cache-dir", str(cache_dir), "--quiet"])

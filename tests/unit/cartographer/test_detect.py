@@ -32,11 +32,16 @@ def test_detection_bbox_at_centre() -> None:
 
 
 def test_roboflow_class_enum_parity() -> None:
-    """AC-C8: RoboflowClass values must equal buildings.json names minus 'wall'."""
+    """AC-C8: RoboflowClass values must equal buildings.json (minus 'wall') union traps.json."""
     from cartographer.detect import RoboflowClass
 
-    buildings_path = Path(__file__).parents[3] / "app" / "data" / "buildings.json"
-    data = json.loads(buildings_path.read_text(encoding="utf-8"))
-    expected = {entry["name"] for entry in data["entries"]} - {"wall"}
+    data_dir = Path(__file__).parents[3] / "app" / "data"
+    buildings = json.loads((data_dir / "buildings.json").read_text(encoding="utf-8"))
+    traps = json.loads((data_dir / "traps.json").read_text(encoding="utf-8"))
+    expected = (
+        {entry["name"] for entry in buildings["entries"]}
+        - {"wall"}
+        | {entry["name"] for entry in traps["entries"]}
+    )
     actual = {c.value for c in RoboflowClass}
     assert actual == expected

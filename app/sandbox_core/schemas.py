@@ -13,7 +13,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-SCHEMA_VERSION: Literal[2] = 2
+SCHEMA_VERSION: Literal[3] = 3
 
 
 class _StrictModel(BaseModel):
@@ -75,6 +75,17 @@ class EventType(StrEnum):
     TARGET_ACQUIRED = "target_acquired"
     TARGET_LOST = "target_lost"
     ATTACK_END = "attack_end"
+    TRAP_ARMED = "trap_armed"
+    TRAP_TRIGGERED = "trap_triggered"
+    TRAP_DETONATED = "trap_detonated"
+    TROOP_EJECTED = "troop_ejected"
+
+
+class TrapKind(StrEnum):
+    BOMB = "bomb"
+    GIANT_BOMB = "giant_bomb"
+    SPRING_TRAP = "spring_trap"
+    AIR_BOMB = "air_bomb"
 
 
 # ---------------------------------------------------------------------------
@@ -178,6 +189,38 @@ class SpellType(_StrictModel):
         raise KeyError(f"SpellType {self.name!r} has no stats for level {level}")
 
 
+class TrapLevelStats(_StrictModel):
+    level: int = Field(ge=1)
+    damage: float = Field(default=0.0, ge=0)
+    damage_radius_tiles: float = Field(default=0.0, ge=0)
+    spring_capacity: int = Field(default=0, ge=0)
+    unlocked_at_th: int = Field(default=1, ge=1)
+
+
+class TrapType(_StrictModel):
+    name: str
+    kind: TrapKind
+    footprint: tuple[int, int] = (1, 1)
+    target_filter: TargetFilter = TargetFilter.GROUND
+    trigger_radius_tiles: float = Field(default=0.0, ge=0)
+    fuse_ticks: int = Field(default=0, ge=0)
+    levels: list[TrapLevelStats]
+
+    @field_validator("footprint")
+    @classmethod
+    def _square_footprint(cls, value: tuple[int, int]) -> tuple[int, int]:
+        h, w = value
+        if h < 1 or w < 1:
+            raise ValueError("footprint dimensions must be >= 1")
+        return (h, w)
+
+    def stats_at(self, level: int) -> TrapLevelStats:
+        for entry in self.levels:
+            if entry.level == level:
+                return entry
+        raise KeyError(f"TrapType {self.name!r} has no stats for level {level}")
+
+
 # ---------------------------------------------------------------------------
 # BaseLayout / DeploymentPlan
 # ---------------------------------------------------------------------------
@@ -208,11 +251,18 @@ class CartographerProvenance(_StrictModel):
     per_placement_confidence: dict[str, float]
 
 
+class TrapPlacement(_StrictModel):
+    trap_type: str
+    origin: tuple[int, int]
+    level: int | None = None
+
+
 class BaseLayout(_StrictModel):
-    schema_version: Literal[2] = SCHEMA_VERSION
+    schema_version: Literal[3] = SCHEMA_VERSION
     metadata: BaseLayoutMetadata
     th_level: int = Field(ge=1, le=15)
     placements: list[BuildingPlacement]
+    traps: list[TrapPlacement] = Field(default_factory=lambda: list[TrapPlacement]())
     cc_contents: list[str] = Field(default_factory=list)
     provenance: CartographerProvenance | None = None
 
@@ -249,7 +299,7 @@ class DeploymentAction(_StrictModel):
 
 
 class DeploymentPlan(_StrictModel):
-    schema_version: Literal[2] = SCHEMA_VERSION
+    schema_version: Literal[3] = SCHEMA_VERSION
     metadata: DeploymentPlanMetadata
     actions: list[DeploymentAction]
 
@@ -317,10 +367,21 @@ class Score(_StrictModel):
     town_hall_destroyed: bool = False
 
 
+class TrapState(_StrictModel):
+    id: int
+    trap_type: str
+    origin: tuple[int, int]
+    level: int
+    triggered: bool = False
+    detonated: bool = False
+    detonate_at_tick: int | None = None
+
+
 class WorldState(_StrictModel):
     tick: int = Field(ge=0)
     buildings: list[BuildingState]
     troops: list[TroopState]
+    traps: list[TrapState] = Field(default_factory=lambda: list[TrapState]())
     projectiles: list[Projectile] = Field(default_factory=lambda: list[Projectile]())
     spells: list[SpellCast] = Field(default_factory=lambda: list[SpellCast]())
     score: Score
@@ -352,7 +413,7 @@ class ReplayMetadata(_StrictModel):
 
 
 class Replay(_StrictModel):
-    schema_version: Literal[2] = SCHEMA_VERSION
+    schema_version: Literal[3] = SCHEMA_VERSION
     metadata: ReplayMetadata
     initial_state: WorldState
     frames: list[TickFrame]
@@ -426,10 +487,38 @@ def _migrate_replay_v1_to_v2(payload: dict[str, Any]) -> dict[str, Any]:
     return updated
 
 
+def _migrate_baselayout_v2_to_v3(payload: dict[str, Any]) -> dict[str, Any]:
+    updated = dict(payload)
+    updated["schema_version"] = 3
+    updated.setdefault("traps", [])
+    return updated
+
+
+def _migrate_deploymentplan_v2_to_v3(payload: dict[str, Any]) -> dict[str, Any]:
+    updated = dict(payload)
+    updated["schema_version"] = 3
+    return updated
+
+
+def _migrate_replay_v2_to_v3(payload: dict[str, Any]) -> dict[str, Any]:
+    updated = dict(payload)
+    updated["schema_version"] = 3
+
+    def _patch_world(world: Any) -> None:
+        if isinstance(world, dict):
+            world.setdefault("traps", [])
+
+    _patch_world(updated.get("initial_state"))
+    for frame in updated.get("frames", []) or []:
+        if isinstance(frame, dict):
+            _patch_world(frame.get("state"))
+    return updated
+
+
 MIGRATIONS: dict[str, list[MigrationStep]] = {
-    "BaseLayout": [_migrate_baselayout_v1_to_v2],
-    "DeploymentPlan": [_migrate_deploymentplan_v1_to_v2],
-    "Replay": [_migrate_replay_v1_to_v2],
+    "BaseLayout": [_migrate_baselayout_v1_to_v2, _migrate_baselayout_v2_to_v3],
+    "DeploymentPlan": [_migrate_deploymentplan_v1_to_v2, _migrate_deploymentplan_v2_to_v3],
+    "Replay": [_migrate_replay_v1_to_v2, _migrate_replay_v2_to_v3],
 }
 
 
@@ -485,11 +574,11 @@ __all__ = [
     "BaseLayout",
     "BaseLayoutMetadata",
     "BuildingCategory",
-    "CartographerProvenance",
     "BuildingLevelStats",
     "BuildingPlacement",
     "BuildingState",
     "BuildingType",
+    "CartographerProvenance",
     "DeploymentAction",
     "DeploymentPlan",
     "DeploymentPlanMetadata",
@@ -510,6 +599,11 @@ __all__ = [
     "TargetFilter",
     "TargetPreference",
     "TickFrame",
+    "TrapKind",
+    "TrapLevelStats",
+    "TrapPlacement",
+    "TrapState",
+    "TrapType",
     "TroopCategory",
     "TroopLevelStats",
     "TroopState",

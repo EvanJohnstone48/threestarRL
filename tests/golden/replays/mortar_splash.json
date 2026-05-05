@@ -137,6 +137,7 @@
         },
         "spells": [],
         "tick": 0,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -263,6 +264,7 @@
         },
         "spells": [],
         "tick": 1,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -389,6 +391,7 @@
         },
         "spells": [],
         "tick": 2,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -515,6 +518,7 @@
         },
         "spells": [],
         "tick": 3,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -641,6 +645,7 @@
         },
         "spells": [],
         "tick": 4,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -767,6 +772,7 @@
         },
         "spells": [],
         "tick": 5,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -893,6 +899,7 @@
         },
         "spells": [],
         "tick": 6,
+        "traps": [],
         "troops": [
           {
             "destroyed": false,
@@ -1097,6 +1104,7 @@
         },
         "spells": [],
         "tick": 7,
+        "traps": [],
         "troops": [
           {
             "destroyed": true,
@@ -1199,11 +1207,12 @@
     },
     "spells": [],
     "tick": 0,
+    "traps": [],
     "troops": []
   },
   "metadata": {
     "base_name": "mortar_splash",
-    "config_hash": "911e5aea9ede6564cf51ad8a8f22dd9d179d38bd9647be8ba63f6227daffc1b4",
+    "config_hash": "63ec0a6cc31b9b95fd28f41de80912f7aef95b1cf02dbb511b7b5d9b67405c91",
     "episode_id": "",
     "final_score": {
       "destruction_pct": 0.0,
@@ -1218,5 +1227,5 @@
     "started_at": "",
     "total_ticks": 8
   },
-  "schema_version": 2
+  "schema_version": 3
 }

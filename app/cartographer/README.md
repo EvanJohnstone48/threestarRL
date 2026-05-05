@@ -19,8 +19,24 @@ screenshot.png
 
 - Model training happens off-codebase in Roboflow's UI.
 - Repo only contains inference glue + `BaseLayout` emission.
-- API key in `ROBOFLOW_API_KEY` env var (never committed).
 - Project + dataset version pinned in `app/data/cartographer_config.json`.
+- Hosted inference reads the Roboflow API key from `ROBOFLOW_API_KEY`.
+- Keep the key in a local root `.env` file or shell environment; never commit it.
+
+Example `.env`:
+
+```dotenv
+ROBOFLOW_API_KEY=your_roboflow_api_key_here
+```
+
+PowerShell setup for the current terminal:
+
+```powershell
+$env:ROBOFLOW_API_KEY = "your_roboflow_api_key_here"
+```
+
+Issue 027's real detector should fail with a clear setup message when
+`ROBOFLOW_API_KEY` is unset.
 
 ## v1 commitments
 

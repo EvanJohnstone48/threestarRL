@@ -9,7 +9,7 @@ import {
 import type { Replay } from "@/generated_types";
 
 const minimalReplay = (overrides: Partial<Replay> = {}): Replay => ({
-  schema_version: 1,
+  schema_version: 3,
   metadata: {
     sim_version: "0.1.0",
     base_name: "tracer",
@@ -26,6 +26,7 @@ const minimalReplay = (overrides: Partial<Replay> = {}): Replay => ({
     tick: 0,
     buildings: [],
     troops: [],
+    traps: [],
     projectiles: [],
     spells: [],
     score: { stars: 0, destruction_pct: 0, ticks_elapsed: 0, town_hall_destroyed: false },
@@ -38,7 +39,7 @@ describe("parseReplay", () => {
   it("accepts a valid replay JSON string", () => {
     const text = JSON.stringify(minimalReplay());
     const parsed = parseReplay(text);
-    expect(parsed.schema_version).toBe(1);
+    expect(parsed.schema_version).toBe(3);
     expect(parsed.metadata.sim_version).toBe("0.1.0");
   });
 
@@ -74,12 +75,12 @@ describe("validateReplay", () => {
 
 describe("crossVersionBanner / simVersionBanner", () => {
   it("returns null when schema_version matches", () => {
-    expect(crossVersionBanner(minimalReplay({ schema_version: 1 }), 1)).toBeNull();
+    expect(crossVersionBanner(minimalReplay(), 3)).toBeNull();
   });
 
   it("returns a banner message when schema versions differ", () => {
-    const banner = crossVersionBanner(minimalReplay({ schema_version: 1 }), 2);
-    expect(banner).toMatch(/schema_version 1.*runtime 2.*playback only/);
+    const banner = crossVersionBanner(minimalReplay(), 2);
+    expect(banner).toMatch(/schema_version 3.*runtime 2.*playback only/);
   });
 
   it("returns null when sim_version matches", () => {

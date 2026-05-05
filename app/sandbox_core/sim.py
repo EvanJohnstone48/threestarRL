@@ -55,6 +55,8 @@ from sandbox_core.schemas import (
     SpellCast,
     SpellType,
     TickFrame,
+    TrapState,
+    TrapType,
     TroopLevelStats,
     TroopState,
     TroopType,
@@ -99,6 +101,7 @@ class Sim:
         "_base",
         "_catalogue_buildings",
         "_catalogue_spells",
+        "_catalogue_traps",
         "_catalogue_troops",
         "_config_hash",
         "_ctx",
@@ -120,6 +123,7 @@ class Sim:
         catalogue_buildings: dict[str, BuildingType],
         catalogue_troops: dict[str, TroopType],
         catalogue_spells: dict[str, SpellType] | None = None,
+        catalogue_traps: dict[str, TrapType] | None = None,
         spell_capacity_total: int = 0,
         sim_version: str = "0.1.0",
         config_hash: str = "",
@@ -129,6 +133,7 @@ class Sim:
         self._catalogue_buildings = catalogue_buildings
         self._catalogue_troops = catalogue_troops
         self._catalogue_spells: dict[str, SpellType] = catalogue_spells or {}
+        self._catalogue_traps: dict[str, TrapType] = catalogue_traps or {}
         self._spell_capacity_total = spell_capacity_total
         self._sim_version = sim_version
         self._config_hash = config_hash
@@ -157,6 +162,7 @@ class Sim:
             catalogue_buildings=self._catalogue_buildings,
             catalogue_troops=self._catalogue_troops,
             catalogue_spells=self._catalogue_spells,
+            catalogue_traps=self._catalogue_traps,
             spell_capacity_total=self._spell_capacity_total,
             sim_version=self._sim_version,
             config_hash=self._config_hash,
@@ -180,6 +186,7 @@ class Sim:
         self._step_apply_deployments(tick, events)
         self._step_tick_spell_casts(tick, events)
         self._step_troop_attacks(tick, events)
+        self._step_traps(tick, events)
         self._step_defense_attacks(tick, events)
         damage_events = self._collect_pending_damage_events(events)
         self._apply_damage(damage_events, tick, events)
@@ -268,6 +275,9 @@ class Sim:
             raise InvalidDeploymentError(
                 f"BaseLayout must contain exactly 1 Town Hall; found {seen_th}"
             )
+        for trap in self._base.traps:
+            if trap.trap_type not in self._catalogue_traps:
+                raise InvalidDeploymentError(f"unknown trap_type: {trap.trap_type!r}")
 
     def _validate_plan(self, plan: DeploymentPlan) -> None:
         for action in plan.actions:
@@ -312,6 +322,22 @@ class Sim:
                 )
             )
             self._ctx.building_cd[bid] = _AttackerCooldown()
+
+        traps: list[TrapState] = []
+        for trap in self._base.traps:
+            tt = self._catalogue_traps[trap.trap_type]
+            tlevel = trap.level if trap.level is not None else self._base.th_level
+            tlevel = min(tlevel, max(s.level for s in tt.levels))
+            tid = self._next_id()
+            traps.append(
+                TrapState(
+                    id=tid,
+                    trap_type=trap.trap_type,
+                    origin=trap.origin,
+                    level=tlevel,
+                )
+            )
+
         score = compute_score(
             buildings=buildings,
             building_types=self._catalogue_buildings,
@@ -321,6 +347,7 @@ class Sim:
             tick=0,
             buildings=buildings,
             troops=[],
+            traps=traps,
             projectiles=[],
             spells=[],
             score=score,
@@ -943,6 +970,198 @@ class Sim:
             return
         ux, uy = dr / dist, dc / dist
         troop.position = (pr + ux * actual_step, pc + uy * actual_step)
+
+    def _step_traps(self, tick: int, events: list[Event]) -> None:
+        """Trap arming, fuse advance, and detonation.
+
+        Order:
+          1. For every armed (not-yet-triggered) trap, check if any qualifying
+             troop is within trigger_radius. If so, mark triggered and schedule
+             detonate_at_tick = tick + fuse_ticks.
+          2. For every triggered-not-yet-detonated trap whose detonate tick has
+             arrived, resolve its effect (splash damage / spring eject) and mark
+             detonated.
+
+        Detonated traps stay in WorldState (for replay rendering) but never
+        re-arm — a single sim is one attack, no inter-attack rearm.
+        """
+        if not self._world.traps:
+            return
+        for trap in sorted(self._world.traps, key=lambda x: x.id):
+            if trap.detonated:
+                continue
+            tt = self._catalogue_traps[trap.trap_type]
+            center = footprint_center(trap.origin, tt.footprint)
+
+            if not trap.triggered and self._trap_should_trigger(trap, tt, center):
+                trap.triggered = True
+                trap.detonate_at_tick = tick + tt.fuse_ticks
+                events.append(
+                    Event(
+                        type=EventType.TRAP_TRIGGERED,
+                        tick=tick,
+                        payload={
+                            "trap_id": trap.id,
+                            "trap_type": trap.trap_type,
+                            "kind": tt.kind.value,
+                            "center": list(center),
+                            "fuse_ticks": tt.fuse_ticks,
+                        },
+                    )
+                )
+
+            if (
+                trap.triggered
+                and not trap.detonated
+                and trap.detonate_at_tick is not None
+                and tick >= trap.detonate_at_tick
+            ):
+                self._detonate_trap(trap, tt, center, tick, events)
+                trap.detonated = True
+
+    def _trap_should_trigger(
+        self,
+        trap: TrapState,
+        tt: TrapType,
+        center: tuple[float, float],
+    ) -> bool:
+        radius = tt.trigger_radius_tiles
+        target_filter = tt.target_filter.value
+        for t in self._world.troops:
+            if t.destroyed:
+                continue
+            troop_type = self._catalogue_troops[t.troop_type]
+            cat = troop_type.category.value
+            if target_filter == "ground" and cat != "ground":
+                continue
+            if target_filter == "air" and cat != "air":
+                continue
+            if euclidean(center, t.position) <= radius + 1e-9:
+                return True
+        return False
+
+    def _detonate_trap(
+        self,
+        trap: TrapState,
+        tt: TrapType,
+        center: tuple[float, float],
+        tick: int,
+        events: list[Event],
+    ) -> None:
+        stats = tt.stats_at(trap.level)
+        kind = tt.kind.value
+
+        if kind == "spring_trap":
+            victim = self._spring_trap_victim(tt, center, stats.spring_capacity)
+            if victim is not None:
+                victim.hp = 0.0
+                victim.destroyed = True
+                events.append(
+                    Event(
+                        type=EventType.TROOP_EJECTED,
+                        tick=tick,
+                        payload={
+                            "trap_id": trap.id,
+                            "troop_id": victim.id,
+                            "troop_type": victim.troop_type,
+                        },
+                    )
+                )
+            events.append(
+                Event(
+                    type=EventType.TRAP_DETONATED,
+                    tick=tick,
+                    payload={
+                        "trap_id": trap.id,
+                        "trap_type": trap.trap_type,
+                        "kind": kind,
+                        "center": list(center),
+                    },
+                )
+            )
+            return
+
+        # Explosive traps: splash damage to qualifying troops in damage_radius.
+        target_filter = tt.target_filter.value
+        damage_events: list[DamageEvent] = []
+        for t in sorted(self._world.troops, key=lambda x: x.id):
+            if t.destroyed:
+                continue
+            troop_type = self._catalogue_troops[t.troop_type]
+            cat = troop_type.category.value
+            if target_filter == "ground" and cat != "ground":
+                continue
+            if target_filter == "air" and cat != "air":
+                continue
+            if euclidean(center, t.position) <= stats.damage_radius_tiles + 1e-9:
+                damage_events.append(
+                    DamageEvent(target_id=t.id, damage=stats.damage, attacker_id=trap.id)
+                )
+        if damage_events:
+            self._enqueue_damage(tick, damage_events)
+            for de in damage_events:
+                events.append(
+                    Event(
+                        type=EventType.DAMAGE,
+                        tick=tick,
+                        payload={
+                            "target_id": de.target_id,
+                            "damage": de.damage,
+                            "attacker_id": de.attacker_id,
+                            "kind": "trap",
+                        },
+                    )
+                )
+        events.append(
+            Event(
+                type=EventType.TRAP_DETONATED,
+                tick=tick,
+                payload={
+                    "trap_id": trap.id,
+                    "trap_type": trap.trap_type,
+                    "kind": kind,
+                    "center": list(center),
+                    "damage": stats.damage,
+                    "damage_radius_tiles": stats.damage_radius_tiles,
+                },
+            )
+        )
+
+    def _spring_trap_victim(
+        self,
+        tt: TrapType,
+        center: tuple[float, float],
+        spring_capacity: int,
+    ) -> TroopState | None:
+        """Pick the highest-housing-space ground troop in trigger_radius.
+
+        Eject only if its housing_space <= spring_capacity (per pre-rework
+        mechanic). Otherwise return None (no effect).
+        """
+        target_filter = tt.target_filter.value
+        radius = tt.trigger_radius_tiles
+        best: TroopState | None = None
+        best_housing = -1
+        for t in sorted(self._world.troops, key=lambda x: x.id):
+            if t.destroyed:
+                continue
+            troop_type = self._catalogue_troops[t.troop_type]
+            cat = troop_type.category.value
+            if target_filter == "ground" and cat != "ground":
+                continue
+            if target_filter == "air" and cat != "air":
+                continue
+            if euclidean(center, t.position) > radius + 1e-9:
+                continue
+            housing = troop_type.housing_space
+            if housing > best_housing:
+                best_housing = housing
+                best = t
+        if best is None:
+            return None
+        if best_housing > spring_capacity:
+            return None
+        return best
 
     def _step_defense_attacks(self, tick: int, events: list[Event]) -> None:
         # Placeholder per PRD §13.3: defenses pick the nearest in-range troop

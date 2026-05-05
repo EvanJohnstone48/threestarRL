@@ -18,10 +18,14 @@ import {
   COLOR_GRID_LINE,
   COLOR_HP_FULL,
   COLOR_PROJECTILE,
+  TRAP_COLOR,
+  TRAP_DETONATED_COLOR,
+  TRAP_TRIGGERED_COLOR,
   buildingColor,
   buildingLabel,
   categoryForBuilding,
   hpBarColor,
+  trapLabel,
   troopColor,
   troopLabel,
 } from "./colors";
@@ -66,9 +70,12 @@ export class TopDownRenderer {
   private camera: Container;
   private gridLayer: Container;
   private buildingLayer: Container;
+  private trapLayer: Container;
   private troopLayer: Container;
   private projectileLayer: Container;
   private hpBarLayer: Container;
+  private buildingsVisible = true;
+  private trapsVisible = true;
   private dragging = false;
   private lastPointer: { x: number; y: number } | null = null;
   private pointerDownPos: { x: number; y: number } | null = null;
@@ -83,11 +90,13 @@ export class TopDownRenderer {
     this.camera = new Container();
     this.gridLayer = new Container();
     this.buildingLayer = new Container();
+    this.trapLayer = new Container();
     this.troopLayer = new Container();
     this.projectileLayer = new Container();
     this.hpBarLayer = new Container();
     this.camera.addChild(this.gridLayer);
     this.camera.addChild(this.buildingLayer);
+    this.camera.addChild(this.trapLayer);
     this.camera.addChild(this.projectileLayer);
     this.camera.addChild(this.troopLayer);
     this.camera.addChild(this.hpBarLayer);
@@ -140,10 +149,14 @@ export class TopDownRenderer {
   // for ~100 buildings at TH6); troops + projectiles likewise.
   renderFrame(frame: InterpolatedFrame, currentTickFrame: TickFrame): void {
     this.buildingLayer.removeChildren();
+    this.trapLayer.removeChildren();
     this.troopLayer.removeChildren();
     this.projectileLayer.removeChildren();
     this.hpBarLayer.removeChildren();
     this.entityHitAreas = [];
+
+    this.buildingLayer.visible = this.buildingsVisible;
+    this.trapLayer.visible = this.trapsVisible;
 
     for (const b of currentTickFrame.state.buildings) {
       if (b.destroyed) continue;
@@ -177,6 +190,33 @@ export class TopDownRenderer {
       }
 
       this.entityHitAreas.push({ kind: "building", id: b.id, x, y, w: w * TILE_SIZE, h: h * TILE_SIZE });
+    }
+
+    for (const trap of currentTickFrame.state.traps ?? []) {
+      const [h, w] = footprintFor(trap.trap_type);
+      const { x, y } = gridToScreen(trap.origin[0], trap.origin[1]);
+      const color = trap.detonated
+        ? TRAP_DETONATED_COLOR
+        : trap.triggered
+          ? TRAP_TRIGGERED_COLOR
+          : TRAP_COLOR;
+      const rect = new Graphics();
+      rect.rect(x, y, w * TILE_SIZE, h * TILE_SIZE).fill({
+        color,
+        alpha: trap.detonated ? 0.35 : 0.85,
+      });
+      rect
+        .rect(x, y, w * TILE_SIZE, h * TILE_SIZE)
+        .stroke({ color: 0x000000, width: 1, alpha: 0.5 });
+      this.trapLayer.addChild(rect);
+
+      const text = new Text({
+        text: trapLabel(trap.trap_type, trap.level),
+        style: labelStyleTiny,
+      });
+      text.x = x + (w * TILE_SIZE) / 2 - text.width / 2;
+      text.y = y + (h * TILE_SIZE) / 2 - text.height / 2;
+      this.trapLayer.addChild(text);
     }
 
     for (const p of frame.projectiles) {
@@ -330,6 +370,16 @@ export class TopDownRenderer {
 
   setVisible(visible: boolean): void {
     this.camera.visible = visible;
+  }
+
+  setBuildingsVisible(visible: boolean): void {
+    this.buildingsVisible = visible;
+    this.buildingLayer.visible = visible;
+  }
+
+  setTrapsVisible(visible: boolean): void {
+    this.trapsVisible = visible;
+    this.trapLayer.visible = visible;
   }
 
   destroy(): void {

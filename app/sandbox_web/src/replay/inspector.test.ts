@@ -9,6 +9,7 @@ function makeFrame(overrides: Partial<TickFrame["state"]> = {}): TickFrame {
       tick: 0,
       buildings: [],
       troops: [],
+      traps: [],
       projectiles: [],
       spells: [],
       score: { stars: 0, destruction_pct: 0, ticks_elapsed: 0, town_hall_destroyed: false },

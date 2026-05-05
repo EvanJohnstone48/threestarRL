@@ -72,10 +72,10 @@ describe("editorState — placeBuildingAt", () => {
   });
 
   it("returns cap_exceeded when TH6 cap is reached", () => {
-    // mortar cap is 1
-    let state = enterPlaceMode(createEditorState(), "mortar");
+    // air_sweeper cap is 1
+    let state = enterPlaceMode(createEditorState(), "air_sweeper");
     [state] = placeBuildingAt(state, [10, 10]);
-    state = enterPlaceMode(state, "mortar");
+    state = enterPlaceMode(state, "air_sweeper");
     const [finalState, result] = placeBuildingAt(state, [20, 20]);
     expect(result).toBe("cap_exceeded");
     expect(finalState.placements).toHaveLength(1);
@@ -124,9 +124,10 @@ describe("editorState — getGhostLegality", () => {
   });
 
   it("returns cap_exceeded when cap is reached", () => {
-    let state = enterPlaceMode(createEditorState(), "mortar");
+    // air_sweeper has TH6 cap = 1, so the second placement attempt is over cap.
+    let state = enterPlaceMode(createEditorState(), "air_sweeper");
     [state] = placeBuildingAt(state, [10, 10]);
-    state = enterPlaceMode(state, "mortar");
+    state = enterPlaceMode(state, "air_sweeper");
     expect(getGhostLegality(state, [20, 20])).toBe("cap_exceeded");
   });
 });

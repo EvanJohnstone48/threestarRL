@@ -9,6 +9,7 @@ function makeFrame(tick: number, events: TickFrame["events"] = []): TickFrame {
       tick,
       buildings: [],
       troops: [],
+      traps: [],
       projectiles: [],
       spells: [],
       score: { stars: 0, destruction_pct: 0, ticks_elapsed: tick, town_hall_destroyed: false },

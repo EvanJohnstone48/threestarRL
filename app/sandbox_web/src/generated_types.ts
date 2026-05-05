@@ -6,7 +6,7 @@
 // After editing the Pydantic schemas, regenerate this file and commit the
 // result. CI and pre-commit fail if this file drifts from the schemas.
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export type AttackKind =
   | "melee"
@@ -36,7 +36,11 @@ export type EventType =
   | "sim_terminated"
   | "spell_cast"
   | "target_acquired"
-  | "target_lost";
+  | "target_lost"
+  | "trap_armed"
+  | "trap_detonated"
+  | "trap_triggered"
+  | "troop_ejected";
 
 export type TargetFilter =
   | "air"
@@ -50,15 +54,22 @@ export type TargetPreference =
   | "resources"
   | "walls";
 
+export type TrapKind =
+  | "air_bomb"
+  | "bomb"
+  | "giant_bomb"
+  | "spring_trap";
+
 export type TroopCategory =
   | "air"
   | "ground";
 
 export interface BaseLayout {
-  schema_version: 2;
+  schema_version: 3;
   metadata: BaseLayoutMetadata;
   th_level: number;
   placements: BuildingPlacement[];
+  traps: TrapPlacement[];
   cc_contents: string[];
   provenance: CartographerProvenance | null;
 }
@@ -132,7 +143,7 @@ export interface DeploymentAction {
 }
 
 export interface DeploymentPlan {
-  schema_version: 2;
+  schema_version: 3;
   metadata: DeploymentPlanMetadata;
   actions: DeploymentAction[];
 }
@@ -165,7 +176,7 @@ export interface Projectile {
 }
 
 export interface Replay {
-  schema_version: 2;
+  schema_version: 3;
   metadata: ReplayMetadata;
   initial_state: WorldState;
   frames: TickFrame[];
@@ -224,6 +235,40 @@ export interface TickFrame {
   events: Event[];
 }
 
+export interface TrapLevelStats {
+  level: number;
+  damage: number;
+  damage_radius_tiles: number;
+  spring_capacity: number;
+  unlocked_at_th: number;
+}
+
+export interface TrapPlacement {
+  trap_type: string;
+  origin: [number, number];
+  level: number | null;
+}
+
+export interface TrapState {
+  id: number;
+  trap_type: string;
+  origin: [number, number];
+  level: number;
+  triggered: boolean;
+  detonated: boolean;
+  detonate_at_tick: number | null;
+}
+
+export interface TrapType {
+  name: string;
+  kind: TrapKind;
+  footprint: [number, number];
+  target_filter: TargetFilter;
+  trigger_radius_tiles: number;
+  fuse_ticks: number;
+  levels: TrapLevelStats[];
+}
+
 export interface TroopLevelStats {
   level: number;
   hp: number;
@@ -266,6 +311,7 @@ export interface WorldState {
   tick: number;
   buildings: BuildingState[];
   troops: TroopState[];
+  traps: TrapState[];
   projectiles: Projectile[];
   spells: SpellCast[];
   score: Score;

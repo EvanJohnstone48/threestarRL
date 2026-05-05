@@ -32,7 +32,7 @@ def test_run_writes_json_and_returns_layout(tmp_path: Path) -> None:
     assert isinstance(layout, BaseLayout)
     assert out.exists()
     data = json.loads(out.read_text())
-    assert data["schema_version"] == 2
+    assert data["schema_version"] == 3
     assert data["provenance"] is not None
 
 

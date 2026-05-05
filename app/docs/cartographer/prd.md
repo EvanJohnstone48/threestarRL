@@ -98,9 +98,15 @@ This composes naturally with the grass-grid step: walls break the grass pattern 
 
 ### 4.6 Detection-to-grid alignment
 
-Footprint comes from class label, not bbox dimensions. Each class maps deterministically to a footprint (e.g., `cannon → 3×3`, `town_hall → 4×4`) loaded from `app/data/buildings.json`. Bbox center is converted to fractional tile coordinates, half-footprint is subtracted, and the result is rounded to the nearest integer tile origin. The integer origin is reverse-projected back to a predicted bbox center; predicted vs. observed center distance is asserted ≤ 0.5 tile.
+Footprint comes from class label, not bbox dimensions. Each class maps deterministically to a footprint (e.g., `cannon → 3×3`, `town_hall → 4×4`) loaded from `app/data/buildings.json`.
+
+The alignment anchor is the bbox **bottom-center** pixel `(bbox_x_center, bbox_y_max)`, not the bbox center. Sprite vertical heights vary widely by class (Town Hall is tall, builder's hut is short), but every CoC sprite's base sits flush with the bottom apex of its tile-footprint diamond, so bottom-center is the most class-invariant pixel anchor. A per-class screen-pixel offset `(dx, dy)` from `app/data/cartographer_calibration.json` is added to the bottom-center to recover the true footprint anchor pixel; the offset table is calibrated once per Roboflow `dataset_version` via the sandbox-web Cartographer tab (§4.7-bis). A missing or stale calibration table is non-fatal — `align` falls back to zero offsets with a warning, never blocks ingestion.
+
+The footprint anchor pixel is converted to fractional tile coordinates via the iso basis + derived `(pitch, origin)`. For an `N×N` footprint, the top-left tile is at `round(anchor_tile_frac − (N, N))`. The integer origin is reverse-projected back to a predicted anchor pixel; predicted vs. observed distance is asserted ≤ 0.5 tile. This works uniformly for 2×2, 3×3, 4×4, and 5×5 footprints — no even/odd parity special-case is required.
 
 If two detections round to overlapping tile origins, the stage raises and the pipeline aborts with a diagnostic PNG. There is no automated tie-breaking by confidence or any other heuristic.
+
+The grid frame derived from grass tiles is local — it pins pitch and a phase, but not an absolute (0,0) on the 44×44 schema grid. After alignment, the convex-hull centroid of all placed building footprints is translated to grid `(22, 22)` to commit to the schema frame. This is contracted only for TH6 bases, which never extend close to the playable boundary (§4.11). Future TH-level expansion will need an explicit boundary-derivation strategy. Edge-pushed TH6 bases land off-center in the resulting JSON; this is acceptable for the v2 eval set. If centering would push any placement outside the 44×44 grid, the stage raises and the pipeline aborts.
 
 This decision overrides the wording in `technical.md` §7.1 ("infer footprints from bbox size + class-specific footprint catalog"). Footprints are class-driven; bbox size is sanity-check only. `technical.md` will be updated as part of v2 rollout.
 
@@ -109,6 +115,33 @@ This decision overrides the wording in `technical.md` §7.1 ("infer footprints f
 A single global `confidence_threshold` applies to all classes, defaulting to `0.5` and stored in `app/data/cartographer_config.json`. Detections at or above threshold are emitted to JSON; below-threshold detections are omitted from JSON but rendered onto the diagnostic PNG in a contrasting color so a human reviewer can decide whether a class is systematically weak and warrants more training data.
 
 There is no auto-completeness check. The pipeline does not assert "this base must contain exactly one Town Hall" or similar. Missing buildings appear as holes in the resulting layout; the diagnostic PNG is the only mitigation.
+
+### 4.7-bis Calibration and review
+
+Per-class screen-pixel offsets `(dx, dy)` from bbox bottom-center to footprint anchor (§4.6) are calibrated once per Roboflow `dataset_version` through a new "Cartographer" tab in `app/sandbox_web/`. The CLI subcommand:
+
+```
+uv run python -m cartographer calibrate --in <screenshot.png>...
+```
+
+boots a small FastAPI server (`app/cartographer/server.py`) on a free localhost port, runs Roboflow inference once for each input screenshot and caches results in memory, opens the user's default browser at `http://localhost:<port>/?tab=cartographer&mode=calibrate`, and blocks until the user posts their calibration. The page renders each detection's bbox over the screenshot with a draggable `N×N` footprint highlight (size from `buildings.json`); the user drags the highlight until it sits flush with the sprite base. On "Save & exit", the server computes the per-class **median** offset across all detections of that class (median is more robust than mean for the few-shot case), writes `app/data/cartographer_calibration.json`, returns 200, and shuts down.
+
+Calibration file schema:
+
+```
+{
+  "dataset_version": str,
+  "offsets": { class_name: [dx, dy] },
+  "calibrated_at_utc": str,
+  "sample_counts": { class_name: int }
+}
+```
+
+A missing, malformed, or `dataset_version`-mismatched calibration table is non-fatal: `align` logs a warning (once per ingest) and uses zero offsets. There is no CI freshness check; recalibration is on the project owner when they bump dataset versions.
+
+The optional `--review` flag on `ingest` invokes the same server pattern in "review" mode after the alignment stage. The server boots with the candidate `BaseLayout` pre-loaded, the browser opens at `?mode=review`, the user drags any wrong placements to their correct tile origin, and on save the server runs walls + emit on the corrected layout and writes the final JSON with `provenance.reviewed = true`. Per-instance review corrections do NOT update `cartographer_calibration.json` — they are one-off fixes for a single base, not training signal for the offsets.
+
+Detection rejection is via the existing global `confidence_threshold` only. Neither calibration nor review mode provides a per-detection reject affordance; missing or unwanted detections are managed by retraining, threshold tuning, or manual sandbox-web edit after emission.
 
 ### 4.8 Inference
 
@@ -129,7 +162,7 @@ Default `<basename>` mirrors the input screenshot stem. The CLI accepts an `--ou
 
 - `provenance: CartographerProvenance | None = None`
 
-`CartographerProvenance` carries `{ source_screenshot: str, ingest_timestamp_utc: str, dataset_version: str, confidence_threshold: float, derived_pitch_px: float, derived_origin_px: tuple[float, float], per_placement_confidence: dict[placement_id, float] }`. Hand-built bases continue to write `provenance: None` (or omit). v1 readers that ignore unknown fields continue to load v2 bases; the migration `migrate_baselayout_v1_to_v2` is the no-op identity.
+`CartographerProvenance` carries `{ source_screenshot: str, ingest_timestamp_utc: str, dataset_version: str, confidence_threshold: float, derived_pitch_px: float, derived_origin_px: tuple[float, float], per_placement_confidence: dict[placement_id, float], calibration_dataset_version: str | None, reviewed: bool }`. The two trailing fields default to `None` and `False` respectively for backward-compatibility with the v2 schema bump in issue 024. Hand-built bases continue to write `provenance: None` (or omit). v1 readers that ignore unknown fields continue to load v2 bases; the migration `migrate_baselayout_v1_to_v2` is the no-op identity.
 
 ### 4.11 Input scope and assumptions
 
@@ -140,6 +173,7 @@ The v2 pipeline is contracted on screenshots that meet all of:
 - Full playable area visible in frame.
 - Default device aspect ratio (the project owner's capture device, pinned in `cartographer_config.json` as a sanity-check field).
 - Zoom is not pinned; the per-image grid derivation absorbs zoom variation.
+- The visible base is roughly screen-centered. The pipeline translates the convex-hull centroid of accepted placements to grid `(22, 22)` to commit to the 44×44 schema frame (§4.6); edge-pushed bases land off-center in the resulting JSON. This contract holds for TH6, which never extends close to the playable boundary; later TH levels will require an explicit boundary-derivation strategy.
 
 Screenshots violating these conditions are out of contract — the pipeline may fail loudly or, worse, succeed with wrong output. Detecting violation automatically (e.g., asserting the screenshot is from the contracted device) is out of scope.
 
@@ -167,8 +201,16 @@ Each stage module exposes a single top-level function with a typed signature. `p
 ```
 uv run python -m cartographer ingest \
     --in <path/to/screenshot.png> \
-    [--out <path/to/output.json>]
+    [--out <path/to/output.json>] \
+    [--review]
+
+uv run python -m cartographer calibrate \
+    --in <path/to/screenshot.png>...
 ```
+
+`ingest` runs the seven-stage pipeline and writes JSON + diagnostic PNG. `--review` (off by default — preserves user story 1) opens the sandbox-web Cartographer tab in review mode after alignment and lets the user correct individual placements before emit (§4.7-bis).
+
+`calibrate` boots the same server in calibrate mode against one or more screenshots and writes `app/data/cartographer_calibration.json` on save (§4.7-bis).
 
 No batch mode in v2 (single-screenshot per §4.11). No `--no-diagnostic` flag — the diagnostic PNG is always produced.
 
@@ -208,11 +250,14 @@ Prior art: the golden replay tests in `tests/golden/replays/` are the closest an
 
 The original AC-C1, AC-C2, AC-C3 in `app/docs/prd.md` §5.3 stand. New ACs from this design:
 
-- **AC-C4 (grid).** On the 20-screenshot eval set, the derived `(pitch, origin)` matches a hand-labeled ground-truth grid within ±0.5 tile on every screenshot.
+- **AC-C4 (alignment).** On the 20-screenshot eval set, every accepted detection's tile origin matches the hand-labeled ground-truth origin exactly (zero-tile tolerance) when run with a fresh per-dataset-version calibration. The reverse-projection check fires on the engineered bad-bbox failure fixture and on no others.
 - **AC-C5 (walls).** Wall classification on a 5-screenshot wall-labeled subset achieves ≥95% precision and ≥90% recall.
-- **AC-C6 (failure handling).** Negative tests covering (i) a screenshot designed to fail grid cross-validation, (ii) two detections engineered to overlap, and (iii) a screenshot with zero detections — assert no JSON is written, the typed exception is raised, and the diagnostic PNG is produced.
-- **AC-C7 (provenance).** Every successful ingestion produces a JSON whose `provenance` is fully populated and round-trips through Pydantic v2 cleanly.
+- **AC-C6 (failure handling).** Negative tests covering (i) a screenshot designed to fail grid cross-validation, (ii) two detections engineered to overlap, (iii) a screenshot with zero detections, and (iv) a placement that would be pushed outside the 44×44 grid by hull-centroid centering — assert no JSON is written, the typed exception is raised, and the diagnostic PNG is produced.
+- **AC-C7 (provenance).** Every successful ingestion produces a JSON whose `provenance` is fully populated (including `calibration_dataset_version` and `reviewed`) and round-trips through Pydantic v2 cleanly.
 - **AC-C8 (class naming parity).** A CI test loads the Roboflow class list and the keys of `app/data/buildings.json` (excluding `wall`) and asserts set equality.
+- **AC-C9 (calibration roundtrip).** Calibrating against a synthetic detection set with known ground-truth offsets produces a `cartographer_calibration.json` whose recovered per-class offsets match ground truth within ±2 pixels.
+- **AC-C10 (review roundtrip).** Invoking `--review` on a screenshot with one engineered misalignment, then dragging the footprint to the correct tile, produces a `BaseLayout` whose corrected placement matches ground truth and whose `provenance.reviewed` is `True`.
+- **AC-C11 (calibration fallback).** Running `ingest` with no `cartographer_calibration.json` present logs a single warning and proceeds with zero offsets, producing valid JSON.
 
 ## 6. Out of Scope
 
@@ -243,9 +288,12 @@ Per `app/docs/prd.md` §9 — multiplayer, war, leagues, Builder Base, non-TH6 l
 When v2 implementation begins, these documents need updates:
 
 - `app/docs/technical.md` §7.1 — pipeline diagram updated to seven stages (add `grid` and `walls`); the wording "infer footprints from bbox size + class-specific footprint catalog" is replaced with "footprints are class-driven; bbox size is sanity-check only" (§4.6 of this PRD).
-- `app/docs/prd.md` §5.3 — extended with AC-C4 through AC-C8 and the "Out of scope for v2" additions in §6.1 of this PRD.
-- `app/sandbox_core/schemas.py` — `BaseLayout.schema_version` bumped to 2, `provenance: CartographerProvenance | None = None` added, identity migration `migrate_baselayout_v1_to_v2` registered.
+- `app/docs/prd.md` §5.3 — extended with AC-C4 through AC-C11 and the "Out of scope for v2" additions in §6.1 of this PRD.
+- `app/sandbox_core/schemas.py` — `BaseLayout.schema_version` bumped to 2, `provenance: CartographerProvenance | None = None` added, identity migration `migrate_baselayout_v1_to_v2` registered. `CartographerProvenance` extended with `calibration_dataset_version: str | None = None` and `reviewed: bool = False`.
 - `app/cartographer/README.md` — replaced with the v2-implemented README when the package ships.
+- `app/sandbox_web/src/App.tsx` — gains a fourth `cartographer` tab.
+- `app/cartographer/server.py` — new FastAPI module that hosts sandbox-web for calibrate and review modes (§4.7-bis).
+- `app/data/cartographer_calibration.json` — new committed file written by the calibration tool (created on first calibration run, may be absent before then).
 
 ### 7.2 Phasing
 

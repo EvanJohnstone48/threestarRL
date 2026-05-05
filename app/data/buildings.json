@@ -350,6 +350,33 @@
       "category": "defense",
       "damages_walls_on_suicide": false,
       "footprint": [
+        2,
+        2
+      ],
+      "hitbox_inset": 0.5,
+      "is_wall": false,
+      "levels": [
+        {
+          "attack_cooldown_ticks": 50,
+          "damage_per_shot": 0,
+          "hp": 750,
+          "level": 1,
+          "range_tiles": 15,
+          "unlocked_at_th": 6
+        }
+      ],
+      "min_range_tiles": 1.0,
+      "name": "air_sweeper",
+      "projectile_homing": true,
+      "projectile_speed_tiles_per_sec": null,
+      "splash_damages_walls": false,
+      "splash_radius_tiles": 0.0,
+      "target_filter": "air"
+    },
+    {
+      "category": "defense",
+      "damages_walls_on_suicide": false,
+      "footprint": [
         3,
         3
       ],
