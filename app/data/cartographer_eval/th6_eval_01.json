@@ -1,0 +1,1450 @@
+{
+  "schema_version": 3,
+  "metadata": {
+    "name": "th6_eval_01",
+    "th_level": 6,
+    "tags": [],
+    "notes": null,
+    "author": "Evan",
+    "created_at": "2026-05-05T18:30:32.425Z"
+  },
+  "th_level": 6,
+  "placements": [
+    {
+      "building_type": "town_hall",
+      "origin": [
+        23,
+        23
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        27,
+        27
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        27,
+        26
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        27,
+        25
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        27,
+        24
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        27,
+        23
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        27,
+        22
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        27,
+        21
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        26,
+        21
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        25,
+        21
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        24,
+        21
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        23,
+        21
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        22,
+        21
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        21,
+        21
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        21,
+        22
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        21,
+        23
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        21,
+        24
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        21,
+        25
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        21,
+        26
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        21,
+        27
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        22,
+        27
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        23,
+        27
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        24,
+        27
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        25,
+        27
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        26,
+        27
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        28,
+        28
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        29,
+        28
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        30,
+        28
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        31,
+        28
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        32,
+        28
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        28,
+        29
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        28,
+        30
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        28,
+        31
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        28,
+        32
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        23,
+        28
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        23,
+        29
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        23,
+        30
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        23,
+        31
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        23,
+        32
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        23,
+        33
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        23,
+        34
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        23,
+        35
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        28,
+        23
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        29,
+        23
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        30,
+        23
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        31,
+        23
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        32,
+        23
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        33,
+        23
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        34,
+        23
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        35,
+        23
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        20,
+        20
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        20,
+        19
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        20,
+        18
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        20,
+        17
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        20,
+        16
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        20,
+        15
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        20,
+        14
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        20,
+        13
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        19,
+        13
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        18,
+        13
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        17,
+        13
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        16,
+        13
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        15,
+        13
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        14,
+        13
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        13,
+        13
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        13,
+        14
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        13,
+        15
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        13,
+        16
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        13,
+        17
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        13,
+        18
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        13,
+        19
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        13,
+        20
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        14,
+        20
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        15,
+        20
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        16,
+        20
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        17,
+        20
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        18,
+        20
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        19,
+        20
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        25,
+        16
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        25,
+        15
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        25,
+        14
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        25,
+        13
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        25,
+        12
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        25,
+        11
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        25,
+        10
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        26,
+        10
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        27,
+        10
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        28,
+        10
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        29,
+        10
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        30,
+        10
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        31,
+        10
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        31,
+        11
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        31,
+        12
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        31,
+        13
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        31,
+        14
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        31,
+        15
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        31,
+        16
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        30,
+        16
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        29,
+        16
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        28,
+        16
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        27,
+        16
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        26,
+        16
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        16,
+        25
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        15,
+        25
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        14,
+        25
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        13,
+        25
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        12,
+        25
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        11,
+        25
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        10,
+        25
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        10,
+        26
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        10,
+        27
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        10,
+        28
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        10,
+        29
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        10,
+        30
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        10,
+        31
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        11,
+        31
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        12,
+        31
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        13,
+        31
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        14,
+        31
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        15,
+        31
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        16,
+        31
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        16,
+        30
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        16,
+        29
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        16,
+        28
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        16,
+        27
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wall",
+      "origin": [
+        16,
+        26
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "air_sweeper",
+      "origin": [
+        18,
+        18
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "cannon",
+      "origin": [
+        22,
+        17
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "cannon",
+      "origin": [
+        17,
+        22
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "cannon",
+      "origin": [
+        30,
+        30
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "clan_castle",
+      "origin": [
+        24,
+        37
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "archer_tower",
+      "origin": [
+        13,
+        26
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "archer_tower",
+      "origin": [
+        26,
+        13
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "archer_tower",
+      "origin": [
+        14,
+        14
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "mortar",
+      "origin": [
+        24,
+        29
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "mortar",
+      "origin": [
+        29,
+        24
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "air_defense",
+      "origin": [
+        18,
+        26
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "air_defense",
+      "origin": [
+        26,
+        18
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wizard_tower",
+      "origin": [
+        31,
+        20
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "wizard_tower",
+      "origin": [
+        20,
+        31
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "gold_mine",
+      "origin": [
+        17,
+        30
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "gold_mine",
+      "origin": [
+        14,
+        33
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "gold_mine",
+      "origin": [
+        13,
+        22
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "gold_mine",
+      "origin": [
+        9,
+        21
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "gold_mine",
+      "origin": [
+        22,
+        13
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "gold_mine",
+      "origin": [
+        21,
+        10
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "elixir_collector",
+      "origin": [
+        17,
+        9
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "elixir_collector",
+      "origin": [
+        13,
+        9
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "elixir_collector",
+      "origin": [
+        9,
+        9
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "elixir_collector",
+      "origin": [
+        9,
+        13
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "elixir_collector",
+      "origin": [
+        9,
+        17
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "elixir_collector",
+      "origin": [
+        30,
+        17
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "gold_storage",
+      "origin": [
+        33,
+        24
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "gold_storage",
+      "origin": [
+        24,
+        33
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "elixir_storage",
+      "origin": [
+        17,
+        14
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "elixir_storage",
+      "origin": [
+        14,
+        17
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "army_camp",
+      "origin": [
+        34,
+        28
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "army_camp",
+      "origin": [
+        33,
+        33
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "army_camp",
+      "origin": [
+        28,
+        34
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "barracks",
+      "origin": [
+        33,
+        9
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "barracks",
+      "origin": [
+        33,
+        13
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "barracks",
+      "origin": [
+        10,
+        33
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "laboratory",
+      "origin": [
+        35,
+        18
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "spell_factory",
+      "origin": [
+        19,
+        35
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "builders_hut",
+      "origin": [
+        38,
+        33
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "builders_hut",
+      "origin": [
+        38,
+        36
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "builders_hut",
+      "origin": [
+        36,
+        38
+      ],
+      "level": 1
+    },
+    {
+      "building_type": "builders_hut",
+      "origin": [
+        33,
+        38
+      ],
+      "level": 1
+    }
+  ],
+  "traps": [
+    {
+      "trap_type": "spring_trap",
+      "origin": [
+        21,
+        20
+      ],
+      "level": 1
+    },
+    {
+      "trap_type": "spring_trap",
+      "origin": [
+        20,
+        21
+      ],
+      "level": 1
+    },
+    {
+      "trap_type": "spring_trap",
+      "origin": [
+        28,
+        27
+      ],
+      "level": 1
+    },
+    {
+      "trap_type": "spring_trap",
+      "origin": [
+        27,
+        28
+      ],
+      "level": 1
+    },
+    {
+      "trap_type": "bomb",
+      "origin": [
+        25,
+        18
+      ],
+      "level": 1
+    },
+    {
+      "trap_type": "bomb",
+      "origin": [
+        25,
+        19
+      ],
+      "level": 1
+    },
+    {
+      "trap_type": "bomb",
+      "origin": [
+        18,
+        25
+      ],
+      "level": 1
+    },
+    {
+      "trap_type": "bomb",
+      "origin": [
+        19,
+        25
+      ],
+      "level": 1
+    },
+    {
+      "trap_type": "giant_bomb",
+      "origin": [
+        29,
+        21
+      ],
+      "level": 1
+    },
+    {
+      "trap_type": "air_bomb",
+      "origin": [
+        18,
+        17
+      ],
+      "level": 1
+    },
+    {
+      "trap_type": "air_bomb",
+      "origin": [
+        17,
+        18
+      ],
+      "level": 1
+    }
+  ],
+  "cc_contents": [],
+  "provenance": null
+}
