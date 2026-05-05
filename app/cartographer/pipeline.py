@@ -58,7 +58,7 @@ def run(screenshot_path: Path, out_path: Path | None = None) -> BaseLayout:
 
     offsets = load_offsets(cfg["dataset_version"])
     placements = align.run(accepted, pitch, origin, offsets=offsets)
-    wall_tiles = walls.run(image, pitch, origin)
+    wall_tiles = walls.run(image, pitch, origin, placements=placements)
 
     try:
         layout = emit.run(
