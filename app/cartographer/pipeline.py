@@ -10,6 +10,7 @@ from typing import Any
 from sandbox_core.schemas import BaseLayout
 
 from cartographer import align, detect, diagnostic, emit, grid, preprocess, walls
+from cartographer.calibration import load_offsets
 from cartographer.grid import GridCrossValidationError
 
 _CONFIG_PATH = Path(__file__).parent.parent / "data" / "cartographer_config.json"
@@ -55,7 +56,8 @@ def run(screenshot_path: Path, out_path: Path | None = None) -> BaseLayout:
         diagnostic.render(image, [], [], sub_threshold, 64.0, (0.0, 0.0), diag_path, grid_failed=True)
         raise
 
-    placements = align.run(accepted, pitch, origin)
+    offsets = load_offsets(cfg["dataset_version"])
+    placements = align.run(accepted, pitch, origin, offsets=offsets)
     wall_tiles = walls.run(image, pitch, origin)
 
     try:
