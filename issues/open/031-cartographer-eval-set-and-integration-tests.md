@@ -21,6 +21,7 @@
 
 - Add a `requires_roboflow_api_key` pytest marker (skips cleanly when env var absent).
 - `tests/integration/cartographer/` contains end-to-end tests that load each eval fixture, run `pipeline.run()`, and assert against ground truth. All marked `@pytest.mark.slow` and `@pytest.mark.requires_roboflow_api_key`.
+- These tests hit the live model endpoint configured in `detect.py` (issue 027) — `https://detect.roboflow.com/{project_name}/{dataset_version}` via `requests`, NOT the `inference-sdk` package and NOT the Roboflow workflow URL. See issue 027 for the reasoning (Python 3.13 wheel gap + workflow router 404s). Do not reintroduce `inference-sdk` here.
 - AC-C1: every successful ingestion produces a `BaseLayout` that loads in the Sandbox without error.
 - AC-C3: ≥90% F1 on building class, ≥95% IoU on bounding box (against the 20-screenshot eval ground truth).
 - AC-C4: derived `(pitch, origin)` within ±0.5 tile of hand-labeled ground truth on all 20.

@@ -20,7 +20,7 @@ A FastAPI application with these endpoints:
 - `POST /api/calibration` → accepts a list of `{ filename, class_name, bbox_xyxy, placed_anchor_xy }` records; per class, computes `offset_i = placed_anchor_xy - bbox_bottom_center`, takes the median across instances, writes `app/data/cartographer_calibration.json` (per the schema in issue 033) with the current `dataset_version`, returns 200, then triggers shutdown.
 - Static-serves the built sandbox-web SPA at `/`.
 
-The Roboflow inference call from issue 027 is invoked **once per screenshot at server startup** and cached in memory; the GET endpoint serves from the cache so frontend interactions cost no inference quota.
+The Roboflow inference call from issue 027 is invoked **once per screenshot at server startup** and cached in memory; the GET endpoint serves from the cache so frontend interactions cost no inference quota. The server reuses `cartographer.detect.run` (or whatever public function issue 027 lands) — it does NOT make its own HTTP call and does NOT import `inference-sdk`. See issue 027 for why: Python 3.13 wheel gap + the Roboflow workflow router 404s, so the underlying model endpoint is called directly via `requests`.
 
 ### CLI subcommand
 
