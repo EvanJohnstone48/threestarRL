@@ -18,6 +18,7 @@
   "reportImplicitOverride": "warning",
   "reportUnnecessaryTypeIgnoreComment": "warning",
   "reportPrivateImportUsage": "none",
+  "reportUnusedFunction": "none",
   "reportUnknownMemberType": "warning",
   "reportUnknownArgumentType": "warning",
   "reportUnknownVariableType": "warning",

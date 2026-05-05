@@ -2,8 +2,9 @@ import { useState } from "react";
 import { ReplayViewer } from "@/components/ReplayViewer";
 import { EditorPage } from "@/editor/EditorPage";
 import { SpriteCalibratorPage } from "@/sprites/SpriteCalibratorPage";
+import { CartographerPage } from "@/cartographer/CartographerPage";
 
-type Tab = "viewer" | "editor" | "sprites";
+type Tab = "viewer" | "editor" | "sprites" | "cartographer";
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("viewer");
@@ -27,7 +28,7 @@ export default function App() {
           flexShrink: 0,
         }}
       >
-        {(["viewer", "editor", "sprites"] as Tab[]).map((t) => (
+        {(["viewer", "editor", "sprites", "cartographer"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -51,6 +52,7 @@ export default function App() {
         {tab === "viewer" && <ReplayViewer />}
         {tab === "editor" && <EditorPage />}
         {tab === "sprites" && <SpriteCalibratorPage />}
+        {tab === "cartographer" && <CartographerPage />}
       </div>
     </div>
   );

@@ -21,6 +21,12 @@ cartographer = [
     "requests>=2.31",
     "opencv-python>=4.9",
     "pillow>=10.0",
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+]
+cartographer-server = [
+    "threestarrl[cartographer]",
+    "httpx>=0.27",
 ]
 wandb = ["wandb>=0.16"]
 dev = [
@@ -31,6 +37,7 @@ dev = [
     "pyright>=1.1.360",
     "pre-commit>=3.7",
     "datamodel-code-generator>=0.25",
+    "httpx>=0.27",
 ]
 
 [project.scripts]
