@@ -92,28 +92,6 @@
       "scale": 0.5303213506452943
     }
   },
-  "traps": {
-    "air_bomb": {
-      "offset_x": 0,
-      "offset_y": 0,
-      "scale": 0.3
-    },
-    "bomb": {
-      "offset_x": 0,
-      "offset_y": 0,
-      "scale": 0.3
-    },
-    "giant_bomb": {
-      "offset_x": 0,
-      "offset_y": 0,
-      "scale": 0.4
-    },
-    "spring_trap": {
-      "offset_x": 0,
-      "offset_y": 0,
-      "scale": 0.3
-    }
-  },
   "troops": {
     "archer": {
       "offset_x": 2.2222990601417223,
@@ -161,6 +139,28 @@
       "offset_x": -1.1110884946667738,
       "offset_y": -4.444512358309339,
       "scale": 0.12270440108003679
+    }
+  },
+  "traps": {
+    "air_bomb": {
+      "offset_x": 1.1110884946668875,
+      "offset_y": 2.2221951432520655,
+      "scale": 0.5387568978066392
+    },
+    "bomb": {
+      "offset_x": 0,
+      "offset_y": -5.55567096583809,
+      "scale": 0.2591512795594428
+    },
+    "giant_bomb": {
+      "offset_x": 3.33338755480861,
+      "offset_y": 15.555793254082573,
+      "scale": 0.46305000000000013
+    },
+    "spring_trap": {
+      "offset_x": 1.1110884946667738,
+      "offset_y": 22.222500755643978,
+      "scale": 0.3828844687499999
     }
   }
 }

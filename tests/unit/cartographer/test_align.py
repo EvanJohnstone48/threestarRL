@@ -24,15 +24,15 @@ def _basis_matrix(pitch: float) -> np.ndarray:
 
 
 def _anchor_pixel_for_tile(col0: int, row0: int, n: int, pitch: float, origin: tuple[float, float]) -> tuple[float, float]:
-    """Return the bbox bottom-center pixel for a building at (col0, row0) with footprint n."""
+    """Return the footprint-center pixel for a building at (col0, row0)."""
     M = _basis_matrix(pitch)
-    anchor_tile = np.array([col0 + n, row0 + n], dtype=float)
+    anchor_tile = np.array([col0 + n / 2.0, row0 + n / 2.0], dtype=float)
     pixel = np.array(origin) + M @ anchor_tile
     return float(pixel[0]), float(pixel[1])
 
 
 def _make_bbox_for_tile(col0: int, row0: int, n: int, pitch: float, origin: tuple[float, float]) -> tuple[float, float, float, float]:
-    """Build a plausible bbox whose bottom-center lands at the expected anchor pixel."""
+    """Build a plausible bbox whose bottom-center lands at the footprint center."""
     ax, ay = _anchor_pixel_for_tile(col0, row0, n, pitch, origin)
     half = n * pitch * 0.4
     return (ax - half, ay - 2 * half, ax + half, ay)
@@ -175,17 +175,19 @@ def test_bad_bbox_raises_reverse_projection_error() -> None:
 
     With the isometric basis, Δcol=0.5 and Δrow=-0.5 in tile space maps to a
     pixel error of ~57px > 0.5*pitch=32px.  We engineer the anchor to land at
-    tile (12.5, 13.5) so Python's banker-rounding gives col0=10, row0=10 for
+    tile (11.0, 12.0) so Python's banker-rounding gives col0=10, row0=10 for
     col0_frac=9.5, row0_frac=10.5, triggering ReverseProjectionError.
     """
     from cartographer.align import ReverseProjectionError, run
 
     pitch = 64.0
     origin = (300.0, 300.0)
-    # Anchor at tile (12.5, 13.5): col0_frac=9.5 rounds to 10, row0_frac=10.5 rounds to 10.
+    # Anchor at tile (11.0, 12.0): col0_frac=9.5 rounds to 10, row0_frac=10.5 rounds to 10.
     # Δcol=0.5, Δrow=-0.5 → pixel error ≈ 57px > 32px = 0.5*pitch.
-    anchor_x = 242.75665978  # pre-computed for origin=(300,300), pitch=64
-    anchor_y = 1044.16342291
+    M = _basis_matrix(pitch)
+    anchor_delta = M @ np.array([11.0, 12.0], dtype=float)
+    anchor_x = origin[0] + float(anchor_delta[0])
+    anchor_y = origin[1] + float(anchor_delta[1])
     half = 50.0
     bad_bbox = (anchor_x - half, anchor_y - 100.0, anchor_x + half, anchor_y)
     dets = [_make_detection("cannon", bad_bbox)]

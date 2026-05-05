@@ -39,7 +39,14 @@ import {
   canRedo,
   type HistoryState,
 } from "./historyState";
-import { saveToLocalStorage, loadFromLocalStorage, clearLocalStorage } from "./autosave";
+import {
+  saveToLocalStorage,
+  loadFromLocalStorage,
+  clearLocalStorage,
+  saveScreenshotToLocalStorage,
+  loadScreenshotFromLocalStorage,
+  clearScreenshotFromLocalStorage,
+} from "./autosave";
 
 // --- Palette configuration ---
 
@@ -399,6 +406,53 @@ function MetaField({
   );
 }
 
+interface ScreenshotPanelProps {
+  src: string | null;
+  onLoad: () => void;
+  onClear: () => void;
+}
+
+function ScreenshotPanel({ src, onLoad, onClear }: ScreenshotPanelProps) {
+  return (
+    <div style={styles.screenshotPanel}>
+      <div style={styles.screenshotHeader}>
+        <span style={styles.panelTitle}>Reference</span>
+        {src ? (
+          <button
+            onClick={onClear}
+            style={styles.screenshotHeaderBtn}
+            title="Remove the loaded screenshot"
+            aria-label="Clear reference screenshot"
+          >
+            Clear
+          </button>
+        ) : (
+          <button
+            onClick={onLoad}
+            style={styles.screenshotHeaderBtn}
+            title="Load a JPEG/PNG screenshot to reference while labelling"
+            aria-label="Load reference screenshot"
+          >
+            Load…
+          </button>
+        )}
+      </div>
+      <div style={styles.screenshotBody}>
+        {src ? (
+          <img src={src} style={styles.screenshotImg} alt="Reference base screenshot" />
+        ) : (
+          <div style={styles.screenshotEmpty}>
+            No screenshot loaded.
+            <br />
+            <br />
+            Click <strong>Load…</strong> to pick a JPEG/PNG to label against.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // --- Main editor page ---
 
 interface ContextMenu {
@@ -423,8 +477,13 @@ export function EditorPage() {
   const rendererRef = useRef<EditorRenderer | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const screenshotInputRef = useRef<HTMLInputElement>(null);
+
   const [editorState, setEditorState] = useState<EditorState>(createEditorState);
   const [history, setHistory] = useState<HistoryState>(() => createHistoryState([]));
+  const [screenshotSrc, setScreenshotSrc] = useState<string | null>(() =>
+    loadScreenshotFromLocalStorage(),
+  );
   const [ghostOrigin, setGhostOrigin] = useState<[number, number] | null>(null);
   const [hoverTile, setHoverTile] = useState<[number, number] | null>(null);
   const [paintCurrentTile, setPaintCurrentTile] = useState<[number, number] | null>(null);
@@ -810,6 +869,32 @@ export function EditorPage() {
     setTimeout(() => setErrorToast(null), 2500);
   }, []);
 
+  const handleLoadScreenshot = useCallback(() => {
+    screenshotInputRef.current?.click();
+  }, []);
+
+  const handleScreenshotFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target?.result as string;
+        if (typeof dataUrl !== "string") return;
+        setScreenshotSrc(dataUrl);
+        saveScreenshotToLocalStorage(dataUrl);
+      };
+      reader.readAsDataURL(file);
+      e.target.value = "";
+    },
+    [],
+  );
+
+  const handleClearScreenshot = useCallback(() => {
+    setScreenshotSrc(null);
+    clearScreenshotFromLocalStorage();
+  }, []);
+
   const handleClearAllConfirmed = useCallback(() => {
     setConfirmClearAll(false);
     setEditorState((prev) => {
@@ -886,11 +971,26 @@ export function EditorPage() {
         onChange={handleFileChange}
       />
 
+      {/* Hidden file input for reference screenshot */}
+      <input
+        ref={screenshotInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/*"
+        style={{ display: "none" }}
+        onChange={handleScreenshotFileChange}
+      />
+
       <Palette
         placements={editorState.placements}
         selectedType={editorState.selectedType}
         mode={editorState.mode}
         onSelect={handleSelect}
+      />
+
+      <ScreenshotPanel
+        src={screenshotSrc}
+        onLoad={handleLoadScreenshot}
+        onClear={handleClearScreenshot}
       />
 
       <div style={styles.centerCol}>
@@ -1052,6 +1152,54 @@ const styles = {
     display: "flex",
     flexDirection: "column" as const,
     overflow: "hidden",
+    minWidth: 0,
+  } as React.CSSProperties,
+  screenshotPanel: {
+    width: 420,
+    minWidth: 280,
+    flexShrink: 0,
+    background: "#0f1419",
+    borderRight: "1px solid #21262d",
+    display: "flex",
+    flexDirection: "column" as const,
+    overflow: "hidden",
+  } as React.CSSProperties,
+  screenshotHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "10px 12px 8px 12px",
+    borderBottom: "1px solid #21262d",
+    flexShrink: 0,
+  } as React.CSSProperties,
+  screenshotHeaderBtn: {
+    padding: "3px 10px",
+    background: "#1e2a3a",
+    border: "1px solid #2a3a4a",
+    borderRadius: 4,
+    color: "#cdd9e5",
+    fontSize: 11,
+    fontFamily: "monospace",
+    cursor: "pointer",
+  } as React.CSSProperties,
+  screenshotBody: {
+    flex: 1,
+    overflowY: "auto" as const,
+    overflowX: "hidden" as const,
+    padding: 8,
+  } as React.CSSProperties,
+  screenshotImg: {
+    width: "100%",
+    height: "auto",
+    display: "block",
+    borderRadius: 4,
+  } as React.CSSProperties,
+  screenshotEmpty: {
+    padding: 16,
+    color: "#8b949e",
+    fontSize: 11,
+    textAlign: "center" as const,
+    lineHeight: 1.5,
   } as React.CSSProperties,
   statusBar: {
     background: "#21262d",

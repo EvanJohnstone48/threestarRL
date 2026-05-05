@@ -12,7 +12,7 @@ from typing import Any
 
 import numpy as np
 
-from cartographer.calibration import CalibrationFile
+from cartographer.calibration import CalibrationFile, CalibrationSample, load_offsets
 from cartographer.detect import Detection
 
 _DATA_DIR = Path(__file__).parent.parent / "data"
@@ -33,16 +33,33 @@ def compute_offsets(
 ) -> tuple[dict[str, tuple[float, float]], dict[str, int]]:
     """Compute per-class median pixel offsets from HITL-placed anchors.
 
-    offset = placed_anchor - bbox_bottom_center  (independent x, y medians)
+    The placed anchor is the human-marked center of the building footprint:
+    - 2x2/4x4: the shared inner border point of the middle tiles
+    - 3x3: the center of the middle footprint tile
+
+    offset = footprint_center - bbox_bottom_center  (independent x, y medians)
     """
-    by_class: dict[str, list[tuple[float, float]]] = {}
+    return _offsets_from_samples(_samples_from_records(records))
+
+
+def _samples_from_records(records: list[dict[str, Any]]) -> list[CalibrationSample]:
+    samples: list[CalibrationSample] = []
     for rec in records:
         x1, _y1, x2, y2 = rec["bbox_xyxy"]
         bottom_center_x = (x1 + x2) / 2.0
         bottom_center_y = float(y2)
         dx = float(rec["placed_anchor_xy"][0]) - bottom_center_x
         dy = float(rec["placed_anchor_xy"][1]) - bottom_center_y
-        by_class.setdefault(rec["class_name"], []).append((dx, dy))
+        samples.append(CalibrationSample(class_name=rec["class_name"], offset=(dx, dy)))
+    return samples
+
+
+def _offsets_from_samples(
+    samples: list[CalibrationSample],
+) -> tuple[dict[str, tuple[float, float]], dict[str, int]]:
+    by_class: dict[str, list[tuple[float, float]]] = {}
+    for sample in samples:
+        by_class.setdefault(sample.class_name, []).append(sample.offset)
 
     offsets: dict[str, tuple[float, float]] = {}
     sample_counts: dict[str, int] = {}
@@ -53,6 +70,30 @@ def compute_offsets(
         sample_counts[class_name] = len(deltas)
 
     return offsets, sample_counts
+
+
+def _load_existing_samples(calibration_path: Path, dataset_version: str) -> list[CalibrationSample]:
+    if not calibration_path.exists():
+        return []
+
+    try:
+        cal = CalibrationFile.model_validate(
+            json.loads(calibration_path.read_text(encoding="utf-8"))
+        )
+    except Exception:
+        return []
+
+    if cal.dataset_version != dataset_version:
+        return []
+
+    if cal.samples:
+        return list(cal.samples)
+
+    samples: list[CalibrationSample] = []
+    for class_name, offset in cal.offsets.items():
+        count = max(1, int(cal.sample_counts.get(class_name, 1)))
+        samples.extend(CalibrationSample(class_name=class_name, offset=offset) for _ in range(count))
+    return samples
 
 
 def _load_buildings() -> dict[str, list[int]]:
@@ -76,6 +117,7 @@ def create_app(
     from fastapi.responses import FileResponse, JSONResponse
 
     app = FastAPI()
+    _add_local_frontend_cors(app)
     _cal_path = calibration_path if calibration_path is not None else _CALIBRATION_PATH
     _shutdown = shutdown_event if shutdown_event is not None else threading.Event()
 
@@ -109,6 +151,11 @@ def create_app(
     def get_config() -> Any:
         return config
 
+    @app.get("/api/calibration/offsets")
+    def get_calibration_offsets() -> Any:
+        offsets = load_offsets(str(config["dataset_version"]), _path=_cal_path)
+        return {class_name: list(offset) for class_name, offset in offsets.items()}
+
     @app.get("/api/images/{filename}")
     def get_image(filename: str) -> Any:
         path = _image_paths.get(filename)
@@ -119,20 +166,31 @@ def create_app(
         return FileResponse(str(path))
 
     @app.post("/api/calibration")
-    def post_calibration(records: list[dict[str, Any]]) -> Any:
-        offsets, sample_counts = compute_offsets(records)
+    def post_calibration(records: list[dict[str, Any]], finalize: bool = True) -> Any:
+        samples = _load_existing_samples(_cal_path, str(config["dataset_version"]))
+        samples.extend(_samples_from_records(records))
+        offsets, sample_counts = _offsets_from_samples(samples)
         cal = CalibrationFile(
             dataset_version=str(config["dataset_version"]),
             offsets=offsets,
             calibrated_at_utc=datetime.datetime.now(datetime.UTC).isoformat(),
             sample_counts=sample_counts,
+            samples=samples,
         )
         _cal_path.write_text(
             json.dumps(cal.model_dump(), indent=2, default=list),
             encoding="utf-8",
         )
-        _shutdown.set()
-        return JSONResponse(content={"status": "ok"})
+        if finalize:
+            _shutdown.set()
+        return JSONResponse(
+            content={
+                "status": "ok",
+                "finalized": finalize,
+                "offsets": {class_name: list(offset) for class_name, offset in offsets.items()},
+                "sample_counts": sample_counts,
+            }
+        )
 
     return app
 
@@ -158,6 +216,7 @@ def create_review_app(
     from fastapi.responses import FileResponse, JSONResponse
 
     app = FastAPI()
+    _add_local_frontend_cors(app)
     _shutdown = shutdown_event if shutdown_event is not None else threading.Event()
 
     # Build footprint lookup (buildings.json + trap fallbacks)
@@ -227,3 +286,17 @@ def create_review_app(
         return FileResponse(str(screenshot_path))
 
     return app
+
+
+def _add_local_frontend_cors(app: Any) -> None:
+    from fastapi.middleware.cors import CORSMiddleware
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+        ],
+        allow_methods=["GET", "POST"],
+        allow_headers=["*"],
+    )

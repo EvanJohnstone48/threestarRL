@@ -43,3 +43,13 @@ def test_cli_ingest_runs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
     with patch("cartographer.detect.run", side_effect=_stub_detect):
         main()
     assert out.exists()
+
+
+def test_expand_calibration_inputs_accepts_directory(tmp_path: Path) -> None:
+    from cartographer.cli import _expand_calibration_inputs
+
+    a = _make_png(tmp_path)
+    b = tmp_path / "note.txt"
+    b.write_text("not an image", encoding="utf-8")
+
+    assert _expand_calibration_inputs([tmp_path]) == [a]

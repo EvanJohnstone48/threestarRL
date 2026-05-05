@@ -73,13 +73,25 @@ def _image_to_base64(image: np.ndarray) -> str:
 def _parse_response(
     data: dict,
     confidence_threshold: float,
+    target_shape: tuple[int, int] | None = None,
 ) -> tuple[list[Detection], list[Detection]]:
     """Split Roboflow predictions into accepted and sub-threshold detections."""
+    scale_x = 1.0
+    scale_y = 1.0
+    response_image = data.get("image")
+    if target_shape and isinstance(response_image, dict):
+        response_w = float(response_image.get("width") or 0)
+        response_h = float(response_image.get("height") or 0)
+        target_h, target_w = target_shape
+        if response_w > 0 and response_h > 0:
+            scale_x = target_w / response_w
+            scale_y = target_h / response_h
+
     accepted: list[Detection] = []
     sub_threshold: list[Detection] = []
     for pred in data.get("predictions", []):
-        x, y = float(pred["x"]), float(pred["y"])
-        w, h = float(pred["width"]), float(pred["height"])
+        x, y = float(pred["x"]) * scale_x, float(pred["y"]) * scale_y
+        w, h = float(pred["width"]) * scale_x, float(pred["height"]) * scale_y
         bbox_xyxy = (x - w / 2, y - h / 2, x + w / 2, y + h / 2)
         conf = float(pred["confidence"])
         det = Detection(
@@ -123,4 +135,4 @@ def run(
         timeout=60,
     )
     resp.raise_for_status()
-    return _parse_response(resp.json(), confidence_threshold)
+    return _parse_response(resp.json(), confidence_threshold, target_shape=image.shape[:2])

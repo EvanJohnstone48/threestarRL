@@ -1,5 +1,5 @@
 """CLI: python -m cartographer ingest --in <screenshot> [--out <path>]
-              python -m cartographer calibrate --in <path>...
+              python -m cartographer calibrate [--in <path>...]
 """
 
 from __future__ import annotations
@@ -11,14 +11,44 @@ import socket
 import threading
 import webbrowser
 from pathlib import Path
+from urllib.parse import urlencode
 
 from cartographer import pipeline
+
+_DEFAULT_FRONTEND_URL = "http://localhost:5173/"
+_DEFAULT_CALIBRATION_DIR = Path(__file__).parent.parent / "data" / "base_screenshots"
+_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 
 
 def _free_port() -> int:
     with socket.socket() as s:
         s.bind(("", 0))
         return s.getsockname()[1]
+
+
+def _frontend_url(mode: str, api_port: int) -> str:
+    base = os.environ.get("SANDBOX_WEB_URL", _DEFAULT_FRONTEND_URL).rstrip("/") + "/"
+    query = urlencode(
+        {
+            "tab": "cartographer",
+            "mode": mode,
+            "api": f"http://127.0.0.1:{api_port}",
+        }
+    )
+    return f"{base}?{query}"
+
+
+def _expand_calibration_inputs(inputs: list[Path] | None) -> list[Path]:
+    paths = inputs or [_DEFAULT_CALIBRATION_DIR]
+    expanded: list[Path] = []
+    for path in paths:
+        if path.is_dir():
+            expanded.extend(
+                p for p in sorted(path.iterdir()) if p.is_file() and p.suffix.lower() in _IMAGE_EXTENSIONS
+            )
+        else:
+            expanded.append(path)
+    return expanded
 
 
 def _run_calibrate(screenshot_paths: list[Path]) -> None:
@@ -31,8 +61,12 @@ def _run_calibrate(screenshot_paths: list[Path]) -> None:
     config = json.loads(config_path.read_text(encoding="utf-8"))
     api_key = os.environ.get("ROBOFLOW_API_KEY", "")
 
+    expanded_paths = _expand_calibration_inputs(screenshot_paths)
+    if not expanded_paths:
+        raise SystemExit("No calibration screenshots found.")
+
     entries: list[ScreenshotEntry] = []
-    for p in screenshot_paths:
+    for p in expanded_paths:
         image = preprocess.load(p)
         accepted, _ = detect.run(
             image,
@@ -47,7 +81,7 @@ def _run_calibrate(screenshot_paths: list[Path]) -> None:
     app = create_app(entries, config, shutdown_event=shutdown_event)
 
     port = _free_port()
-    url = f"http://localhost:{port}/?tab=cartographer&mode=calibrate"
+    url = _frontend_url("calibrate", port)
 
     server = uvicorn.Server(
         uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning")
@@ -59,6 +93,10 @@ def _run_calibrate(screenshot_paths: list[Path]) -> None:
     # Wait briefly for the server to start before opening the browser.
     import time
     time.sleep(0.5)
+    print(f"Cartographer API server running on http://127.0.0.1:{port}")
+    print(f"Loaded {len(entries)} calibration screenshot(s).")
+    print(f"Opening calibration UI: {url}")
+    print("Waiting for Save & exit in the browser...")
     webbrowser.open(url)
 
     shutdown_event.wait()
@@ -133,7 +171,7 @@ def _run_review(screenshot_path: Path, out_path: Path | None) -> None:
     )
 
     port = _free_port()
-    url = f"http://localhost:{port}/?tab=cartographer&mode=review"
+    url = _frontend_url("review", port)
 
     server = uvicorn.Server(
         uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning")
@@ -144,6 +182,9 @@ def _run_review(screenshot_path: Path, out_path: Path | None) -> None:
 
     import time
     time.sleep(0.5)
+    print(f"Cartographer API server running on http://127.0.0.1:{port}")
+    print(f"Opening review UI: {url}")
+    print("Waiting for Save corrected layout in the browser...")
     webbrowser.open(url)
 
     shutdown_event.wait()
@@ -170,7 +211,13 @@ def main() -> None:
         help="Run the HITL calibration workflow against one or more screenshots.",
     )
     calibrate_parser.add_argument(
-        "--in", dest="inputs", required=True, nargs="+", type=Path, metavar="PATH"
+        "--in",
+        dest="inputs",
+        required=False,
+        nargs="+",
+        type=Path,
+        metavar="PATH",
+        help="Screenshot file(s) or folder(s). Defaults to app/data/base_screenshots.",
     )
 
     args = parser.parse_args()

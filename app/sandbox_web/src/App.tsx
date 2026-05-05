@@ -6,8 +6,20 @@ import { CartographerPage } from "@/cartographer/CartographerPage";
 
 type Tab = "viewer" | "editor" | "sprites" | "cartographer";
 
+function initialTab(): Tab {
+  const tab = new URLSearchParams(window.location.search).get("tab");
+  return tab === "editor" || tab === "sprites" || tab === "cartographer" ? tab : "viewer";
+}
+
 export default function App() {
-  const [tab, setTab] = useState<Tab>("viewer");
+  const [tab, setTab] = useState<Tab>(() => initialTab());
+
+  function selectTab(next: Tab): void {
+    setTab(next);
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", next);
+    window.history.replaceState(null, "", url);
+  }
 
   return (
     <div
@@ -31,7 +43,7 @@ export default function App() {
         {(["viewer", "editor", "sprites", "cartographer"] as Tab[]).map((t) => (
           <button
             key={t}
-            onClick={() => setTab(t)}
+            onClick={() => selectTab(t)}
             style={{
               padding: "8px 20px",
               background: tab === t ? "#1f2937" : "transparent",

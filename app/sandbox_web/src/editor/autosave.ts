@@ -1,6 +1,7 @@
 import type { BuildingPlacement, BaseLayoutMetadata } from "@/generated_types";
 
 const AUTOSAVE_KEY = "editor_autosave";
+const SCREENSHOT_KEY = "editor_screenshot";
 
 export interface AutosaveDraft {
   placements: BuildingPlacement[];
@@ -28,4 +29,20 @@ export function loadFromLocalStorage(): AutosaveDraft | null {
 
 export function clearLocalStorage(): void {
   localStorage.removeItem(AUTOSAVE_KEY);
+}
+
+export function saveScreenshotToLocalStorage(dataUrl: string): void {
+  try {
+    localStorage.setItem(SCREENSHOT_KEY, dataUrl);
+  } catch {
+    // QuotaExceededError on very large images — silently drop, screenshot won't persist
+  }
+}
+
+export function loadScreenshotFromLocalStorage(): string | null {
+  return localStorage.getItem(SCREENSHOT_KEY);
+}
+
+export function clearScreenshotFromLocalStorage(): void {
+  localStorage.removeItem(SCREENSHOT_KEY);
 }

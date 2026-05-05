@@ -1,5 +1,5 @@
 {
-  "project_name": "clash-base-detector",
-  "dataset_version": "1",
+  "project_name": "home-village-building-detector",
+  "dataset_version": "3",
   "confidence_threshold": 0.5
 }

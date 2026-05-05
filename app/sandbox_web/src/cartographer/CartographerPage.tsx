@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 // ---------------------------------------------------------------------------
 // Types matching the server API
@@ -20,6 +20,10 @@ interface BuildingsMap {
   [class_name: string]: [number, number];
 }
 
+interface CalibrationOffsets {
+  [class_name: string]: [number, number];
+}
+
 interface CalibConfig {
   dataset_version: string;
   [k: string]: unknown;
@@ -32,12 +36,117 @@ interface PlacedRecord {
   placed_anchor_xy: [number, number];
 }
 
+interface CalibrationSaveResponse {
+  status: string;
+  finalized: boolean;
+  offsets: CalibrationOffsets;
+  sample_counts: Record<string, number>;
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 function bboxBottomCenter(bbox: [number, number, number, number]): [number, number] {
   return [(bbox[0] + bbox[2]) / 2, bbox[3]];
+}
+
+interface ImageMetrics {
+  scale: number;
+  offsetX: number;
+  offsetY: number;
+  width: number;
+  height: number;
+}
+
+const emptyImageMetrics: ImageMetrics = {
+  scale: 1,
+  offsetX: 0,
+  offsetY: 0,
+  width: 0,
+  height: 0,
+};
+
+function getImageMetrics(img: HTMLImageElement): ImageMetrics {
+  if (!img.naturalWidth || !img.naturalHeight || !img.clientWidth || !img.clientHeight) {
+    return {
+      ...emptyImageMetrics,
+      width: img.clientWidth,
+      height: img.clientHeight,
+    };
+  }
+
+  const scale = Math.min(img.clientWidth / img.naturalWidth, img.clientHeight / img.naturalHeight);
+  const width = img.naturalWidth * scale;
+  const height = img.naturalHeight * scale;
+  return {
+    scale,
+    offsetX: (img.clientWidth - width) / 2,
+    offsetY: (img.clientHeight - height) / 2,
+    width,
+    height,
+  };
+}
+
+const errorStyle: CSSProperties = {
+  color: "#f85149",
+  padding: 24,
+  fontFamily: "monospace",
+  whiteSpace: "pre-wrap",
+  lineHeight: 1.5,
+};
+
+class CartographerApiError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "CartographerApiError";
+  }
+}
+
+function cartographerApiUnavailableMessage(path: string): string {
+  return [
+    `Cartographer backend is not serving ${path}.`,
+    "Launch this tab through the Cartographer CLI so the FastAPI /api routes are available:",
+    "python -m cartographer calibrate",
+    "or:",
+    "uv run python -m cartographer ingest --in path/to/screenshot.png --review",
+  ].join("\n");
+}
+
+function cartographerApiBase(): string {
+  const raw = new URLSearchParams(window.location.search).get("api") ?? "";
+  return raw.replace(/\/+$/, "");
+}
+
+function apiUrl(path: string): string {
+  if (/^https?:\/\//.test(path)) return path;
+  return `${cartographerApiBase()}${path}`;
+}
+
+async function fetchJson<T>(path: string): Promise<T> {
+  const response = await fetch(apiUrl(path));
+  const text = await response.text();
+  const contentType = response.headers.get("content-type") ?? "";
+
+  if (!response.ok) {
+    throw new CartographerApiError(
+      `Cartographer API request failed: ${path} returned HTTP ${response.status}.`,
+    );
+  }
+
+  if (!contentType.includes("application/json")) {
+    throw new CartographerApiError(cartographerApiUnavailableMessage(path));
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch (err) {
+    throw new CartographerApiError(
+      `Cartographer API returned invalid JSON for ${path}: ${
+        err instanceof Error ? err.message : String(err)
+      }`,
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -52,36 +161,42 @@ interface FootprintState {
 
 interface CalibrateViewProps {
   entry: ScreenshotEntry;
-  buildings: BuildingsMap;
-  onSaved: (records: PlacedRecord[]) => void;
+  calibrationOffsets: CalibrationOffsets;
+  isLast: boolean;
+  onSaved: (records: PlacedRecord[], finish: boolean) => void;
 }
 
-function CalibrateView({ entry, buildings, onSaved }: CalibrateViewProps) {
+function CalibrateView({ entry, calibrationOffsets, isLast, onSaved }: CalibrateViewProps) {
   const imgRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Footprint anchors: keyed by detection index, in *image* pixel coords
+  // Footprint-center anchors: keyed by detection index, in image pixel coords.
   const [footprints, setFootprints] = useState<FootprintState[]>(() =>
     entry.detections.map((det, i) => {
       const [ax, ay] = bboxBottomCenter(det.bbox_xyxy);
-      return { detIdx: i, anchorX: ax, anchorY: ay };
+      const [dx, dy] = calibrationOffsets[det.class_name] ?? [0, 0];
+      return { detIdx: i, anchorX: ax + dx, anchorY: ay + dy };
     }),
   );
 
   const dragging = useRef<{ fpIdx: number; offsetX: number; offsetY: number } | null>(null);
 
   // Scale factor: image natural coords → canvas display coords
-  const [scale, setScale] = useState(1);
+  const [imageMetrics, setImageMetrics] = useState<ImageMetrics>(emptyImageMetrics);
 
   useEffect(() => {
     const img = imgRef.current;
     if (!img) return;
-    const updateScale = () => {
-      if (img.naturalWidth) setScale(img.clientWidth / img.naturalWidth);
+    const updateMetrics = () => {
+      setImageMetrics(getImageMetrics(img));
     };
-    img.addEventListener("load", updateScale);
-    updateScale();
-    return () => img.removeEventListener("load", updateScale);
+    img.addEventListener("load", updateMetrics);
+    window.addEventListener("resize", updateMetrics);
+    updateMetrics();
+    return () => {
+      img.removeEventListener("load", updateMetrics);
+      window.removeEventListener("resize", updateMetrics);
+    };
   }, [entry.image_url]);
 
   // Redraw canvas on every footprint change
@@ -96,42 +211,40 @@ function CalibrateView({ entry, buildings, onSaved }: CalibrateViewProps) {
     canvas.height = h;
     const ctx = canvas.getContext("2d")!;
     ctx.clearRect(0, 0, w, h);
-    const s = scale;
+    const { scale: s, offsetX, offsetY } = imageMetrics;
 
     // Draw bounding boxes
     ctx.strokeStyle = "rgba(255,200,0,0.9)";
     ctx.lineWidth = 2;
     for (const det of entry.detections) {
       const [x1, y1, x2, y2] = det.bbox_xyxy;
-      ctx.strokeRect(x1 * s, y1 * s, (x2 - x1) * s, (y2 - y1) * s);
+      ctx.strokeRect(offsetX + x1 * s, offsetY + y1 * s, (x2 - x1) * s, (y2 - y1) * s);
       ctx.fillStyle = "rgba(255,200,0,0.9)";
       ctx.font = `${Math.max(10, 11 * s)}px monospace`;
-      ctx.fillText(det.class_name, x1 * s + 2, y1 * s - 3);
+      ctx.fillText(det.class_name, offsetX + x1 * s + 2, offsetY + y1 * s - 3);
     }
 
-    // Draw footprint highlights
+    // Draw footprint-center markers.
     for (const fp of footprints) {
-      const det = entry.detections[fp.detIdx];
-      const fp_size = buildings[det.class_name] ?? [1, 1];
-      // We treat placed_anchor_xy as the bottom-center of the footprint in image coords.
-      // Footprint tile size in screen pixels is unknown here, so just draw a coloured dot + cross.
-      const cx = fp.anchorX * s;
-      const cy = fp.anchorY * s;
-      const r = Math.max(8, 16 * s);
-      ctx.strokeStyle = "rgba(0,200,255,0.95)";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(cx - r, cy - r * (fp_size[1] / fp_size[0]), r * 2, r * 2 * (fp_size[1] / fp_size[0]));
+      const cx = offsetX + fp.anchorX * s;
+      const cy = offsetY + fp.anchorY * s;
       ctx.beginPath();
-      ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+      ctx.arc(cx, cy, Math.max(4, 5 * s), 0, Math.PI * 2);
       ctx.fillStyle = "rgba(0,200,255,0.95)";
       ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,0.9)";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
     }
-  }, [footprints, scale, entry, buildings]);
+  }, [footprints, imageMetrics, entry]);
 
   function canvasCoordToImage(ex: number, ey: number): [number, number] {
     const canvas = canvasRef.current!;
     const rect = canvas.getBoundingClientRect();
-    return [(ex - rect.left) / scale, (ey - rect.top) / scale];
+    return [
+      (ex - rect.left - imageMetrics.offsetX) / imageMetrics.scale,
+      (ey - rect.top - imageMetrics.offsetY) / imageMetrics.scale,
+    ];
   }
 
   function onMouseDown(e: React.MouseEvent) {
@@ -171,8 +284,8 @@ function CalibrateView({ entry, buildings, onSaved }: CalibrateViewProps) {
     dragging.current = null;
   }
 
-  function handleSave() {
-    const records: PlacedRecord[] = footprints.map((fp) => {
+  function buildRecords(): PlacedRecord[] {
+    return footprints.map((fp) => {
       const det = entry.detections[fp.detIdx];
       return {
         filename: entry.filename,
@@ -181,7 +294,10 @@ function CalibrateView({ entry, buildings, onSaved }: CalibrateViewProps) {
         placed_anchor_xy: [fp.anchorX, fp.anchorY],
       };
     });
-    onSaved(records);
+  }
+
+  function handleSave(finish: boolean) {
+    onSaved(buildRecords(), finish);
   }
 
   return (
@@ -194,7 +310,7 @@ function CalibrateView({ entry, buildings, onSaved }: CalibrateViewProps) {
       >
         <img
           ref={imgRef}
-          src={entry.image_url}
+          src={apiUrl(entry.image_url)}
           alt={entry.filename}
           style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
         />
@@ -205,7 +321,7 @@ function CalibrateView({ entry, buildings, onSaved }: CalibrateViewProps) {
       </div>
       <div style={{ display: "flex", gap: 8, padding: "8px 0", flexShrink: 0 }}>
         <button
-          onClick={handleSave}
+          onClick={() => handleSave(isLast)}
           style={{
             padding: "6px 18px",
             background: "#238636",
@@ -217,8 +333,25 @@ function CalibrateView({ entry, buildings, onSaved }: CalibrateViewProps) {
             cursor: "pointer",
           }}
         >
-          Save &amp; exit
+          {isLast ? "Save & finish" : "Save & next"}
         </button>
+        {!isLast && (
+          <button
+            onClick={() => handleSave(true)}
+            style={{
+              padding: "6px 18px",
+              background: "#30363d",
+              color: "#fff",
+              border: "1px solid #8b949e",
+              borderRadius: 4,
+              fontFamily: "monospace",
+              fontSize: 13,
+              cursor: "pointer",
+            }}
+          >
+            Save &amp; stop
+          </button>
+        )}
       </div>
     </div>
   );
@@ -230,46 +363,49 @@ function CalibrateView({ entry, buildings, onSaved }: CalibrateViewProps) {
 
 function CalibrateMode() {
   const [screenshots, setScreenshots] = useState<ScreenshotEntry[] | null>(null);
-  const [buildings, setBuildings] = useState<BuildingsMap | null>(null);
+  const [calibrationOffsets, setCalibrationOffsets] = useState<CalibrationOffsets | null>(null);
   const [config, setConfig] = useState<CalibConfig | null>(null);
   const [activeIdx, setActiveIdx] = useState(0);
-  const [allRecords, setAllRecords] = useState<PlacedRecord[]>([]);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/screenshots").then((r) => r.json()),
-      fetch("/api/buildings").then((r) => r.json()),
-      fetch("/api/config").then((r) => r.json()),
+      fetchJson<ScreenshotEntry[]>("/api/screenshots"),
+      fetchJson<CalibConfig>("/api/config"),
+      fetchJson<CalibrationOffsets>("/api/calibration/offsets"),
     ])
-      .then(([s, b, c]) => {
-        setScreenshots(s as ScreenshotEntry[]);
-        setBuildings(b as BuildingsMap);
-        setConfig(c as CalibConfig);
+      .then(([s, c, offsets]) => {
+        setScreenshots(s);
+        setConfig(c);
+        setCalibrationOffsets(offsets);
       })
-      .catch((e: unknown) => setError(String(e)));
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)));
   }, []);
 
-  function handleScreenshotSaved(records: PlacedRecord[]) {
-    const merged = [...allRecords.filter((r) => r.filename !== screenshots![activeIdx].filename), ...records];
-    if (activeIdx < screenshots!.length - 1) {
-      setAllRecords(merged);
-      setActiveIdx((i) => i + 1);
-    } else {
-      // Last screenshot — POST everything
-      fetch("/api/calibration", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(merged),
+  function handleScreenshotSaved(records: PlacedRecord[], finish: boolean) {
+    fetch(apiUrl(`/api/calibration?finalize=${finish ? "true" : "false"}`), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(records),
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Save failed with HTTP ${response.status}.`);
+        return response.json() as Promise<CalibrationSaveResponse>;
       })
-        .then(() => setSaved(true))
-        .catch((e: unknown) => setError(String(e)));
-    }
+      .then((body) => {
+        setCalibrationOffsets(body.offsets);
+        if (finish || activeIdx >= screenshots!.length - 1) {
+          setSaved(true);
+        } else {
+          setActiveIdx((i) => i + 1);
+        }
+      })
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)));
   }
 
-  if (error) return <div style={{ color: "#f85149", padding: 24, fontFamily: "monospace" }}>{error}</div>;
-  if (!screenshots || !buildings || !config)
+  if (error) return <div style={errorStyle}>{error}</div>;
+  if (!screenshots || !calibrationOffsets || !config)
     return <div style={{ color: "#8b949e", padding: 24, fontFamily: "monospace" }}>Loading…</div>;
   if (saved)
     return (
@@ -308,7 +444,8 @@ function CalibrateMode() {
         <CalibrateView
           key={activeIdx}
           entry={screenshots[activeIdx]}
-          buildings={buildings}
+          calibrationOffsets={calibrationOffsets}
+          isLast={activeIdx >= screenshots.length - 1}
           onSaved={handleScreenshotSaved}
         />
       </div>
@@ -348,8 +485,10 @@ function tileToPixel(
   pitch: number,
   originPx: [number, number],
 ): [number, number] {
-  const ax = Math.cos(ISO_ANGLE_1) * pitch * col + Math.cos(ISO_ANGLE_2) * pitch * row + originPx[0];
-  const ay = Math.sin(ISO_ANGLE_1) * pitch * col + Math.sin(ISO_ANGLE_2) * pitch * row + originPx[1];
+  const ax =
+    Math.cos(ISO_ANGLE_1) * pitch * col + Math.cos(ISO_ANGLE_2) * pitch * row + originPx[0];
+  const ay =
+    Math.sin(ISO_ANGLE_1) * pitch * col + Math.sin(ISO_ANGLE_2) * pitch * row + originPx[1];
   return [ax, ay];
 }
 
@@ -392,7 +531,7 @@ interface ReviewViewProps {
 function ReviewView({ payload, buildings, onSaved }: ReviewViewProps) {
   const imgRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [scale, setScale] = useState(1);
+  const [imageMetrics, setImageMetrics] = useState<ImageMetrics>(emptyImageMetrics);
 
   const allPlacements: CandidatePlacement[] = [
     ...payload.candidate_baselayout.placements,
@@ -416,12 +555,16 @@ function ReviewView({ payload, buildings, onSaved }: ReviewViewProps) {
   useEffect(() => {
     const img = imgRef.current;
     if (!img) return;
-    const updateScale = () => {
-      if (img.naturalWidth) setScale(img.clientWidth / img.naturalWidth);
+    const updateMetrics = () => {
+      setImageMetrics(getImageMetrics(img));
     };
-    img.addEventListener("load", updateScale);
-    updateScale();
-    return () => img.removeEventListener("load", updateScale);
+    img.addEventListener("load", updateMetrics);
+    window.addEventListener("resize", updateMetrics);
+    updateMetrics();
+    return () => {
+      img.removeEventListener("load", updateMetrics);
+      window.removeEventListener("resize", updateMetrics);
+    };
   }, [payload.screenshot_url]);
 
   useEffect(() => {
@@ -436,10 +579,11 @@ function ReviewView({ payload, buildings, onSaved }: ReviewViewProps) {
     const ctx = canvas.getContext("2d")!;
     ctx.clearRect(0, 0, w, h);
 
+    const { scale, offsetX, offsetY } = imageMetrics;
     const pitch = payload.derived_pitch_px * scale;
     const origin: [number, number] = [
-      payload.derived_origin_px[0] * scale,
-      payload.derived_origin_px[1] * scale,
+      offsetX + payload.derived_origin_px[0] * scale,
+      offsetY + payload.derived_origin_px[1] * scale,
     ];
 
     for (const p of placements) {
@@ -470,14 +614,20 @@ function ReviewView({ payload, buildings, onSaved }: ReviewViewProps) {
       ctx.fillText(p.building_type, ax + 2, ay - 3);
 
       // Suppress unused vars warning from the simplified bbox path
-      void x0; void y0; void x1; void y1;
+      void x0;
+      void y0;
+      void x1;
+      void y1;
     }
-  }, [placements, scale, payload, buildings]);
+  }, [placements, imageMetrics, payload, buildings]);
 
   function canvasCoordToImage(ex: number, ey: number): [number, number] {
     const canvas = canvasRef.current!;
     const rect = canvas.getBoundingClientRect();
-    return [(ex - rect.left) / scale, (ey - rect.top) / scale];
+    return [
+      (ex - rect.left - imageMetrics.offsetX) / imageMetrics.scale,
+      (ey - rect.top - imageMetrics.offsetY) / imageMetrics.scale,
+    ];
   }
 
   function findNearestPlacement(ix: number, iy: number): number | null {
@@ -512,13 +662,16 @@ function ReviewView({ payload, buildings, onSaved }: ReviewViewProps) {
   function onMouseMove(e: React.MouseEvent) {
     if (!dragging.current) return;
     const [ix, iy] = canvasCoordToImage(e.clientX, e.clientY);
-    const [colF, rowF] = pixelToTile(ix, iy, payload.derived_pitch_px, payload.derived_origin_px as [number, number]);
+    const [colF, rowF] = pixelToTile(
+      ix,
+      iy,
+      payload.derived_pitch_px,
+      payload.derived_origin_px as [number, number],
+    );
     const col = Math.round(colF);
     const row = Math.round(rowF);
     const { pIdx } = dragging.current;
-    setPlacements((prev) =>
-      prev.map((p, i) => (i === pIdx ? { ...p, col, row } : p)),
-    );
+    setPlacements((prev) => prev.map((p, i) => (i === pIdx ? { ...p, col, row } : p)));
   }
 
   function onMouseUp() {
@@ -543,7 +696,7 @@ function ReviewView({ payload, buildings, onSaved }: ReviewViewProps) {
       >
         <img
           ref={imgRef}
-          src={payload.screenshot_url}
+          src={apiUrl(payload.screenshot_url)}
           alt="screenshot"
           style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
         />
@@ -585,27 +738,27 @@ function ReviewMode() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/review/baselayout").then((r) => r.json()),
-      fetch("/api/buildings").then((r) => r.json()),
+      fetchJson<ReviewPayload>("/api/review/baselayout"),
+      fetchJson<BuildingsMap>("/api/buildings"),
     ])
       .then(([p, b]) => {
-        setPayload(p as ReviewPayload);
-        setBuildings(b as BuildingsMap);
+        setPayload(p);
+        setBuildings(b);
       })
-      .catch((e: unknown) => setError(String(e)));
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)));
   }, []);
 
   function handleSaved(corrected: CandidatePlacement[]) {
-    fetch("/api/review/baselayout", {
+    fetch(apiUrl("/api/review/baselayout"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ corrected_placements: corrected }),
     })
       .then(() => setSaved(true))
-      .catch((e: unknown) => setError(String(e)));
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)));
   }
 
-  if (error) return <div style={{ color: "#f85149", padding: 24, fontFamily: "monospace" }}>{error}</div>;
+  if (error) return <div style={errorStyle}>{error}</div>;
   if (!payload || !buildings)
     return <div style={{ color: "#8b949e", padding: 24, fontFamily: "monospace" }}>Loading…</div>;
   if (saved)

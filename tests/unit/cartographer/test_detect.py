@@ -36,6 +36,22 @@ def test_parse_response_bbox_center_to_xyxy() -> None:
     assert y2 == pytest.approx(220.0)
 
 
+def test_parse_response_scales_to_target_image_shape() -> None:
+    """Roboflow response coords are rescaled if the response image size differs."""
+    from cartographer.detect import _parse_response
+
+    data = {
+        "image": {"width": 100, "height": 50},
+        "predictions": [
+            {"class": "cannon", "x": 50.0, "y": 25.0, "width": 20.0, "height": 10.0, "confidence": 0.9},
+        ],
+    }
+    accepted, sub = _parse_response(data, confidence_threshold=0.5, target_shape=(100, 200))
+    assert len(accepted) == 1
+    assert sub == []
+    assert accepted[0].bbox_xyxy == pytest.approx((80.0, 40.0, 120.0, 60.0))
+
+
 def test_confidence_filtering() -> None:
     """Detections split correctly into accepted vs sub-threshold."""
     from cartographer.detect import _parse_response

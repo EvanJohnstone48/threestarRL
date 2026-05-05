@@ -16,7 +16,7 @@ import json
 import logging
 from pathlib import Path
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, Field, ValidationError
 
 _logger = logging.getLogger("cartographer")
 
@@ -25,11 +25,17 @@ _CALIBRATION_PATH = Path(__file__).parent.parent / "data" / "cartographer_calibr
 _warned: set[str] = set()
 
 
+class CalibrationSample(BaseModel):
+    class_name: str
+    offset: tuple[float, float]
+
+
 class CalibrationFile(BaseModel):
     dataset_version: str
     offsets: dict[str, tuple[float, float]]
     calibrated_at_utc: str
     sample_counts: dict[str, int]
+    samples: list[CalibrationSample] = Field(default_factory=list)
 
 
 def load_offsets(

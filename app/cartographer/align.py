@@ -81,7 +81,7 @@ def run(
         detections: Accepted detections from the detect stage.
         pitch: Tile pitch in pixels from the grid stage.
         origin: Grid origin pixel (ox, oy) from the grid stage.
-        offsets: Per-class calibration offsets from calibration.load_offsets().
+        offsets: Per-class footprint-center calibration offsets from calibration.load_offsets().
                  Pass None or {} to use zero offsets for all classes.
 
     Raises:
@@ -104,7 +104,8 @@ def run(
 
     for det in detections:
         x1, _y1, x2, y2 = det.bbox_xyxy
-        # Anchor: bbox bottom-center pixel
+        # Start from the detector box's bottom-center, then apply calibration so
+        # the anchor represents the center of the building's footprint.
         anchor_x = (x1 + x2) / 2.0
         anchor_y = float(y2)
 
@@ -119,24 +120,25 @@ def run(
         anchor_x += dx
         anchor_y += dy
 
-        # Convert anchor pixel to fractional tile coords (col, row)
+        # Convert footprint-center pixel to fractional tile coords (col, row).
         delta = np.array([anchor_x - ox, anchor_y - oy], dtype=float)
         cr = mat_inv @ delta
         col_frac, row_frac = float(cr[0]), float(cr[1])
 
-        # Footprint NxN
+        # Footprint dimensions are in tile counts. The calibrated center is at
+        # origin + footprint / 2. For 2x2 and 4x4 this is the shared inner tile
+        # border; for 3x3 this is the center of the middle tile.
         fp = _FOOTPRINTS.get(det.class_name, (3, 3))
-        n = fp[0]
+        cols, rows = fp
 
-        # Top-left tile: anchor is the bottom diamond apex, N tiles down-right
-        col0_frac = col_frac - n
-        row0_frac = row_frac - n
+        col0_frac = col_frac - cols / 2.0
+        row0_frac = row_frac - rows / 2.0
 
         col0 = round(col0_frac)
         row0 = round(row0_frac)
 
-        # Reverse-project to validate (predicted anchor should be within 0.5 tile)
-        pred_cr = np.array([col0 + n, row0 + n], dtype=float)
+        # Reverse-project to validate (predicted center should be within 0.5 tile)
+        pred_cr = np.array([col0 + cols / 2.0, row0 + rows / 2.0], dtype=float)
         pred_delta = mat @ pred_cr
         pred_anchor_x = ox + float(pred_delta[0])
         pred_anchor_y = oy + float(pred_delta[1])
@@ -162,9 +164,9 @@ def run(
     occupied: dict[tuple[int, int], str] = {}
     for p in placements:
         c0, r0 = p.origin
-        n = p.footprint[0]
-        for dc in range(n):
-            for dr in range(n):
+        cols, rows = p.footprint
+        for dc in range(cols):
+            for dr in range(rows):
                 tile = (c0 + dc, r0 + dr)
                 if tile in occupied:
                     raise OverlapError(
@@ -181,12 +183,17 @@ def run(
     centered: list[AlignedPlacement] = []
     for p in placements:
         c0, r0 = p.origin
-        n = p.footprint[0]
+        cols, rows = p.footprint
         new_c0 = c0 + shift_col
         new_r0 = r0 + shift_row
-        if new_c0 < 0 or new_r0 < 0 or new_c0 + n > _GRID_SIZE or new_r0 + n > _GRID_SIZE:
+        if (
+            new_c0 < 0
+            or new_r0 < 0
+            or new_c0 + cols > _GRID_SIZE
+            or new_r0 + rows > _GRID_SIZE
+        ):
             raise BoundaryError(
-                f"{p.class_name}: origin ({new_c0}, {new_r0}) footprint {n}x{n} "
+                f"{p.class_name}: origin ({new_c0}, {new_r0}) footprint {cols}x{rows} "
                 f"clips the {_GRID_SIZE}x{_GRID_SIZE} grid after centering"
             )
         centered.append(

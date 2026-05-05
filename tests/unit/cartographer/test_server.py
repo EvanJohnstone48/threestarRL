@@ -151,6 +151,27 @@ def test_get_config_returns_config(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
+def test_get_calibration_offsets_returns_existing_offsets(tmp_path: Path) -> None:
+    from fastapi.testclient import TestClient
+
+    app, cal_path, _ = _make_app(tmp_path)
+    cal_path.write_text(
+        json.dumps(
+            {
+                "dataset_version": "1",
+                "offsets": {"cannon": [3.0, -7.0]},
+                "calibrated_at_utc": "2026-01-01T00:00:00+00:00",
+                "sample_counts": {"cannon": 4},
+            }
+        ),
+        encoding="utf-8",
+    )
+    client = TestClient(app)
+    resp = client.get("/api/calibration/offsets")
+    assert resp.status_code == 200
+    assert resp.json() == {"cannon": [3.0, -7.0]}
+
+
 def test_get_screenshots_returns_entries(tmp_path: Path) -> None:
     from fastapi.testclient import TestClient
 
@@ -196,7 +217,68 @@ def test_post_calibration_writes_file(tmp_path: Path) -> None:
     assert "cannon" in written["offsets"]
     assert written["offsets"]["cannon"] == pytest.approx([5.0, -5.0])
     assert written["sample_counts"]["cannon"] == 1
+    assert written["samples"] == [{"class_name": "cannon", "offset": [5.0, -5.0]}]
     assert "calibrated_at_utc" in written
+
+
+def test_post_calibration_merges_existing_samples(tmp_path: Path) -> None:
+    from fastapi.testclient import TestClient
+
+    app, cal_path, _ = _make_app(tmp_path)
+    cal_path.write_text(
+        json.dumps(
+            {
+                "dataset_version": "1",
+                "offsets": {"cannon": [0.0, 0.0]},
+                "calibrated_at_utc": "2026-01-01T00:00:00+00:00",
+                "sample_counts": {"cannon": 2},
+                "samples": [
+                    {"class_name": "cannon", "offset": [0.0, 0.0]},
+                    {"class_name": "cannon", "offset": [10.0, 0.0]},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    client = TestClient(app, raise_server_exceptions=True)
+
+    payload = [
+        {
+            "filename": "shot.png",
+            "class_name": "cannon",
+            "bbox_xyxy": [10.0, 20.0, 50.0, 80.0],
+            "placed_anchor_xy": [50.0, 80.0],
+        }
+    ]
+    resp = client.post("/api/calibration", json=payload)
+    assert resp.status_code == 200
+
+    written = json.loads(cal_path.read_text(encoding="utf-8"))
+    assert written["offsets"]["cannon"] == pytest.approx([10.0, 0.0])
+    assert written["sample_counts"]["cannon"] == 3
+    assert len(written["samples"]) == 3
+
+
+def test_post_calibration_can_save_without_shutdown(tmp_path: Path) -> None:
+    from fastapi.testclient import TestClient
+
+    app, cal_path, _ = _make_app(tmp_path)
+    client = TestClient(app, raise_server_exceptions=True)
+
+    payload = [
+        {
+            "filename": "shot.png",
+            "class_name": "cannon",
+            "bbox_xyxy": [10.0, 20.0, 50.0, 80.0],
+            "placed_anchor_xy": [35.0, 75.0],
+        }
+    ]
+    resp = client.post("/api/calibration?finalize=false", json=payload)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["finalized"] is False
+    assert data["offsets"]["cannon"] == pytest.approx([5.0, -5.0])
+    assert cal_path.exists()
 
 
 # ---------------------------------------------------------------------------
