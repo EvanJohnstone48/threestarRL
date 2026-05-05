@@ -317,6 +317,314 @@ function CalibrateMode() {
 }
 
 // ---------------------------------------------------------------------------
+// Review mode types
+// ---------------------------------------------------------------------------
+
+interface CandidatePlacement {
+  building_type: string;
+  origin: [number, number]; // [row, col] tile coords
+}
+
+interface ReviewPayload {
+  screenshot_url: string;
+  candidate_baselayout: {
+    placements: Array<{ building_type: string; origin: [number, number] }>;
+    traps: Array<{ trap_type: string; origin: [number, number] }>;
+  };
+  derived_pitch_px: number;
+  derived_origin_px: [number, number];
+}
+
+// ---------------------------------------------------------------------------
+// ISO basis helpers (must match Python: ISO_ANGLE_1=atan2(1,2), ISO_ANGLE_2=π-ISO_ANGLE_1)
+// ---------------------------------------------------------------------------
+
+const ISO_ANGLE_1 = Math.atan2(1, 2);
+const ISO_ANGLE_2 = Math.PI - ISO_ANGLE_1;
+
+function tileToPixel(
+  col: number,
+  row: number,
+  pitch: number,
+  originPx: [number, number],
+): [number, number] {
+  const ax = Math.cos(ISO_ANGLE_1) * pitch * col + Math.cos(ISO_ANGLE_2) * pitch * row + originPx[0];
+  const ay = Math.sin(ISO_ANGLE_1) * pitch * col + Math.sin(ISO_ANGLE_2) * pitch * row + originPx[1];
+  return [ax, ay];
+}
+
+function pixelToTile(
+  px: number,
+  py: number,
+  pitch: number,
+  originPx: [number, number],
+): [number, number] {
+  const dx = px - originPx[0];
+  const dy = py - originPx[1];
+  // 2x2 basis matrix columns: [cos1*p, sin1*p] and [cos2*p, sin2*p]
+  const a = Math.cos(ISO_ANGLE_1) * pitch;
+  const b = Math.cos(ISO_ANGLE_2) * pitch;
+  const c = Math.sin(ISO_ANGLE_1) * pitch;
+  const d = Math.sin(ISO_ANGLE_2) * pitch;
+  const det = a * d - b * c;
+  const col = (d * dx - b * dy) / det;
+  const row = (a * dy - c * dx) / det;
+  return [col, row];
+}
+
+// ---------------------------------------------------------------------------
+// ReviewView — canvas overlay with draggable tile placements
+// ---------------------------------------------------------------------------
+
+interface ReviewPlacementState {
+  idx: number;
+  building_type: string;
+  col: number;
+  row: number;
+}
+
+interface ReviewViewProps {
+  payload: ReviewPayload;
+  buildings: BuildingsMap;
+  onSaved: (corrected: CandidatePlacement[]) => void;
+}
+
+function ReviewView({ payload, buildings, onSaved }: ReviewViewProps) {
+  const imgRef = useRef<HTMLImageElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [scale, setScale] = useState(1);
+
+  const allPlacements: CandidatePlacement[] = [
+    ...payload.candidate_baselayout.placements,
+    ...payload.candidate_baselayout.traps.map((t) => ({
+      building_type: t.trap_type,
+      origin: t.origin,
+    })),
+  ];
+
+  const [placements, setPlacements] = useState<ReviewPlacementState[]>(() =>
+    allPlacements.map((p, i) => ({
+      idx: i,
+      building_type: p.building_type,
+      col: p.origin[1], // origin is [row, col] in Python convention
+      row: p.origin[0],
+    })),
+  );
+
+  const dragging = useRef<{ pIdx: number; startCol: number; startRow: number } | null>(null);
+
+  useEffect(() => {
+    const img = imgRef.current;
+    if (!img) return;
+    const updateScale = () => {
+      if (img.naturalWidth) setScale(img.clientWidth / img.naturalWidth);
+    };
+    img.addEventListener("load", updateScale);
+    updateScale();
+    return () => img.removeEventListener("load", updateScale);
+  }, [payload.screenshot_url]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const img = imgRef.current;
+    if (!canvas || !img || !img.naturalWidth) return;
+
+    const w = img.clientWidth;
+    const h = img.clientHeight;
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d")!;
+    ctx.clearRect(0, 0, w, h);
+
+    const pitch = payload.derived_pitch_px * scale;
+    const origin: [number, number] = [
+      payload.derived_origin_px[0] * scale,
+      payload.derived_origin_px[1] * scale,
+    ];
+
+    for (const p of placements) {
+      const fp = buildings[p.building_type] ?? [1, 1];
+      const [cols, rows] = fp; // footprint is [cols, rows] from buildings.json
+      const [x0, y0] = tileToPixel(p.col, p.row, pitch, origin);
+      const [x1, y1] = tileToPixel(p.col + cols, p.row + rows, pitch, origin);
+      ctx.strokeStyle = "rgba(0,200,255,0.95)";
+      ctx.lineWidth = 2;
+      // Draw the footprint as a parallelogram via all 4 corners
+      const [ax, ay] = tileToPixel(p.col, p.row, pitch, origin);
+      const [bx, by] = tileToPixel(p.col + cols, p.row, pitch, origin);
+      const [cx, cy] = tileToPixel(p.col + cols, p.row + rows, pitch, origin);
+      const [dx, dy] = tileToPixel(p.col, p.row + rows, pitch, origin);
+      ctx.beginPath();
+      ctx.moveTo(ax, ay);
+      ctx.lineTo(bx, by);
+      ctx.lineTo(cx, cy);
+      ctx.lineTo(dx, dy);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.fillStyle = "rgba(0,200,255,0.15)";
+      ctx.fill();
+
+      // Label
+      ctx.fillStyle = "rgba(0,200,255,0.95)";
+      ctx.font = `${Math.max(9, 10 * scale)}px monospace`;
+      ctx.fillText(p.building_type, ax + 2, ay - 3);
+
+      // Suppress unused vars warning from the simplified bbox path
+      void x0; void y0; void x1; void y1;
+    }
+  }, [placements, scale, payload, buildings]);
+
+  function canvasCoordToImage(ex: number, ey: number): [number, number] {
+    const canvas = canvasRef.current!;
+    const rect = canvas.getBoundingClientRect();
+    return [(ex - rect.left) / scale, (ey - rect.top) / scale];
+  }
+
+  function findNearestPlacement(ix: number, iy: number): number | null {
+    const pitch = payload.derived_pitch_px;
+    const origin = payload.derived_origin_px as [number, number];
+    let best: number | null = null;
+    let bestDist = 40;
+    for (let i = 0; i < placements.length; i++) {
+      const p = placements[i];
+      const [px, py] = tileToPixel(p.col, p.row, pitch, origin);
+      const d = Math.hypot(px - ix, py - iy);
+      if (d < bestDist) {
+        bestDist = d;
+        best = i;
+      }
+    }
+    return best;
+  }
+
+  function onMouseDown(e: React.MouseEvent) {
+    const [ix, iy] = canvasCoordToImage(e.clientX, e.clientY);
+    const idx = findNearestPlacement(ix, iy);
+    if (idx !== null) {
+      dragging.current = {
+        pIdx: idx,
+        startCol: placements[idx].col,
+        startRow: placements[idx].row,
+      };
+    }
+  }
+
+  function onMouseMove(e: React.MouseEvent) {
+    if (!dragging.current) return;
+    const [ix, iy] = canvasCoordToImage(e.clientX, e.clientY);
+    const [colF, rowF] = pixelToTile(ix, iy, payload.derived_pitch_px, payload.derived_origin_px as [number, number]);
+    const col = Math.round(colF);
+    const row = Math.round(rowF);
+    const { pIdx } = dragging.current;
+    setPlacements((prev) =>
+      prev.map((p, i) => (i === pIdx ? { ...p, col, row } : p)),
+    );
+  }
+
+  function onMouseUp() {
+    dragging.current = null;
+  }
+
+  function handleSave() {
+    const corrected: CandidatePlacement[] = placements.map((p) => ({
+      building_type: p.building_type,
+      origin: [p.row, p.col], // back to [row, col] for the server
+    }));
+    onSaved(corrected);
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8, height: "100%" }}>
+      <div
+        style={{ position: "relative", flex: 1, overflow: "hidden", cursor: "crosshair" }}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+      >
+        <img
+          ref={imgRef}
+          src={payload.screenshot_url}
+          alt="screenshot"
+          style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
+        />
+        <canvas
+          ref={canvasRef}
+          style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none" }}
+        />
+      </div>
+      <div style={{ display: "flex", gap: 8, padding: "8px 0", flexShrink: 0 }}>
+        <button
+          onClick={handleSave}
+          style={{
+            padding: "6px 18px",
+            background: "#238636",
+            color: "#fff",
+            border: "none",
+            borderRadius: 4,
+            fontFamily: "monospace",
+            fontSize: 13,
+            cursor: "pointer",
+          }}
+        >
+          Save corrected layout
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Review mode root
+// ---------------------------------------------------------------------------
+
+function ReviewMode() {
+  const [payload, setPayload] = useState<ReviewPayload | null>(null);
+  const [buildings, setBuildings] = useState<BuildingsMap | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/review/baselayout").then((r) => r.json()),
+      fetch("/api/buildings").then((r) => r.json()),
+    ])
+      .then(([p, b]) => {
+        setPayload(p as ReviewPayload);
+        setBuildings(b as BuildingsMap);
+      })
+      .catch((e: unknown) => setError(String(e)));
+  }, []);
+
+  function handleSaved(corrected: CandidatePlacement[]) {
+    fetch("/api/review/baselayout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ corrected_placements: corrected }),
+    })
+      .then(() => setSaved(true))
+      .catch((e: unknown) => setError(String(e)));
+  }
+
+  if (error) return <div style={{ color: "#f85149", padding: 24, fontFamily: "monospace" }}>{error}</div>;
+  if (!payload || !buildings)
+    return <div style={{ color: "#8b949e", padding: 24, fontFamily: "monospace" }}>Loading…</div>;
+  if (saved)
+    return (
+      <div style={{ color: "#3fb950", padding: 24, fontFamily: "monospace" }}>
+        Review saved. You can close this tab.
+      </div>
+    );
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 8 }}>
+      <div style={{ flex: 1, minHeight: 0 }}>
+        <ReviewView payload={payload} buildings={buildings} onSaved={handleSaved} />
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Public export
 // ---------------------------------------------------------------------------
 
@@ -325,11 +633,11 @@ export function CartographerPage() {
   const mode = params.get("mode") ?? "calibrate";
 
   if (mode === "calibrate") return <CalibrateMode />;
+  if (mode === "review") return <ReviewMode />;
 
-  // mode=review — stub for issue 035
   return (
     <div style={{ color: "#8b949e", padding: 24, fontFamily: "monospace" }}>
-      Review mode — not yet implemented (issue #35).
+      Unknown mode: {mode}
     </div>
   );
 }

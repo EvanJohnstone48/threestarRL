@@ -10,6 +10,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+
 from cartographer.calibration import CalibrationFile
 from cartographer.detect import Detection
 
@@ -53,6 +55,11 @@ def compute_offsets(
     return offsets, sample_counts
 
 
+def _load_buildings() -> dict[str, list[int]]:
+    raw = json.loads(_BUILDINGS_PATH.read_text(encoding="utf-8"))
+    return {entry["name"]: entry["footprint"] for entry in raw["entries"]}
+
+
 def create_app(
     screenshot_entries: list[ScreenshotEntry],
     config: dict[str, Any],
@@ -66,11 +73,13 @@ def create_app(
     shutdown_event: set after POST /api/calibration so the caller can shut down
     """
     from fastapi import FastAPI
-    from fastapi.responses import JSONResponse
+    from fastapi.responses import FileResponse, JSONResponse
 
     app = FastAPI()
     _cal_path = calibration_path if calibration_path is not None else _CALIBRATION_PATH
     _shutdown = shutdown_event if shutdown_event is not None else threading.Event()
+
+    _image_paths: dict[str, Path] = {e.filename: e.image_path for e in screenshot_entries}
 
     _screenshots_cache = [
         {
@@ -94,12 +103,20 @@ def create_app(
 
     @app.get("/api/buildings")
     def get_buildings() -> Any:
-        raw = json.loads(_BUILDINGS_PATH.read_text(encoding="utf-8"))
-        return {entry["name"]: entry["footprint"] for entry in raw["entries"]}
+        return _load_buildings()
 
     @app.get("/api/config")
     def get_config() -> Any:
         return config
+
+    @app.get("/api/images/{filename}")
+    def get_image(filename: str) -> Any:
+        path = _image_paths.get(filename)
+        if path is None or not path.exists():
+            from fastapi import HTTPException
+
+            raise HTTPException(status_code=404, detail="Image not found")
+        return FileResponse(str(path))
 
     @app.post("/api/calibration")
     def post_calibration(records: list[dict[str, Any]]) -> Any:
@@ -116,5 +133,97 @@ def create_app(
         )
         _shutdown.set()
         return JSONResponse(content={"status": "ok"})
+
+    return app
+
+
+def create_review_app(
+    screenshot_path: Path,
+    candidate_layout: Any,
+    derived_pitch_px: float,
+    derived_origin_px: tuple[float, float],
+    image: np.ndarray,
+    out_path: Path,
+    config: dict[str, Any],
+    *,
+    calibration_path: Path | None = None,
+    shutdown_event: threading.Event | None = None,
+) -> Any:
+    """Create a FastAPI app for the review-mode HITL workflow.
+
+    calibration_path: injected for tests to verify it is never written.
+    shutdown_event: set after POST /api/review/baselayout.
+    """
+    from fastapi import FastAPI
+    from fastapi.responses import FileResponse, JSONResponse
+
+    app = FastAPI()
+    _shutdown = shutdown_event if shutdown_event is not None else threading.Event()
+
+    # Build footprint lookup (buildings.json + trap fallbacks)
+    _buildings = _load_buildings()
+    _trap_footprints: dict[str, list[int]] = {
+        "bomb": [1, 1],
+        "giant_bomb": [2, 2],
+        "spring_trap": [1, 1],
+        "air_bomb": [1, 1],
+    }
+
+    def _footprint(building_type: str) -> tuple[int, int]:
+        fp = _buildings.get(building_type) or _trap_footprints.get(building_type) or [3, 3]
+        return (int(fp[0]), int(fp[1]))
+
+    @app.get("/api/review/baselayout")
+    def get_review_baselayout() -> Any:
+        return {
+            "screenshot_url": f"/api/images/{screenshot_path.name}",
+            "candidate_baselayout": candidate_layout.model_dump(),
+            "derived_pitch_px": derived_pitch_px,
+            "derived_origin_px": list(derived_origin_px),
+        }
+
+    @app.post("/api/review/baselayout")
+    def post_review_baselayout(body: dict[str, Any]) -> Any:
+        from cartographer import emit, walls
+        from cartographer.align import AlignedPlacement
+
+        corrected = body.get("corrected_placements", [])
+        aligned: list[AlignedPlacement] = [
+            AlignedPlacement(
+                class_name=p["building_type"],
+                origin=(int(p["origin"][0]), int(p["origin"][1])),
+                footprint=_footprint(p["building_type"]),
+                confidence=1.0,
+            )
+            for p in corrected
+        ]
+
+        wall_tiles = walls.run(image, derived_pitch_px, derived_origin_px, placements=aligned)
+
+        emit.run(
+            placements=aligned,
+            wall_tiles=wall_tiles,
+            source_screenshot=str(screenshot_path),
+            pitch=derived_pitch_px,
+            origin=derived_origin_px,
+            dataset_version=str(config["dataset_version"]),
+            confidence_threshold=float(config["confidence_threshold"]),
+            out_path=out_path,
+            reviewed=True,
+        )
+        _shutdown.set()
+        return JSONResponse(content={"status": "ok"})
+
+    @app.get("/api/buildings")
+    def get_buildings() -> Any:
+        return _load_buildings()
+
+    @app.get("/api/images/{filename}")
+    def get_image(filename: str) -> Any:
+        if filename != screenshot_path.name or not screenshot_path.exists():
+            from fastapi import HTTPException
+
+            raise HTTPException(status_code=404, detail="Image not found")
+        return FileResponse(str(screenshot_path))
 
     return app

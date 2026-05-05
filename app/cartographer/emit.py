@@ -29,6 +29,8 @@ def run(
     dataset_version: str,
     confidence_threshold: float,
     out_path: Path,
+    *,
+    reviewed: bool = False,
 ) -> BaseLayout:
     """Assemble a valid BaseLayout, write it to *out_path*, and return it.
 
@@ -55,6 +57,7 @@ def run(
         derived_pitch_px=pitch,
         derived_origin_px=(origin[0], origin[1]),
         per_placement_confidence=per_conf,
+        reviewed=reviewed,
     )
 
     layout = BaseLayout(

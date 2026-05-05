@@ -66,6 +66,91 @@ def _run_calibrate(screenshot_paths: list[Path]) -> None:
     thread.join(timeout=5)
 
 
+def _run_review(screenshot_path: Path, out_path: Path | None) -> None:
+    import uvicorn
+    from sandbox_core.schemas import (
+        BaseLayout,
+        BaseLayoutMetadata,
+        BuildingPlacement,
+        CartographerProvenance,
+        TrapPlacement,
+    )
+
+    from cartographer import pipeline
+    from cartographer.detect import TRAP_CLASSES
+    from cartographer.server import create_review_app
+
+    image, _accepted, _sub_threshold, pitch, origin, placements, _diag_path, cfg = (
+        pipeline.run_to_align(screenshot_path, out_path)
+    )
+
+    if out_path is None:
+        out_path = (
+            Path(__file__).parent.parent
+            / "data"
+            / "scraped_bases"
+            / (screenshot_path.stem + ".json")
+        )
+
+    # Build candidate BaseLayout from aligned placements
+    building_placements: list[BuildingPlacement] = []
+    trap_placements: list[TrapPlacement] = []
+    for p in placements:
+        if p.class_name in TRAP_CLASSES:
+            trap_placements.append(TrapPlacement(trap_type=p.class_name, origin=p.origin))
+        else:
+            building_placements.append(BuildingPlacement(building_type=p.class_name, origin=p.origin))
+
+    per_conf = {f"{p.class_name}_{i}": p.confidence for i, p in enumerate(placements)}
+    candidate_layout = BaseLayout(
+        metadata=BaseLayoutMetadata(name=screenshot_path.stem, th_level=6),
+        th_level=6,
+        placements=building_placements,
+        traps=trap_placements,
+        provenance=CartographerProvenance(
+            source_screenshot=str(screenshot_path),
+            ingest_timestamp_utc=__import__("datetime").datetime.now(
+                __import__("datetime").UTC
+            ).isoformat(),
+            dataset_version=str(cfg["dataset_version"]),
+            confidence_threshold=float(cfg["confidence_threshold"]),
+            derived_pitch_px=pitch,
+            derived_origin_px=(origin[0], origin[1]),
+            per_placement_confidence=per_conf,
+        ),
+    )
+
+    shutdown_event = threading.Event()
+    app = create_review_app(
+        screenshot_path=screenshot_path,
+        candidate_layout=candidate_layout,
+        derived_pitch_px=pitch,
+        derived_origin_px=origin,
+        image=image,
+        out_path=out_path,
+        config=cfg,
+        shutdown_event=shutdown_event,
+    )
+
+    port = _free_port()
+    url = f"http://localhost:{port}/?tab=cartographer&mode=review"
+
+    server = uvicorn.Server(
+        uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning")
+    )
+
+    thread = threading.Thread(target=server.run, daemon=True)
+    thread.start()
+
+    import time
+    time.sleep(0.5)
+    webbrowser.open(url)
+
+    shutdown_event.wait()
+    server.should_exit = True
+    thread.join(timeout=5)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="cartographer")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -73,6 +158,12 @@ def main() -> None:
     ingest_parser = sub.add_parser("ingest", help="Ingest a screenshot into a BaseLayout JSON.")
     ingest_parser.add_argument("--in", dest="input", required=True, type=Path, metavar="PATH")
     ingest_parser.add_argument("--out", dest="output", type=Path, default=None, metavar="PATH")
+    ingest_parser.add_argument(
+        "--review",
+        action="store_true",
+        default=False,
+        help="Open the review UI before writing the final JSON.",
+    )
 
     calibrate_parser = sub.add_parser(
         "calibrate",
@@ -85,6 +176,9 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "ingest":
-        pipeline.run(args.input, args.output)
+        if args.review:
+            _run_review(args.input, args.output)
+        else:
+            pipeline.run(args.input, args.output)
     elif args.command == "calibrate":
         _run_calibrate(args.inputs)

@@ -132,6 +132,7 @@ export interface CartographerProvenance {
   derived_pitch_px: number;
   derived_origin_px: [number, number];
   per_placement_confidence: { [key: string]: number };
+  reviewed: boolean;
 }
 
 export interface DeploymentAction {

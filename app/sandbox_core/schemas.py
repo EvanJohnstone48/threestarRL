@@ -249,6 +249,7 @@ class CartographerProvenance(_StrictModel):
     derived_pitch_px: float
     derived_origin_px: tuple[float, float]
     per_placement_confidence: dict[str, float]
+    reviewed: bool = False
 
 
 class TrapPlacement(_StrictModel):
