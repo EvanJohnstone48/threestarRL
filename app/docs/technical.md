@@ -277,7 +277,8 @@ screenshot.png
   ▼
 ┌──────────────────────────────────────┐
 │ Stage 2 — Roboflow object detection   │   cartographer/detect.py
-│  - call Roboflow Inference SDK        │
+│  - HTTPS POST to model endpoint       │
+│    (detect.roboflow.com/{proj}/{ver}) │
 │  - get bounding boxes + class labels  │
 │    + confidence scores                │
 │  - input: preprocessed image          │
@@ -309,9 +310,12 @@ BaseLayout JSON  (same schema as hand-built bases)
 ### 7.2 Roboflow integration
 
 - Model training happens off-codebase in Roboflow's UI. The repo does not contain training code or labeled data — only inference glue.
-- Model is loaded via Roboflow Inference SDK; either hosted endpoint (HTTPS API call per ingest) or local inference using downloaded weights. Choice deferred to v2.
-- Configuration in `app/data/cartographer_config.json`: `{ project_name, dataset_version, inference_endpoint, confidence_threshold, ... }`.
+- Inference is a direct HTTPS POST to the hosted detection model: `https://detect.roboflow.com/{project_name}/{dataset_version}` with the API key as a query param and the image as base64 in the body. Response shape: `{"predictions": [{"class", "x", "y", "width", "height", "confidence"}, ...]}` where `(x, y)` is the bbox center; convert to xyxy in `detect.py`.
+- The Roboflow `inference-sdk` package is **not used**: it has no Python 3.13 wheel as of v0.9, and the project runs on 3.13. Use `requests` instead. The Roboflow workflow wrapper URL (`/infer/workflows/{ws}/{id}`) is also not used — it 404s on every Roboflow host as of 2026-05-05, and its added outputs (annotated image, count) are duplicated by `cartographer/diagnostic.py`. See `app/docs/cartographer/prd.md` §4.8 and `issues/open/027-cartographer-real-roboflow-detection.md` for the full reasoning.
+- Local inference using downloaded weights remains a future option; the swap point is the `detect` module per cartographer PRD §4.8.
+- Configuration in `app/data/cartographer_config.json`: `{ project_name, dataset_version, confidence_threshold }`.
 - API key in `ROBOFLOW_API_KEY` environment variable, never committed.
+- Smoke test (key + endpoint reachability): `python scripts/roboflow_smoke.py`.
 
 ### 7.3 CLI (v2)
 

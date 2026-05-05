@@ -14,7 +14,7 @@ Pipeline:
 
 1. Build the candidate set: every tile inside the convex hull of accepted detections that is not covered by any placed building's footprint.
 2. For each candidate, sample its pixel region using the iso basis from the derived grid.
-3. Classify wall vs non-wall by RGB distance to a calibrated stone-color centroid (committed as a tested module-level constant; the specific RGB values come from sampling reference screenshots).
+3. Classify wall vs non-wall by RGB distance to a calibrated stone-color centroid (committed as a tested module-level constant; the specific RGB values come from sampling reference screenshots in `app/data/base_screenshots/` — 50 TH6 home-village JPGs already committed, pick a handful with visible wall sections to derive the centroid).
 4. Append wall placements to `BaseLayout.placements` with type `wall`. Non-wall tiles (open ground, decorations, obstacles) are left empty.
 
 The diagnostic stage is updated to render classified walls in a distinct color overlay.

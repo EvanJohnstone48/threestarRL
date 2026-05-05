@@ -12,7 +12,7 @@
 
 **Eval data:**
 
-- Capture 20 TH6 home-village screenshots covering the input scope from PRD §4.11. These are the eval set for AC-C1, AC-C3, AC-C4. Distinct from the training-data screenshots from issue 026.
+- Source 20 TH6 home-village screenshots covering the input scope from PRD §4.11. The pool of available screenshots lives in `app/data/base_screenshots/` (50 TH6 home-village JPGs already committed). Pick 20 distinct from whatever subset issue 026 used for training; if issue 026's training subset overlaps everything in the directory, capture additional screenshots per PRD §4.11 to maintain the train/eval split. These 20 are the eval set for AC-C1, AC-C3, AC-C4.
 - For each, hand-label the ground-truth `BaseLayout` (tile-precise placements) and commit the expected JSON next to the screenshot fixture.
 - Within those, mark a 5-screenshot subset for the wall-accuracy bar (AC-C5). Hand-label every wall tile in those 5 screenshots.
 - Author 3 negative-test fixtures for AC-C6: (i) a screenshot designed to fail grid cross-validation, (ii) a synthetic input engineered to produce two overlapping detections, (iii) a screenshot with zero detections.

@@ -46,7 +46,7 @@ Per-instance review corrections do NOT update `cartographer_calibration.json`. R
 
 - Backend unit test: synthesise a candidate `BaseLayout` and a simulated review-correction payload, hit `POST /api/review/baselayout`, assert the saved JSON has the corrected placements, `provenance.reviewed` is `true`, and `cartographer_calibration.json` was NOT modified.
 - Backend smoke test: stand up the server in review mode against a fixture, hit GET, hit POST, assert shutdown.
-- Frontend smoke (manual, documented): run `cartographer ingest --review --in <example>`, drag a placement, save, verify the resulting JSON.
+- Frontend smoke (manual, documented): run `cartographer ingest --review --in <example>`, drag a placement, save, verify the resulting JSON. Sample screenshots live in `app/data/base_screenshots/` (50 TH6 home-village JPGs).
 
 ## Acceptance criteria
 

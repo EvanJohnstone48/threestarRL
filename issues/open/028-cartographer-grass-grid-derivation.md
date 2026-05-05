@@ -21,6 +21,8 @@ The diagnostic stage is updated to render the inferred grid as an overlay on the
 
 Synthetic-fixture unit tests synthesise a checker raster of known `(pitch, origin)` and assert recovered values within tolerance. A degenerate-input test case asserts the cross-validation failure raises.
 
+For tuning the HSV grass-green hue range and the dilation margin against real CoC art, sample images live in `app/data/base_screenshots/` (50 TH6 home-village JPGs already committed). Use these to eyeball the algorithm's behavior on real input while iterating; do not commit them as test fixtures here — fixture creation belongs to issue 031.
+
 AC-C4 (grid match against ground-truth on the 20-screenshot eval set) is scaffolded here but verified end-to-end in issue 031 once eval data exists.
 
 ## Acceptance criteria

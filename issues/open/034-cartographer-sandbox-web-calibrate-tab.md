@@ -53,7 +53,7 @@ Per-class median, not mean. For class `C` with `K_C` instances in the POST paylo
 
 - Backend unit test on the median aggregator with synthetic POST payloads (single instance, multiple instances, mixed classes).
 - Backend smoke test that stands up the FastAPI app with a mocked Roboflow detect call, hits each GET endpoint, and POSTs a synthetic calibration payload, asserting the resulting JSON file matches expectations and the server shuts down.
-- Frontend smoke (manual, documented): run `cartographer calibrate --in <example screenshot>`, drag at least one footprint, save, verify `cartographer_calibration.json` updates.
+- Frontend smoke (manual, documented): run `cartographer calibrate --in <example screenshot>`, drag at least one footprint, save, verify `cartographer_calibration.json` updates. Sample screenshots for the smoke test live in `app/data/base_screenshots/` (50 TH6 home-village JPGs).
 
 ## Acceptance criteria
 

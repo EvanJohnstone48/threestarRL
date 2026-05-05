@@ -53,7 +53,7 @@ If `ROBOFLOW_API_KEY` is unset, the module raises a typed exception with a clear
 - [ ] Sub-threshold detections never appear in the emitted JSON.
 - [ ] Mock-based unit tests for response parsing and threshold filtering pass without network.
 - [ ] Missing `ROBOFLOW_API_KEY` raises a typed exception with an actionable message.
-- [ ] When `ROBOFLOW_API_KEY` is set, end-to-end pipeline runs on a real screenshot from issue 026's dataset and produces detections.
+- [ ] When `ROBOFLOW_API_KEY` is set, end-to-end pipeline runs on a real screenshot from `app/data/base_screenshots/` (50 TH6 home-village images already committed) and produces detections.
 
 ## Blocked by
 

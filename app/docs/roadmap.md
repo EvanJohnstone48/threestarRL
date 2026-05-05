@@ -224,8 +224,8 @@ Roughly 6–10 weeks. *Cartographer-specific architecture details will be revisi
 - Set up Roboflow project off-codebase: define class taxonomy, label initial dataset, train detection model.
 
 ### 3.2 Detection
-- Implement `cartographer/detect.py`: thin wrapper around Roboflow Inference SDK.
-- Configure via `app/data/cartographer_config.json` (project, dataset_version, endpoint, confidence_threshold).
+- Implement `cartographer/detect.py`: direct HTTPS POST to `detect.roboflow.com/{project}/{version}` via `requests` (the `inference-sdk` package has no Python 3.13 wheel; the workflow URL 404s — see cartographer PRD §4.8).
+- Configure via `app/data/cartographer_config.json` (project, dataset_version, confidence_threshold).
 - Hosted vs local inference choice; default to hosted in v1 of Cartographer.
 
 ### 3.3 Bbox-to-grid alignment
